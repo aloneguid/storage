@@ -163,7 +163,15 @@ namespace Storage.Net.Microsoft.Azure.Storage.Table
             query = query.Take(maxRecords);
          }
 
-         IEnumerable<DynamicTableEntity> entities = await table.ExecuteQuerySegmentedAsync(query, null);
+         TableContinuationToken token = null;
+         var entities = new List<DynamicTableEntity> ();
+         do
+         {
+            var queryResults = await table.ExecuteQuerySegmentedAsync(query, token);
+            entities.AddRange(queryResults.Results);
+            token = queryResults.ContinuationToken;
+         } while (token != null);
+
          return entities.Select(ToTableRow);
       }
 
