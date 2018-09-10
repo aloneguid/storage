@@ -3,7 +3,7 @@ using Storage.Net.Blob;
 using Storage.Net.Messaging;
 using Storage.Net.Microsoft.Azure.Storage.Blob;
 using Storage.Net.Microsoft.Azure.Storage.Messaging;
-using Storage.Net.Microsoft.Azure.Storage.Table;
+using Storage.Net.Microsoft.Azure.Storage.KeyValue;
 using Storage.Net.KeyValue;
 using System.Net;
 using Storage.Net.ConnectionString;

@@ -1,8 +1,5 @@
-﻿using NetBox;
-using NetBox.Data;
-using System;
+﻿using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,9 +8,9 @@ namespace Storage.Net.KeyValue
    /// <summary>
    /// Represents a table row in table data structure.
    /// </summary>
-   public class TableRow : IDictionary<string, DynamicValue>, IEquatable<TableRow>
+   public class TableRow : IDictionary<string, object>, IEquatable<TableRow>
    {
-      private readonly ConcurrentDictionary<string, DynamicValue> _keyToValue = new ConcurrentDictionary<string, DynamicValue>(); 
+      private readonly Dictionary<string, object> _keyToValue = new Dictionary<string, object>(); 
 
       /// <summary>
       /// Creates a new instance from partition key and row key
@@ -63,7 +60,7 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// Get enumerator for cells inside the row
       /// </summary>
-      public IEnumerator<KeyValuePair<string, DynamicValue>> GetEnumerator()
+      public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
       {
          return _keyToValue.GetEnumerator();
       }
@@ -79,7 +76,7 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// IDictionary.Add
       /// </summary>
-      public void Add(KeyValuePair<string, DynamicValue> item)
+      public void Add(KeyValuePair<string, object> item)
       {
          Add(item.Key, item.Value);
       }
@@ -95,7 +92,7 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// IDictionary.Contains
       /// </summary>
-      public bool Contains(KeyValuePair<string, DynamicValue> item)
+      public bool Contains(KeyValuePair<string, object> item)
       {
          return _keyToValue.ContainsKey(item.Key);
       }
@@ -103,7 +100,7 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// IDictionary.CopyTo
       /// </summary>
-      public void CopyTo(KeyValuePair<string, DynamicValue>[] array, int arrayIndex)
+      public void CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
       {
          throw new NotSupportedException();
       }
@@ -111,9 +108,11 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// IDictionary.Remove
       /// </summary>
-      public bool Remove(KeyValuePair<string, DynamicValue> item)
+      public bool Remove(KeyValuePair<string, object> item)
       {
-         return _keyToValue.TryRemove(item.Key, out DynamicValue value);
+         _keyToValue.Remove(item.Key);
+
+         return true;
       }
 
       /// <summary>
@@ -135,11 +134,11 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// IDictionary.Add
       /// </summary>
-      public void Add(string key, DynamicValue value)
+      public void Add(string key, object value)
       {
          if(value == null)
          {
-            _keyToValue.TryRemove(key, out value);
+            Remove(key);
          }
          else
          {
@@ -160,13 +159,13 @@ namespace Storage.Net.KeyValue
       /// </summary>
       public bool Remove(string key)
       {
-         return _keyToValue.TryRemove(key, out DynamicValue value);
+         return _keyToValue.Remove(key);
       }
 
       /// <summary>
       /// IDictionary.TryGetValue
       /// </summary>
-      public bool TryGetValue(string key, out DynamicValue value)
+      public bool TryGetValue(string key, out object value)
       {
          return _keyToValue.TryGetValue(key, out value);
       }
@@ -174,11 +173,11 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// IDictionary.this
       /// </summary>
-      public DynamicValue this[string key]
+      public object this[string key]
       {
          get
          {
-            if (!_keyToValue.TryGetValue(key, out DynamicValue value)) return null;
+            if (!_keyToValue.TryGetValue(key, out object value)) return null;
             return value;
          }
          set { Add(key, value); }
@@ -195,7 +194,7 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// IDictionary.Values
       /// </summary>
-      public ICollection<DynamicValue> Values
+      public ICollection<object> Values
       {
          get { return _keyToValue.Values; }
       }
@@ -211,7 +210,7 @@ namespace Storage.Net.KeyValue
       public TableRow Clone(string rowKey = null, string partitionKey = null)
       {
          var clone = new TableRow(partitionKey ?? PartitionKey, rowKey ?? RowKey);
-         foreach(KeyValuePair<string, DynamicValue> pair in _keyToValue)
+         foreach(KeyValuePair<string, object> pair in _keyToValue)
          {
             clone._keyToValue[pair.Key] = pair.Value;
          }
@@ -251,7 +250,7 @@ namespace Storage.Net.KeyValue
             }
             else
             {
-               foreach (KeyValuePair<string, DynamicValue> cell in row)
+               foreach (KeyValuePair<string, object> cell in row)
                {
                   if (!masterRow.ContainsKey(cell.Key))
                   {

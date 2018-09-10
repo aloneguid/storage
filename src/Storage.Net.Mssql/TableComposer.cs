@@ -42,13 +42,13 @@ namespace Storage.Net.Mssql
          s.Append(_config.RowKeyColumnName);
          s.Append("] NVARCHAR(50) NOT NULL, ");
 
-         foreach (KeyValuePair<string, DynamicValue> cell in row)
+         foreach (KeyValuePair<string, object> cell in row)
          {
-            Type t = cell.Value.OriginalType;
+            Type t = cell.Value.GetType();
 
             if (!TypeToSqlTypeName.TryGetValue(t, out string typeName))
             {
-               int length = cell.Value.OriginalValue == null ? 0 : cell.Value.OriginalValue.ToString().Length;
+               int length = cell.Value == null ? 0 : cell.Value.ToString().Length;
                length *= 2;
                string sLength = length == 0 ? "MAX" : length.ToString();
 

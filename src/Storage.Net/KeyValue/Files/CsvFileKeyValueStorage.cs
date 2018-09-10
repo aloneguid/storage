@@ -1,6 +1,4 @@
-﻿using NetBox;
-using NetBox.Data;
-using NetBox.Extensions;
+﻿using NetBox.Extensions;
 using NetBox.FileFormats;
 using System;
 using System.Collections.Generic;
@@ -253,7 +251,7 @@ namespace Storage.Net.KeyValue.Files
             }
             else
             {
-               foreach (KeyValuePair<string, DynamicValue> line in row)
+               foreach (KeyValuePair<string, object> line in row)
                {
                   prow[line.Key] = line.Value;
                }
@@ -359,9 +357,9 @@ namespace Storage.Net.KeyValue.Files
          for(int i = 1; i < allColumnNames.Length; i++)
          {
             string name = allColumnNames[i];
-            if (row.TryGetValue(name, out DynamicValue cell))
+            if (row.TryGetValue(name, out object cell))
             {
-               writeableRow[i] = cell;
+               writeableRow[i] = cell?.ToString();
             }
             else
             {

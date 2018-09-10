@@ -48,8 +48,7 @@ namespace Storage.Net.Mssql
 
                foreach (string key in row.Keys.OrderBy(kv => kv))
                {
-                  DynamicValue value;
-                  row.TryGetValue("key", out value);
+                  row.TryGetValue("key", out object value);
                   dataRow[key] = value;
                }
 

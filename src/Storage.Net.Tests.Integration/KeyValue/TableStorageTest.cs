@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 using NetBox.Extensions;
 using NetBox.Data;
 
-namespace Storage.Net.Tests.Integration.Tables
+namespace Storage.Net.Tests.Integration.KeyValue
 {
-   public class CsvFilesTableStorageTest : TableStorageTest
+   public class CsvFilesTest : KeyValueStorageTest
    {
-      public CsvFilesTableStorageTest() : base("csv-files") { }
+      public CsvFilesTest() : base("csv-files") { }
    }
 
-   public class AzureTableStorageTest : TableStorageTest
+   public class AzureTableTest : KeyValueStorageTest
    {
-      public AzureTableStorageTest() : base("azure") { }
+      public AzureTableTest() : base("azure") { }
    }
 
    //we dont' have an open test instance of mssql anymore :(
@@ -28,14 +28,14 @@ namespace Storage.Net.Tests.Integration.Tables
       public MssqlTableStorageTest() : base("mssql") { }
    }*/
 
-   public abstract class TableStorageTest : AbstractTestFixture
+   public abstract class KeyValueStorageTest : AbstractTestFixture
    {
       private readonly string _name;
       private IKeyValueStorage _tables;
       private string _tableName;
       private ITestSettings _settings;
 
-      protected TableStorageTest(string name)
+      protected KeyValueStorageTest(string name)
       {
          _settings = new ConfigurationBuilder<ITestSettings>()
             .UseIniFile("c:\\tmp\\integration-tests.ini")
@@ -240,7 +240,9 @@ namespace Storage.Net.Tests.Integration.Tables
          await _tables.InsertAsync(_tableName, new TableRow[] { i });
 
          TableRow o = await _tables.GetAsync(_tableName, "pk", "rk");
-         DateTime date2 = o["date"];
+
+         object dateObj = o["date"];
+         DateTime date2 = (dateObj is string dateObjs) ? DateTime.Parse((string)dateObj) : (DateTime)dateObj;
 
          Assert.Equal(date, date2);
       }
@@ -346,8 +348,8 @@ namespace Storage.Net.Tests.Integration.Tables
          TableRow row1 = await _tables.GetAsync(_tableName, "pk", "rk");
          Assert.Equal("pk", row1.PartitionKey);
          Assert.Equal("rk", row1.RowKey);
-         Assert.Equal(1, row1["C1"].GetValue<int>());
-         Assert.Equal("string", row1["C2"].GetValue<string>());
+         Assert.Equal("1", row1["C1"].ToString());
+         Assert.Equal("string", row1["C2"]);
       }
 
       [Fact]

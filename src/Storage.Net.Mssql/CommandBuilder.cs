@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Text;
-using NetBox;
-using NetBox.Data;
 using Storage.Net.KeyValue;
 
 namespace Storage.Net.Mssql
@@ -45,10 +43,10 @@ namespace Storage.Net.Mssql
          cmd.Parameters.AddWithValue("@rk", row.RowKey);
 
          int c = 0;
-         foreach(KeyValuePair<string, DynamicValue> cell in row)
+         foreach(KeyValuePair<string, object> cell in row)
          {
             string pn = $"@c{c++}";
-            cmd.Parameters.AddWithValue(pn, cell.Value.OriginalValue);
+            cmd.Parameters.AddWithValue(pn, cell.Value);
          }
 
          return cmd;
@@ -62,7 +60,7 @@ namespace Storage.Net.Mssql
 
          bool first = true;
          int i = 0;
-         foreach(KeyValuePair<string, DynamicValue> cell in row)
+         foreach(KeyValuePair<string, object> cell in row)
          {
             if(first)
             {
@@ -101,7 +99,7 @@ namespace Storage.Net.Mssql
          s.Append(", ");
          s.Append(_config.RowKeyColumnName);
 
-         foreach (KeyValuePair<string, DynamicValue> cell in row)
+         foreach (KeyValuePair<string, object> cell in row)
          {
             s.Append(", [");
             s.Append(cell.Key);

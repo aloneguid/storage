@@ -15,12 +15,12 @@ using NetBox;
 using NetBox.Extensions;
 using NetBox.Data;
 
-namespace Storage.Net.Microsoft.Azure.Storage.Table
+namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
 {
    /// <summary>
    /// Microsoft Azure Table storage
    /// </summary>
-   public class AzureTableStorageKeyValueStorage : IKeyValueStorage
+   class AzureTableStorageKeyValueStorage : IKeyValueStorage
    {
       private const int MaxInsertLimit = 100;
       private const string PartitionKeyName = "PartitionKey";
@@ -348,96 +348,6 @@ namespace Storage.Net.Microsoft.Azure.Storage.Table
             }
 
             throw new MeSE(ex.Message, ex);
-         }
-      }
-
-      private class EntityAdapter : IAzTableEntity
-      {
-         private readonly TableRow _row;
-
-         public EntityAdapter(TableRow row)
-         {
-            _row = row;
-
-            Init(row?.Id, true);
-         }
-
-         public EntityAdapter(Key rowId)
-         {
-            Init(rowId, true);
-         }
-
-         private void Init(Key rowId, bool useConcurencyKey)
-         {
-            if (rowId == null) throw new ArgumentNullException("rowId");
-
-            PartitionKey = ToInternalId(rowId.PartitionKey);
-            RowKey = ToInternalId(rowId.RowKey);
-            ETag = "*";
-         }
-
-         public void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
-         {
-            throw new NotSupportedException();
-         }
-
-         public IDictionary<string, EntityProperty> WriteEntity(OperationContext operationContext)
-         {
-            //Azure Lib calls this when it wants to transform this entity to a writeable one
-
-            var dic = new Dictionary<string, EntityProperty>();
-            foreach (KeyValuePair<string, DynamicValue> cell in _row)
-            {
-               EntityProperty ep;
-
-               Type t = cell.Value.OriginalType;
-
-               if (t == typeof(bool))
-               {
-                  ep = EntityProperty.GeneratePropertyForBool(cell.Value);
-               }
-               else if (t == typeof(DateTime) || t == typeof(DateTimeOffset))
-               {
-                  ep = EntityProperty.GeneratePropertyForDateTimeOffset(((DateTime)cell.Value).ToUniversalTime());
-               }
-               else if (t == typeof(int))
-               {
-                  ep = EntityProperty.GeneratePropertyForInt(cell.Value);
-               }
-               else if (t == typeof(long))
-               {
-                  ep = EntityProperty.GeneratePropertyForLong(cell.Value);
-               }
-               else if (t == typeof(double))
-               {
-                  ep = EntityProperty.GeneratePropertyForDouble(cell.Value);
-               }
-               else if (t == typeof(Guid))
-               {
-                  ep = EntityProperty.GeneratePropertyForGuid(cell.Value);
-               }
-               else if (t == typeof(byte[]))
-               {
-                  ep = EntityProperty.GeneratePropertyForByteArray(cell.Value);
-               }
-               else
-               {
-                  ep = EntityProperty.GeneratePropertyForString(cell.Value);
-               }
-
-               dic[cell.Key] = ep;
-            }
-            return dic;
-         }
-
-         public string PartitionKey { get; set; }
-         public string RowKey { get; set; }
-         public DateTimeOffset Timestamp { get; set; }
-         public string ETag { get; set; }
-
-         private static string ToInternalId(string userId)
-         {
-            return userId.UrlEncode();
          }
       }
 
