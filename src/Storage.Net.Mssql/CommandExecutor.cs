@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NetBox;
 using NetBox.Data;
-using Storage.Net.Table;
+using Storage.Net.KeyValue;
 
 namespace Storage.Net.Mssql
 {

@@ -4,18 +4,18 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
-using Storage.Net.Table;
+using Storage.Net.KeyValue;
 
 namespace Storage.Net.Mssql
 {
-   public class MssqlTableStorageProvider : ITableStorage
+   public class MssqlKeyValueStorage : IKeyValueStorage
    {
       private readonly SqlConnection _connection;
       private readonly CommandBuilder _cb;
       private readonly CommandExecutor _exec;
       private readonly SqlConfiguration _config;
 
-      public MssqlTableStorageProvider(string connectionString, SqlConfiguration config)
+      public MssqlKeyValueStorage(string connectionString, SqlConfiguration config)
       {
          _config = config ?? new SqlConfiguration();
          _connection = new SqlConnection(connectionString);
@@ -41,11 +41,11 @@ namespace Storage.Net.Mssql
          }
       }
 
-      public async Task DeleteAsync(string tableName, IEnumerable<TableRowId> rowIds)
+      public async Task DeleteAsync(string tableName, IEnumerable<Key> rowIds)
       {
          if (rowIds == null) return;
 
-         foreach(TableRowId id in rowIds)
+         foreach(Key id in rowIds)
          {
             await _exec.ExecAsync("DELETE FROM [{0}] where [{1}] = '{2}' AND [{3}] = '{4}'",
                tableName,

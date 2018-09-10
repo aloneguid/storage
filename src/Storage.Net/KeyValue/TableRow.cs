@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Storage.Net.Table
+namespace Storage.Net.KeyValue
 {
    /// <summary>
    /// Represents a table row in table data structure.
@@ -18,15 +18,15 @@ namespace Storage.Net.Table
       /// <summary>
       /// Creates a new instance from partition key and row key
       /// </summary>
-      public TableRow(string partitionKey, string rowKey) : this(new TableRowId(partitionKey, rowKey))
+      public TableRow(string partitionKey, string rowKey) : this(new Key(partitionKey, rowKey))
       {
       }
 
       /// <summary>
-      /// Creates a new instance from <see cref="TableRowId"/>
+      /// Creates a new instance from <see cref="Key"/>
       /// </summary>
       /// <param name="id"></param>
-      public TableRow(TableRowId id)
+      public TableRow(Key id)
       {
          Id = id ?? throw new ArgumentNullException(nameof(id));
       }
@@ -34,7 +34,7 @@ namespace Storage.Net.Table
       /// <summary>
       /// Row ID
       /// </summary>
-      public TableRowId Id { get; private set; }
+      public Key Id { get; private set; }
 
       /// <summary>
       /// Partition key
@@ -234,7 +234,7 @@ namespace Storage.Net.Table
       {
          if (rows == null) return true;
 
-         IEnumerable<IGrouping<TableRowId, TableRow>> groups = rows.GroupBy(r => r.Id);
+         IEnumerable<IGrouping<Key, TableRow>> groups = rows.GroupBy(r => r.Id);
          IEnumerable<int> counts = groups.Select(g => g.Count());
          return counts.OrderByDescending(c => c).First() == 1;
       }

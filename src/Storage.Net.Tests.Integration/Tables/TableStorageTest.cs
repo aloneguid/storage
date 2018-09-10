@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
-using Storage.Net.Table;
+using Storage.Net.KeyValue;
 using System.IO;
 using NetBox;
 using Config.Net;
@@ -31,7 +31,7 @@ namespace Storage.Net.Tests.Integration.Tables
    public abstract class TableStorageTest : AbstractTestFixture
    {
       private readonly string _name;
-      private ITableStorage _tables;
+      private IKeyValueStorage _tables;
       private string _tableName;
       private ITestSettings _settings;
 
@@ -46,17 +46,17 @@ namespace Storage.Net.Tests.Integration.Tables
 
          if(_name == "csv-files")
          {
-            _tables = StorageFactory.Tables.CsvFiles(TestDir);
+            _tables = StorageFactory.KeyValue.CsvFiles(TestDir);
          }
          else if(_name == "azure")
          {
-            _tables = StorageFactory.Tables.AzureTableStorage(
+            _tables = StorageFactory.KeyValue.AzureTableStorage(
                _settings.AzureStorageName,
                _settings.AzureStorageKey);
          }
          else if(_name == "mssql")
          {
-            _tables = StorageFactory.Tables.MssqlServer(
+            _tables = StorageFactory.KeyValue.MssqlServer(
                _settings.MssqlConnectionString);
          }
          /*else if(_name == "esent")
@@ -137,7 +137,7 @@ namespace Storage.Net.Tests.Integration.Tables
             ["col1"] = "value2"
          };
          await _tables.InsertAsync(_tableName, new[] {row1, row2});
-         await _tables.DeleteAsync(_tableName, new[] {new TableRowId("part1", "2")});
+         await _tables.DeleteAsync(_tableName, new[] {new Key("part1", "2")});
          IEnumerable<TableRow> rows = await _tables.GetAsync(_tableName, "part1");
 
          Assert.Single(rows);
@@ -146,66 +146,19 @@ namespace Storage.Net.Tests.Integration.Tables
       [Fact]
       public async Task DeleteRows_NullArrayInput_DoesntCrash()
       {
-         await _tables.DeleteAsync(_tableName, (TableRowId[])null);
+         await _tables.DeleteAsync(_tableName, (Key[])null);
       }
 
       [Fact]
       public async Task DeleteRows_NullInput_DoesntCrash()
       {
-         await _tables.DeleteAsync(_tableName, (TableRowId[])null);
+         await _tables.DeleteAsync(_tableName, (Key[])null);
       }
 
       [Fact]
       public async Task DeleteRows_TableDoesNotExist_DoesntCrash()
       {
-         await _tables.DeleteAsync(_tableName + "d", (TableRowId[])null);
-      }
-
-      [Fact]
-      public async Task Concurrency_DeleteWithWrongEtag_Fails()
-      {
-         if (!_tables.HasOptimisticConcurrency) return;
-
-         //insert one row
-         var row = new TableRow("pk", "rk")
-         {
-            ["c"] = "1"
-         };
-         await _tables.InsertAsync(_tableName, new TableRow[] { row });
-         Assert.NotNull(row.Id.ConcurrencyKey);
-
-         //change it's ETag and try to delete which must fail!
-         row.Id.ConcurrencyKey = Guid.NewGuid().ToString();
-         await Assert.ThrowsAsync<StorageException>(async () => await _tables.DeleteAsync(_tableName, new TableRowId[] { row.Id }));
-      }
-
-      [Fact]
-      public async Task Concurrency_RowOldCopy_MustNotUpdate()
-      {
-         if (!_tables.HasOptimisticConcurrency) return;
-
-         //insert one row
-         var row = new TableRow("pk", "rk")
-         {
-            ["c"] = "1"
-         };
-         await _tables.InsertAsync(_tableName, new TableRow[] { row });
-         Assert.NotNull(row.Id.ConcurrencyKey);
-
-         //update with a new value
-         var row1 = new TableRow("pk", "rk")
-         {
-            ["c"] = "2"
-         };
-         await _tables.MergeAsync(_tableName, new TableRow[] { row1 });
-         Assert.NotNull(row1.Id.ConcurrencyKey);
-         Assert.NotEqual(row.Id.ConcurrencyKey, row1.Id.ConcurrencyKey);
-
-         //now use the first row (old ETag) to set the new value
-         row["c"] = "2";
-         await Assert.ThrowsAsync<StorageException>(() => _tables.UpdateAsync(_tableName, new TableRow[] { row }));
-
-         await Assert.ThrowsAsync<StorageException>(() => _tables.DeleteAsync(_tableName, new TableRowId[] { row.Id }));
+         await _tables.DeleteAsync(_tableName + "d", (Key[])null);
       }
 
       [Fact]
@@ -580,7 +533,7 @@ namespace Storage.Net.Tests.Integration.Tables
       public async Task Get_RowsDontExist_EmptyCollection()
       {
          await _tables.InsertAsync(_tableName, new[] { new TableRow("pk", "rk1") });
-         await _tables.DeleteAsync(_tableName, new[] { new TableRowId("pk", "rk1")});
+         await _tables.DeleteAsync(_tableName, new[] { new Key("pk", "rk1")});
 
          IEnumerable<TableRow> rows = await _tables.GetAsync(_tableName, "pk");
          Assert.NotNull(rows);

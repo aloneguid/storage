@@ -4,7 +4,7 @@ using System.Data.SqlClient;
 using System.Text;
 using NetBox;
 using NetBox.Data;
-using Storage.Net.Table;
+using Storage.Net.KeyValue;
 
 namespace Storage.Net.Mssql
 {

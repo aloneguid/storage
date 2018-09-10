@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using Storage.Net.Blob;
 using Storage.Net.Blob.Files;
 using Storage.Net.Messaging;
-using Storage.Net.Table;
-using Storage.Net.Table.Files;
-using NetBox.Extensions;
 using Storage.Net.ConnectionString;
+using Storage.Net.KeyValue;
+using Storage.Net.KeyValue.Files;
 
 namespace Storage.Net
 {
@@ -48,10 +46,10 @@ namespace Storage.Net
       /// </summary>
       /// <param name="factory"></param>
       /// <param name="rootDir"></param>
-      public static ITableStorage CsvFiles(this ITableStorageFactory factory,
+      public static IKeyValueStorage CsvFiles(this IKeyValueStorageFactory factory,
          DirectoryInfo rootDir)
       {
-         return new CsvFileTableStorageProvider(rootDir);
+         return new CsvFileKeyValueStorage(rootDir);
       }
 
       /// <summary>

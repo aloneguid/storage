@@ -2,20 +2,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Storage.Net.Table
+namespace Storage.Net.KeyValue
 {
    /// <summary>
    /// Common interface for working with table storage
    /// </summary>
-   public interface ITableStorage : IDisposable
+   public interface IKeyValueStorage : IDisposable
    {
-      /// <summary>
-      /// Storage returns true if it supports optimistic concurrency. This mode affect the update
-      /// operations on rows and will throw an exception if the version of the row you have is not
-      /// up to date.
-      /// </summary>
-      bool HasOptimisticConcurrency { get; }
-
       /// <summary>
       /// Returns the list of all table names in the table storage.
       /// </summary>
@@ -86,6 +79,6 @@ namespace Storage.Net.Table
       /// <summary>
       /// Deletes multiple rows
       /// </summary>
-      Task DeleteAsync(string tableName, IEnumerable<TableRowId> rowIds);
+      Task DeleteAsync(string tableName, IEnumerable<Key> rowIds);
    }
 }

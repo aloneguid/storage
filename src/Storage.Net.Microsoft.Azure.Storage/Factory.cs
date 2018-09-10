@@ -4,7 +4,7 @@ using Storage.Net.Messaging;
 using Storage.Net.Microsoft.Azure.Storage.Blob;
 using Storage.Net.Microsoft.Azure.Storage.Messaging;
 using Storage.Net.Microsoft.Azure.Storage.Table;
-using Storage.Net.Table;
+using Storage.Net.KeyValue;
 using System.Net;
 using Storage.Net.ConnectionString;
 using Storage.Net.Microsoft.Azure.Storage;
@@ -29,11 +29,11 @@ namespace Storage.Net
       /// <param name="accountName">Account name</param>
       /// <param name="storageKey">Account key</param>
       /// <returns></returns>
-      public static ITableStorage AzureTableStorage(this ITableStorageFactory factory,
+      public static IKeyValueStorage AzureTableStorage(this IKeyValueStorageFactory factory,
          string accountName,
          string storageKey)
       {
-         return new AzureTableStorageProvider(accountName, storageKey);
+         return new AzureTableStorageKeyValueStorage(accountName, storageKey);
       }
 
       /// <summary>
@@ -42,10 +42,10 @@ namespace Storage.Net
       /// <param name="factory">Factory reference</param>
       /// <param name="credential">Credential structure cotnaining account name in username and account key in password.</param>
       /// <returns></returns>
-      public static ITableStorage AzureTableStorage(this ITableStorageFactory factory,
+      public static IKeyValueStorage AzureTableStorage(this IKeyValueStorageFactory factory,
          NetworkCredential credential)
       {
-         return new AzureTableStorageProvider(credential.UserName, credential.Password);
+         return new AzureTableStorageKeyValueStorage(credential.UserName, credential.Password);
       }
 
       /// <summary>

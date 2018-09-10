@@ -9,14 +9,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Storage.Net.Table.Files
+namespace Storage.Net.KeyValue.Files
 {
    /// <summary>
-   /// Creates an abstaction of <see cref="ITableStorage"/> in a CSV file structure.
+   /// Creates an abstaction of <see cref="IKeyValueStorage"/> in a CSV file structure.
    /// Works relative to the root directory specified in the constructor.
    /// Each table will be a separate subfolder, where files are partitions.
    /// </summary>
-   public class CsvFileTableStorageProvider : ITableStorage
+   public class CsvFileKeyValueStorage : IKeyValueStorage
    {
       private const string TablePartitionFormat = "{0}.partition.csv";
       private const string TablePartitionSearchFilter = "*.partition.csv";
@@ -33,7 +33,7 @@ namespace Storage.Net.Table.Files
       /// </summary>
       /// <param name="rootDir"></param>
       /// <exception cref="ArgumentNullException"></exception>
-      public CsvFileTableStorageProvider(DirectoryInfo rootDir)
+      public CsvFileKeyValueStorage(DirectoryInfo rootDir)
       {
          _rootDir = rootDir ?? throw new ArgumentNullException(nameof(rootDir));
          _rootDirPath = rootDir.FullName;
@@ -179,12 +179,12 @@ namespace Storage.Net.Table.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task DeleteAsync(string tableName, IEnumerable<TableRowId> rowIds)
+      public Task DeleteAsync(string tableName, IEnumerable<Key> rowIds)
       {
          if(tableName == null) throw new ArgumentNullException(nameof(tableName));
          if(rowIds == null) return Task.FromResult(true);
 
-         foreach(IGrouping<string, TableRowId> group in rowIds.GroupBy(r => r.PartitionKey))
+         foreach(IGrouping<string, Key> group in rowIds.GroupBy(r => r.PartitionKey))
          {
             string partitionKey = group.Key;
 
@@ -261,9 +261,9 @@ namespace Storage.Net.Table.Files
          }
       }
 
-      private void Delete(Dictionary<string, TableRow> data, IEnumerable<TableRowId> rows)
+      private void Delete(Dictionary<string, TableRow> data, IEnumerable<Key> rows)
       {
-         foreach(TableRowId row in rows)
+         foreach(Key row in rows)
          {
             data.Remove(row.RowKey);
          }
