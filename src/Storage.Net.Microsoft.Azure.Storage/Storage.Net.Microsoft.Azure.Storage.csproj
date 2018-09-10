@@ -33,7 +33,7 @@ new feature: Azure Blob Storage supports connection by container SAS URI</Packag
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <PackageReference Include="WindowsAzure.Storage" Version="9.3.0" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.3.1" />
   </ItemGroup>
    <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
       <Reference Include="System.Net.Http" />
