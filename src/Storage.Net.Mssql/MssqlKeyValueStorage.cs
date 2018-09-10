@@ -49,8 +49,8 @@ namespace Storage.Net.Mssql
          {
             await _exec.ExecAsync("DELETE FROM [{0}] where [{1}] = '{2}' AND [{3}] = '{4}'",
                tableName,
-               _config.PartitionKeyColumnName, id.PartitionKey,
-               _config.RowKeyColumnName, id.RowKey);
+               SqlConstants.PartitionKey, id.PartitionKey,
+               SqlConstants.RowKey, id.RowKey);
          }
       }
 
@@ -78,8 +78,8 @@ namespace Storage.Net.Mssql
 
       private async Task<IReadOnlyCollection<TableRow>> InternalGetAsync(string tableName, string partitionKey, string rowKey)
       {
-         string sql = $"SELECT * FROM [{tableName}] WHERE [{_config.PartitionKeyColumnName}] = '{partitionKey}'";
-         if (rowKey != null) sql += $" AND [{_config.RowKeyColumnName}] = '{rowKey}'";
+         string sql = $"SELECT * FROM [{tableName}] WHERE [{SqlConstants.PartitionKey}] = '{partitionKey}'";
+         if (rowKey != null) sql += $" AND [{SqlConstants.RowKey}] = '{rowKey}'";
          return await _exec.ExecRowsAsync(sql);
       }
 

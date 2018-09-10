@@ -24,7 +24,7 @@ namespace Storage.Net.Mssql
          if(isUpsert && row.Keys.Count > 0)
          {
             s.Append("IF EXISTS (SELECT [");
-            s.Append(_config.PartitionKeyColumnName);
+            s.Append(SqlConstants.PartitionKey);
             s.Append("] FROM [");
             s.Append(tableName);
             s.Append("]");
@@ -41,13 +41,7 @@ namespace Storage.Net.Mssql
 
          cmd.Parameters.AddWithValue("@pk", row.PartitionKey);
          cmd.Parameters.AddWithValue("@rk", row.RowKey);
-
-         int c = 0;
-         foreach(KeyValuePair<string, object> cell in row)
-         {
-            string pn = $"@c{c++}";
-            cmd.Parameters.AddWithValue(pn, cell.Value);
-         }
+         cmd.Parameters.AddWithValue("@doc", row.ToString());
 
          return cmd;
       }
@@ -56,27 +50,9 @@ namespace Storage.Net.Mssql
       {
          s.Append("UPDATE [");
          s.Append(tableName);
-         s.Append("] SET ");
-
-         bool first = true;
-         int i = 0;
-         foreach(KeyValuePair<string, object> cell in row)
-         {
-            if(first)
-            {
-               first = false;
-            }
-            else
-            {
-               s.Append(", ");
-            }
-
-            s.Append("[");
-            s.Append(cell.Key);
-            s.Append("] = ");
-            s.Append("@c");
-            s.Append(i++);
-         }
+         s.Append("] SET [");
+         s.Append(SqlConstants.DocumentColumn);
+         s.Append("] = @doc");
 
          AddWhereLimit(s);
       }
@@ -84,9 +60,9 @@ namespace Storage.Net.Mssql
       private void AddWhereLimit(StringBuilder s)
       {
          s.Append(" WHERE [");
-         s.Append(_config.PartitionKeyColumnName);
+         s.Append(SqlConstants.PartitionKey);
          s.Append("] = @pk AND [");
-         s.Append(_config.RowKeyColumnName);
+         s.Append(SqlConstants.RowKey);
          s.Append("] = @rk");
       }
 
@@ -95,25 +71,12 @@ namespace Storage.Net.Mssql
          s.Append("INSERT INTO [");
          s.Append(tableName);
          s.Append("] (");
-         s.Append(_config.PartitionKeyColumnName);
+         s.Append(SqlConstants.PartitionKey);
          s.Append(", ");
-         s.Append(_config.RowKeyColumnName);
-
-         foreach (KeyValuePair<string, object> cell in row)
-         {
-            s.Append(", [");
-            s.Append(cell.Key);
-            s.Append("]");
-         }
-
-         s.Append(") values (@pk, @rk");
-         for (int i = 0; i < row.Count; i++)
-         {
-            s.Append(", @c");
-            s.Append(i);
-         }
-
-         s.Append(")");
+         s.Append(SqlConstants.RowKey);
+         s.Append(", ");
+         s.Append(SqlConstants.DocumentColumn);
+         s.Append(") values (@pk, @rk, @doc)");
       }
    }
 }

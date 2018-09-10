@@ -22,11 +22,10 @@ namespace Storage.Net.Tests.Integration.KeyValue
       public AzureTableTest() : base("azure") { }
    }
 
-   //we dont' have an open test instance of mssql anymore :(
-   /*public class MssqlTableStorageTest : TableStorageTest
+   public class MssqlTest : KeyValueStorageTest
    {
-      public MssqlTableStorageTest() : base("mssql") { }
-   }*/
+      public MssqlTest() : base("mssql") { }
+   }
 
    public abstract class KeyValueStorageTest : AbstractTestFixture
    {
@@ -59,19 +58,13 @@ namespace Storage.Net.Tests.Integration.KeyValue
             _tables = StorageFactory.KeyValue.MssqlServer(
                _settings.MssqlConnectionString);
          }
-         /*else if(_name == "esent")
-         {
-            _tables = StorageFactory.Tables.Esent(
-               Path.Combine(TestDir.FullName, "test.edb"));
-         }*/
 
          _tableName = "TableStorageTest" + Guid.NewGuid().ToString().Replace("-", "");
-         //_tableName = "TableStorageTest";
       }
 
       public override void Dispose()
       {
-         _tables.DeleteAsync(_tableName).Wait();
+         //_tables.DeleteAsync(_tableName).Wait();
 
          _tables.Dispose();
 

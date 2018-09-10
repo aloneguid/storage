@@ -76,9 +76,6 @@ namespace Storage.Net.Tests
       [Option(Alias = "Mssql.ConnectionString")]
       string MssqlConnectionString { get; }
 
-      [Option(Alias = "Mssql.TableName")]
-      string MssqlTableName { get; }
-
       #endregion
    }
 }

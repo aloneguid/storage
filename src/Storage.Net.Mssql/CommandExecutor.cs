@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using NetBox;
-using NetBox.Data;
 using Storage.Net.KeyValue;
 
 namespace Storage.Net.Mssql
@@ -126,7 +123,7 @@ namespace Storage.Net.Mssql
          {
             string name = reader.GetName(i);
             object value = reader[i];
-            row[name] = new DynamicValue(value);
+            row[name] = value;
          }
 
          return row;
@@ -134,12 +131,12 @@ namespace Storage.Net.Mssql
 
       private TableRow CreateMinRow(SqlDataReader reader, out int colsUsed)
       {
-         string partitionKey = (reader.FieldCount > 0 && reader.GetName(0) == _config.PartitionKeyColumnName)
-            ? reader[_config.PartitionKeyColumnName] as string
+         string partitionKey = (reader.FieldCount > 0 && reader.GetName(0) == SqlConstants.PartitionKey)
+            ? reader[SqlConstants.PartitionKey] as string
             : null;
 
-         string rowKey = (reader.FieldCount > 1 && reader.GetName(1) == _config.RowKeyColumnName)
-            ? reader[_config.RowKeyColumnName] as string
+         string rowKey = (reader.FieldCount > 1 && reader.GetName(1) == SqlConstants.RowKey)
+            ? reader[SqlConstants.RowKey] as string
             : null;
 
          colsUsed = (partitionKey == null ? 0 : 1) + (rowKey == null ? 0 : 1);

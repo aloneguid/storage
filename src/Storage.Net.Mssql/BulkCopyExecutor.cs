@@ -43,8 +43,8 @@ namespace Storage.Net.Mssql
             {
                DataRow dataRow = dataTable.NewRow();
 
-               dataRow[_configuration.PartitionKeyColumnName] = row.PartitionKey;
-               dataRow[_configuration.RowKeyColumnName] = row.RowKey;
+               dataRow[SqlConstants.PartitionKey] = row.PartitionKey;
+               dataRow[SqlConstants.RowKey] = row.RowKey;
 
                foreach (string key in row.Keys.OrderBy(kv => kv))
                {
@@ -105,8 +105,8 @@ namespace Storage.Net.Mssql
       {
          TableRow schemaRow = TableRow.Merge(rows);
 
-         dataTable.Columns.Add(_configuration.PartitionKeyColumnName);
-         dataTable.Columns.Add(_configuration.RowKeyColumnName);
+         dataTable.Columns.Add(SqlConstants.PartitionKey);
+         dataTable.Columns.Add(SqlConstants.RowKey);
 
          foreach (string key in schemaRow.Keys.OrderBy(kv => kv))
          {
