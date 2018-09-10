@@ -62,7 +62,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// Returns the list of table names in this storage
       /// </summary>
       /// <returns></returns>
-      public async Task<IEnumerable<string>> ListTableNamesAsync()
+      public async Task<IReadOnlyCollection<string>> ListTableNamesAsync()
       {
          var result = new List<string>();
 
@@ -101,7 +101,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// Gets the list of rows in a specified partition
       /// </summary>
-      public async Task<IEnumerable<TableRow>> GetAsync(string tableName, string partitionKey)
+      public async Task<IReadOnlyCollection<TableRow>> GetAsync(string tableName, string partitionKey)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
@@ -121,10 +121,13 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          return (await InternalGetAsync(tableName, partitionKey, rowKey, -1))?.FirstOrDefault();
       }
 
-      private async Task<IEnumerable<TableRow>> InternalGetAsync(string tableName, string partitionKey, string rowKey, int maxRecords)
+      private async Task<IReadOnlyCollection<TableRow>> InternalGetAsync(string tableName, string partitionKey, string rowKey, int maxRecords)
       {
          CloudTable table = await GetTableAsync(tableName, false);
-         if (table == null) return Enumerable.Empty<TableRow>();
+         if (table == null)
+         {
+            return new List<TableRow>();
+         }
 
          var query = new TableQuery();
 
@@ -172,7 +175,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
             token = queryResults.ContinuationToken;
          } while (token != null);
 
-         return entities.Select(ToTableRow);
+         return entities.Select(ToTableRow).ToList();
       }
 
       /// <summary>

@@ -13,7 +13,7 @@ namespace Storage.Net.KeyValue
       /// Returns the list of all table names in the table storage.
       /// </summary>
       /// <returns></returns>
-      Task<IEnumerable<string>> ListTableNamesAsync();
+      Task<IReadOnlyCollection<string>> ListTableNamesAsync();
 
       /// <summary>
       /// Deletes entire table. If table doesn't exist no errors are raised.
@@ -30,7 +30,7 @@ namespace Storage.Net.KeyValue
       /// List of table rows in the table's partition. This method never returns null and if no records
       /// are found an empty collection is returned.
       /// </returns>
-      Task<IEnumerable<TableRow>> GetAsync(string tableName, string partitionKey);
+      Task<IReadOnlyCollection<TableRow>> GetAsync(string tableName, string partitionKey);
 
       /// <summary>
       /// Gets a single row by partition key and row key as this uniquely idendifies a row.

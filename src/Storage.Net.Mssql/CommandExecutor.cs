@@ -82,7 +82,7 @@ namespace Storage.Net.Mssql
          await ExecAsync(cmd);
       }
 
-      public async Task<ICollection<TableRow>> ExecRowsAsync(string sql, params object[] parameters)
+      public async Task<IReadOnlyCollection<TableRow>> ExecRowsAsync(string sql, params object[] parameters)
       {
          var result = new List<TableRow>();
 

@@ -59,7 +59,7 @@ namespace Storage.Net.Mssql
          _connection.Dispose();
       }
 
-      public async Task<IEnumerable<TableRow>> GetAsync(string tableName, string partitionKey)
+      public async Task<IReadOnlyCollection<TableRow>> GetAsync(string tableName, string partitionKey)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
@@ -76,7 +76,7 @@ namespace Storage.Net.Mssql
          return (await InternalGetAsync(tableName, partitionKey, rowKey)).FirstOrDefault();
       }
 
-      private async Task<ICollection<TableRow>> InternalGetAsync(string tableName, string partitionKey, string rowKey)
+      private async Task<IReadOnlyCollection<TableRow>> InternalGetAsync(string tableName, string partitionKey, string rowKey)
       {
          string sql = $"SELECT * FROM [{tableName}] WHERE [{_config.PartitionKeyColumnName}] = '{partitionKey}'";
          if (rowKey != null) sql += $" AND [{_config.RowKeyColumnName}] = '{rowKey}'";
@@ -109,13 +109,13 @@ namespace Storage.Net.Mssql
          await Exec(tableName, rows, true);
       }
 
-      public async Task<IEnumerable<string>> ListTableNamesAsync()
+      public async Task<IReadOnlyCollection<string>> ListTableNamesAsync()
       {
          string sql = "SELECT TABLE_NAME FROM {0}.INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'";
 
-         ICollection<TableRow> rows = await _exec.ExecRowsAsync(sql, _connection.Database);
+         IReadOnlyCollection<TableRow> rows = await _exec.ExecRowsAsync(sql, _connection.Database);
 
-         return rows.Select(r => (string)r[r.Keys.First()]);
+         return rows.Select(r => (string)r[r.Keys.First()]).ToList();
       }
 
       public Task MergeAsync(string tableName, IEnumerable<TableRow> rows)

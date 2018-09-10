@@ -45,11 +45,12 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task<IEnumerable<string>> ListTableNamesAsync()
+      public Task<IReadOnlyCollection<string>> ListTableNamesAsync()
       {
-         return Task.FromResult(_rootDir
+         return Task.FromResult<IReadOnlyCollection<string>>(_rootDir
             .GetDirectories(TableNamesSearchPattern, SearchOption.TopDirectoryOnly)
-            .Select(d => d.Name.Substring(0, d.Name.Length - TableNamesSuffix.Length)));
+            .Select(d => d.Name.Substring(0, d.Name.Length - TableNamesSuffix.Length))
+            .ToList());
       }
 
       /// <summary>
@@ -68,7 +69,7 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task<IEnumerable<TableRow>> GetAsync(string tableName, string partitionKey)
+      public Task<IReadOnlyCollection<TableRow>> GetAsync(string tableName, string partitionKey)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
@@ -88,7 +89,7 @@ namespace Storage.Net.KeyValue.Files
          return Task.FromResult(InternalGet(tableName, partitionKey, rowKey)?.FirstOrDefault());
       }
 
-      private IEnumerable<TableRow> InternalGet(string tableName, string partitionKey, string rowKey)
+      private IReadOnlyCollection<TableRow> InternalGet(string tableName, string partitionKey, string rowKey)
       {
          if(tableName == null) throw new ArgumentNullException(nameof(tableName));
 
