@@ -15,7 +15,7 @@ namespace Storage.Net.Mssql
          _config = config;
       }
 
-      public SqlCommand BuildCreateSchemaCommand(string tableName, TableRow row)
+      public SqlCommand BuildCreateSchemaCommand(string tableName, Value row)
       {
          var s = new StringBuilder();
          s.Append("CREATE TABLE [");

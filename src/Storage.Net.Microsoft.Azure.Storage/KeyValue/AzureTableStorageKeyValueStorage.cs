@@ -101,7 +101,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// Gets the list of rows in a specified partition
       /// </summary>
-      public async Task<IReadOnlyCollection<TableRow>> GetAsync(string tableName, string partitionKey)
+      public async Task<IReadOnlyCollection<Value>> GetAsync(string tableName, string partitionKey)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
@@ -112,7 +112,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// Gets the list of rows in a table by partition and row key
       /// </summary>
-      public async Task<TableRow> GetAsync(string tableName, string partitionKey, string rowKey)
+      public async Task<Value> GetAsync(string tableName, string partitionKey, string rowKey)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
@@ -121,12 +121,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          return (await InternalGetAsync(tableName, partitionKey, rowKey, -1))?.FirstOrDefault();
       }
 
-      private async Task<IReadOnlyCollection<TableRow>> InternalGetAsync(string tableName, string partitionKey, string rowKey, int maxRecords)
+      private async Task<IReadOnlyCollection<Value>> InternalGetAsync(string tableName, string partitionKey, string rowKey, int maxRecords)
       {
          CloudTable table = await GetTableAsync(tableName, false);
          if (table == null)
          {
-            return new List<TableRow>();
+            return new List<Value>();
          }
 
          var query = new TableQuery();
@@ -181,14 +181,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task InsertAsync(string tableName, IEnumerable<TableRow> rows)
+      public async Task InsertAsync(string tableName, IEnumerable<Value> rows)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (rows == null) throw new ArgumentNullException(nameof(rows));
 
          var rowsList = rows.ToList();
          if (rowsList.Count == 0) return;
-         if(!TableRow.AreDistinct(rowsList))
+         if(!Value.AreDistinct(rowsList))
          {
             throw new MeSE(ErrorCode.DuplicateKey, null);
          }
@@ -201,14 +201,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// See interface
       /// </summary>
-      public async Task InsertOrReplaceAsync(string tableName, IEnumerable<TableRow> rows)
+      public async Task InsertOrReplaceAsync(string tableName, IEnumerable<Value> rows)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (rows == null) throw new ArgumentNullException(nameof(rows));
 
          var rowsList = rows.ToList();
          if (rowsList.Count == 0) return;
-         if (!TableRow.AreDistinct(rowsList))
+         if (!Value.AreDistinct(rowsList))
          {
             throw new MeSE(ErrorCode.DuplicateKey, null);
          }
@@ -221,7 +221,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task UpdateAsync(string tableName, IEnumerable<TableRow> rows)
+      public async Task UpdateAsync(string tableName, IEnumerable<Value> rows)
       {
          await BatchedOperationAsync(tableName, false,
             (b, te) => b.Replace(te),
@@ -231,7 +231,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task MergeAsync(string tableName, IEnumerable<TableRow> rows)
+      public async Task MergeAsync(string tableName, IEnumerable<Value> rows)
       {
          await BatchedOperationAsync(tableName, true,
             (b, te) => b.InsertOrMerge(te),
@@ -252,7 +252,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
 
       private async Task BatchedOperationAsync(string tableName, bool createTable,
          Action<TableBatchOperation, IAzTableEntity> azAction,
-         IEnumerable<TableRow> rows)
+         IEnumerable<Value> rows)
       {
          if (tableName == null) throw new ArgumentNullException("tableName");
          if (rows == null) return;
@@ -260,15 +260,15 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          CloudTable table = await GetTableAsync(tableName, createTable);
          if (table == null) return;
 
-         foreach (IGrouping<string, TableRow> group in rows.GroupBy(e => e.PartitionKey))
+         foreach (IGrouping<string, Value> group in rows.GroupBy(e => e.PartitionKey))
          {
-            foreach (IEnumerable<TableRow> chunk in group.Chunk(MaxInsertLimit))
+            foreach (IEnumerable<Value> chunk in group.Chunk(MaxInsertLimit))
             {
                if (chunk == null) break;
 
-               var chunkLst = new List<TableRow>(chunk);
+               var chunkLst = new List<Value>(chunk);
                var batch = new TableBatchOperation();
-               foreach (TableRow row in chunkLst)
+               foreach (Value row in chunkLst)
                {
                   azAction(batch, new EntityAdapter(row));
                }
@@ -277,7 +277,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
                for (int i = 0; i < result.Count && i < chunkLst.Count; i++)
                {
                   TableResult tr = result[i];
-                  TableRow row = chunkLst[i];
+                  Value row = chunkLst[i];
                }
             }
          }
@@ -354,9 +354,9 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          }
       }
 
-      private static TableRow ToTableRow(DynamicTableEntity az)
+      private static Value ToTableRow(DynamicTableEntity az)
       {
-         var result = new TableRow(az.PartitionKey, az.RowKey);
+         var result = new Value(az.PartitionKey, az.RowKey);
          foreach (KeyValuePair<string, EntityProperty> pair in az.Properties)
          {
             switch(pair.Value.PropertyType)

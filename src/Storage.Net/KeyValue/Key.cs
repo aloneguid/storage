@@ -3,7 +3,7 @@
 namespace Storage.Net.KeyValue
 {
    /// <summary>
-   /// ID structure of the <see cref="TableRow"/>
+   /// ID structure of the <see cref="Value"/>
    /// </summary>
    public class Key : IEquatable<Key>
    {

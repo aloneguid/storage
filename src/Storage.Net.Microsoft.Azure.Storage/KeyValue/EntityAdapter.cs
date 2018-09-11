@@ -10,7 +10,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
 {
    class EntityAdapter : IAzTableEntity
    {
-      private readonly TableRow _row;
+      private readonly Value _row;
 
       private static Dictionary<Type, Func<object, EntityProperty>> TypeToEntityPropertyFunc = new Dictionary<Type, Func<object, EntityProperty>>
       {
@@ -25,7 +25,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          [typeof(long)] = o => EntityProperty.GeneratePropertyForLong((long)o)
       };
 
-      public EntityAdapter(TableRow row)
+      public EntityAdapter(Value row)
       {
          _row = row;
 

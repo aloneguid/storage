@@ -30,7 +30,7 @@ namespace Storage.Net.KeyValue
       /// List of table rows in the table's partition. This method never returns null and if no records
       /// are found an empty collection is returned.
       /// </returns>
-      Task<IReadOnlyCollection<TableRow>> GetAsync(string tableName, string partitionKey);
+      Task<IReadOnlyCollection<Value>> GetAsync(string tableName, string partitionKey);
 
       /// <summary>
       /// Gets a single row by partition key and row key as this uniquely idendifies a row.
@@ -42,7 +42,7 @@ namespace Storage.Net.KeyValue
       /// List of table rows in the table's partition. This method never returns null and if no records
       /// are found an empty collection is returned.
       /// </returns>
-      Task<TableRow> GetAsync(string tableName, string partitionKey, string rowKey);
+      Task<Value> GetAsync(string tableName, string partitionKey, string rowKey);
 
       /// <summary>
       /// Inserts rows in the table.
@@ -54,7 +54,7 @@ namespace Storage.Net.KeyValue
       /// Note that exception is thrown only for partiton batch. If rows contains more than one partition to insert
       /// some of them may succeed and some may fail.
       /// </exception>
-      Task InsertAsync(string tableName, IEnumerable<TableRow> rows);
+      Task InsertAsync(string tableName, IEnumerable<Value> rows);
 
       /// <summary>
       /// Inserts rows in the table, and if they exist replaces them with a new value.
@@ -64,17 +64,17 @@ namespace Storage.Net.KeyValue
       /// <exception cref="StorageException">
       /// If input rows have duplicated keys throws this exception with <see cref="ErrorCode.DuplicateKey"/>
       /// </exception>
-      Task InsertOrReplaceAsync(string tableName, IEnumerable<TableRow> rows);
+      Task InsertOrReplaceAsync(string tableName, IEnumerable<Value> rows);
 
       /// <summary>
       /// Updates multiple rows. Note that all the rows must belong to the same partition.
       /// </summary>
-      Task UpdateAsync(string tableName, IEnumerable<TableRow> rows);
+      Task UpdateAsync(string tableName, IEnumerable<Value> rows);
 
       /// <summary>
       /// Merges multiple rows. Note that all rows must belong to the same partition
       /// </summary>
-      Task MergeAsync(string tableName, IEnumerable<TableRow> rows);
+      Task MergeAsync(string tableName, IEnumerable<Value> rows);
 
       /// <summary>
       /// Deletes multiple rows

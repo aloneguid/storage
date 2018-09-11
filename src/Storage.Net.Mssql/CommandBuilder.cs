@@ -17,7 +17,7 @@ namespace Storage.Net.Mssql
          _config = config;
       }
 
-      public SqlCommand BuidInsertRowCommand(string tableName, TableRow row, bool isUpsert)
+      public SqlCommand BuidInsertRowCommand(string tableName, Value row, bool isUpsert)
       {
          var s = new StringBuilder();
 
@@ -46,7 +46,7 @@ namespace Storage.Net.Mssql
          return cmd;
       }
 
-      private void AddUpdate(string tableName, StringBuilder s, TableRow row)
+      private void AddUpdate(string tableName, StringBuilder s, Value row)
       {
          s.Append("UPDATE [");
          s.Append(tableName);
@@ -66,7 +66,7 @@ namespace Storage.Net.Mssql
          s.Append("] = @rk");
       }
 
-      private void AddInsert(string tableName, StringBuilder s, TableRow row)
+      private void AddInsert(string tableName, StringBuilder s, Value row)
       {
          s.Append("INSERT INTO [");
          s.Append(tableName);

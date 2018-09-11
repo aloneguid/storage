@@ -8,14 +8,14 @@ namespace Storage.Net.KeyValue
    /// <summary>
    /// Represents a table row in table data structure.
    /// </summary>
-   public class TableRow : IDictionary<string, object>, IEquatable<TableRow>
+   public class Value : IDictionary<string, object>, IEquatable<Value>
    {
       private readonly Dictionary<string, object> _keyToValue = new Dictionary<string, object>(); 
 
       /// <summary>
       /// Creates a new instance from partition key and row key
       /// </summary>
-      public TableRow(string partitionKey, string rowKey) : this(new Key(partitionKey, rowKey))
+      public Value(string partitionKey, string rowKey) : this(new Key(partitionKey, rowKey))
       {
       }
 
@@ -23,7 +23,7 @@ namespace Storage.Net.KeyValue
       /// Creates a new instance from <see cref="Key"/>
       /// </summary>
       /// <param name="id"></param>
-      public TableRow(Key id)
+      public Value(Key id)
       {
          Id = id ?? throw new ArgumentNullException(nameof(id));
       }
@@ -46,7 +46,7 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// Checks row equality
       /// </summary>
-      public bool Equals(TableRow other)
+      public bool Equals(Value other)
       {
          if(ReferenceEquals(other, null)) return false;
          if(ReferenceEquals(other, this)) return true;
@@ -207,9 +207,9 @@ namespace Storage.Net.KeyValue
       /// <param name="rowKey">When specified, the clone receives this value for the Row Key</param>
       /// <param name="partitionKey">When speified, the clone receives this value for the Partition Key</param>
       /// <returns></returns>
-      public TableRow Clone(string rowKey = null, string partitionKey = null)
+      public Value Clone(string rowKey = null, string partitionKey = null)
       {
-         var clone = new TableRow(partitionKey ?? PartitionKey, rowKey ?? RowKey);
+         var clone = new Value(partitionKey ?? PartitionKey, rowKey ?? RowKey);
          foreach(KeyValuePair<string, object> pair in _keyToValue)
          {
             clone._keyToValue[pair.Key] = pair.Value;
@@ -229,20 +229,20 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// Checks if all rows have uniqueue keys
       /// </summary>
-      public static bool AreDistinct(IEnumerable<TableRow> rows)
+      public static bool AreDistinct(IEnumerable<Value> rows)
       {
          if (rows == null) return true;
 
-         IEnumerable<IGrouping<Key, TableRow>> groups = rows.GroupBy(r => r.Id);
+         IEnumerable<IGrouping<Key, Value>> groups = rows.GroupBy(r => r.Id);
          IEnumerable<int> counts = groups.Select(g => g.Count());
          return counts.OrderByDescending(c => c).First() == 1;
       }
 
-      public static TableRow Merge(IEnumerable<TableRow> rows)
+      public static Value Merge(IEnumerable<Value> rows)
       {
-         TableRow masterRow = null;
+         Value masterRow = null;
 
-         foreach (TableRow row in rows)
+         foreach (Value row in rows)
          {
             if (masterRow == null)
             {

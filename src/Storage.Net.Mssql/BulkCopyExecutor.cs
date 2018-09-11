@@ -26,9 +26,9 @@ namespace Storage.Net.Mssql
          _tableName = tableName;
       }
 
-      public async Task InsertAsync(IEnumerable<TableRow> rows)
+      public async Task InsertAsync(IEnumerable<Value> rows)
       {
-         List<TableRow> rowsList = rows.ToList();
+         List<Value> rowsList = rows.ToList();
 
          using (var sbc = new SqlBulkCopy(_connection))
          {
@@ -39,7 +39,7 @@ namespace Storage.Net.Mssql
             AddColumns(dataTable, rowsList);
 
             //copy to rows
-            foreach (TableRow row in rows)
+            foreach (Value row in rows)
             {
                DataRow dataRow = dataTable.NewRow();
 
@@ -93,17 +93,17 @@ namespace Storage.Net.Mssql
          return dv.OriginalValue;
       }
 
-      private async Task CreateTableAsync(List<TableRow> rowsList)
+      private async Task CreateTableAsync(List<Value> rowsList)
       {
          var composer = new TableComposer(_connection, _configuration);
-         SqlCommand cmd = composer.BuildCreateSchemaCommand(_tableName, TableRow.Merge(rowsList));
+         SqlCommand cmd = composer.BuildCreateSchemaCommand(_tableName, Value.Merge(rowsList));
          await CheckConnection();
          await cmd.ExecuteNonQueryAsync();
       }
 
-      private void AddColumns(DataTable dataTable, IReadOnlyCollection<TableRow> rows)
+      private void AddColumns(DataTable dataTable, IReadOnlyCollection<Value> rows)
       {
-         TableRow schemaRow = TableRow.Merge(rows);
+         Value schemaRow = Value.Merge(rows);
 
          dataTable.Columns.Add(SqlConstants.PartitionKey);
          dataTable.Columns.Add(SqlConstants.RowKey);
