@@ -20,47 +20,47 @@ namespace Storage.Net.Tests.Integration.Blobs
 {
    #region [ Test Variations ]
 
-   public class AzureBlobStorageContainerProviderTest : BlobStorageProviderTest
+   public class AzureBlobStorageContainerProviderTest : BlobStorageTest
    {
       public AzureBlobStorageContainerProviderTest() : base("azure") { }
    }
 
-   public class AzureUniversalBlobStorageProviderTest : BlobStorageProviderTest
+   public class AzureUniversalBlobStorageProviderTest : BlobStorageTest
    {
       public AzureUniversalBlobStorageProviderTest() : base("azure2", "testcontainer/") { }
    }
 
-   public class AzureBlobStorageProviderBySasTest : BlobStorageProviderTest
+   public class AzureBlobStorageProviderBySasTest : BlobStorageTest
    {
       public AzureBlobStorageProviderBySasTest() : base("azure-sas") { }
    }
 
-   public class AzureDataLakeBlobStorageProviderTest : BlobStorageProviderTest
+   public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
    {
       public AzureDataLakeBlobStorageProviderTest() : base("azure-datalakestore") { }
    }
 
-   public class DiskDirectoryBlobStorageProviderTest : BlobStorageProviderTest
+   public class DiskDirectoryBlobStorageProviderTest : BlobStorageTest
    {
       public DiskDirectoryBlobStorageProviderTest() : base("disk-directory") { }
    }
 
-   public class AwsS3BlobStorageProviderTest : BlobStorageProviderTest
+   public class AwsS3BlobStorageProviderTest : BlobStorageTest
    {
       public AwsS3BlobStorageProviderTest() : base("aws-s3") { }
    }
 
-   public class InMemboryBlobStorageProviderTest : BlobStorageProviderTest
+   public class InMemboryBlobStorageProviderTest : BlobStorageTest
    {
       public InMemboryBlobStorageProviderTest() : base("inmemory") { }
    }
 
-   public class AzureKeyVaultBlobStorageProviderTest : BlobStorageProviderTest
+   public class AzureKeyVaultBlobStorageProviderTest : BlobStorageTest
    {
       public AzureKeyVaultBlobStorageProviderTest() : base("azurekeyvault") { }
    }
 
-   public class ZipFileBlobStorageProviderTest : BlobStorageProviderTest
+   public class ZipFileBlobStorageProviderTest : BlobStorageTest
    {
       public ZipFileBlobStorageProviderTest() : base("zip") { }
    }
@@ -68,14 +68,14 @@ namespace Storage.Net.Tests.Integration.Blobs
 
    #endregion
 
-   public abstract class BlobStorageProviderTest : AbstractTestFixture
+   public abstract class BlobStorageTest : AbstractTestFixture
    {
       private readonly string _type;
       private readonly string _blobPrefix;
       private IBlobStorage _storage;
       private ITestSettings _settings;
 
-      public BlobStorageProviderTest(string type, string blobPrefix = null)
+      public BlobStorageTest(string type, string blobPrefix = null)
       {
          StorageFactory.Modules.UseAzureStorage();
 

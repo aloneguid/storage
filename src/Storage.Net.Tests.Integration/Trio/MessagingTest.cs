@@ -15,36 +15,36 @@ namespace Storage.Net.Tests.Integration.Messaging
 {
    #region [ Test Variations ]
 
-   public class AzureStorageQueueMessageQueueTest : GenericMessageQueueTest
+   public class AzureStorageQueueMessageQueueTest : MessagingTest
    {
       public AzureStorageQueueMessageQueueTest() : base("azure-storage-queue") { }
    }
 
-   public class AzureServiceBusQueueMessageQeueueTest : GenericMessageQueueTest
+   public class AzureServiceBusQueueMessageQeueueTest : MessagingTest
    {
       public AzureServiceBusQueueMessageQeueueTest() : base("azure-servicebus-queue") { }
    }
 
-   public class AzureServiceBusTopicMessageQeueueTest : GenericMessageQueueTest
+   public class AzureServiceBusTopicMessageQeueueTest : MessagingTest
    {
       public AzureServiceBusTopicMessageQeueueTest() : base("azure-servicebus-topic") { }
    }
 
-   public class AzureEventHubMessageQeueueTest : GenericMessageQueueTest
+   public class AzureEventHubMessageQeueueTest : MessagingTest
    {
       public AzureEventHubMessageQeueueTest() : base("azure-eventhub") { }
    }
 
-   public class InMemoryMessageQeueueTest : GenericMessageQueueTest
+   public class InMemoryMessageQeueueTest : MessagingTest
    {
       public InMemoryMessageQeueueTest() : base("inmemory") { }
    }
 
    #endregion
 
-   public abstract class GenericMessageQueueTest : AbstractTestFixture, IAsyncLifetime
+   public abstract class MessagingTest : AbstractTestFixture, IAsyncLifetime
    {
-      private readonly ILog _log = L.G<GenericMessageQueueTest>();
+      private readonly ILog _log = L.G<MessagingTest>();
       private readonly string _name;
       private IMessagePublisher _publisher;
       private IMessageReceiver _receiver;
@@ -54,7 +54,7 @@ namespace Storage.Net.Tests.Integration.Messaging
       private static readonly TimeSpan MaxWaitTime = TimeSpan.FromMinutes(1);
       private string _tag = Guid.NewGuid().ToString();
 
-      protected GenericMessageQueueTest(string name)
+      protected MessagingTest(string name)
       {
          _settings = new ConfigurationBuilder<ITestSettings>()
             .UseIniFile("c:\\tmp\\integration-tests.ini")

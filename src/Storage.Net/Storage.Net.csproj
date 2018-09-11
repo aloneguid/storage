@@ -41,7 +41,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NetBox" Version="2.1.0" />
+    <PackageReference Include="NetBox" Version="2.1.1" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Blob\Extensions\" />
