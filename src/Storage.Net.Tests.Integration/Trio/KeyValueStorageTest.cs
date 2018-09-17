@@ -4,11 +4,9 @@ using System.Linq;
 using Xunit;
 using Storage.Net.KeyValue;
 using System.IO;
-using NetBox;
 using Config.Net;
 using System.Threading.Tasks;
 using NetBox.Extensions;
-using NetBox.Data;
 
 namespace Storage.Net.Tests.Integration.KeyValue
 {
@@ -131,7 +129,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
          };
          await _tables.InsertAsync(_tableName, new[] {row1, row2});
          await _tables.DeleteAsync(_tableName, new[] {new Key("part1", "2")});
-         IEnumerable<Value> rows = await _tables.GetAsync(_tableName, "part1");
+         IReadOnlyCollection<Value> rows = await _tables.GetAsync(_tableName, new Key("part1", null));
 
          Assert.Single(rows);
       }
@@ -187,8 +185,8 @@ namespace Storage.Net.Tests.Integration.KeyValue
          };
          await _tables.InsertAsync(_tableName, new[] {row1, row2});
 
-         Value row11 = await _tables.GetAsync(_tableName, "pk", "rk1");
-         Value row12 = await _tables.GetAsync(_tableName, "pk", "rk2");
+         Value row11 = await _tables.GetSingleAsync(_tableName, new Key("pk", "rk1"));
+         Value row12 = await _tables.GetSingleAsync(_tableName, new Key("pk", "rk2"));
 
 
          Assert.Equal("val1", (string)row11["col1"]);
@@ -204,8 +202,8 @@ namespace Storage.Net.Tests.Integration.KeyValue
       {
          var row = new Value("pk", "rk")
          {
-            ["str"] = new DynamicValue("some string"),
-            ["int"] = new DynamicValue(4),
+            ["str"] = "some string",
+            ["int"] = 4,
             ["bytes"] = new byte[] { 0x1, 0x2 },
             ["date"] = DateTime.UtcNow
          };
@@ -215,9 +213,8 @@ namespace Storage.Net.Tests.Integration.KeyValue
       [Fact]
       public async Task Insert_ManyRows_Succeeds()
       {
-         await _tables.InsertAsync(_tableName, Enumerable.Range(0, 100)
-            .Select(i => 
-            new Value("pk" + i, "rk" + i) { ["col"] = i }));
+         await _tables.InsertAsync(_tableName,
+            Enumerable.Range(0, 1000).Select(i => new Value("pk" + 1, "rk" + i) { ["col"] = i }).ToList());
       }
 
       [Fact]
@@ -232,10 +229,10 @@ namespace Storage.Net.Tests.Integration.KeyValue
 
          await _tables.InsertAsync(_tableName, new Value[] { i });
 
-         Value o = await _tables.GetAsync(_tableName, "pk", "rk");
+         Value o = await _tables.GetSingleAsync(_tableName, "pk", "rk");
 
          object dateObj = o["date"];
-         DateTime date2 = (dateObj is string dateObjs) ? DateTime.Parse((string)dateObj) : (DateTime)dateObj;
+         DateTime date2 = (dateObj is string dateObjs) ? DateTime.Parse((string)dateObj).ToUniversalTime() : (DateTime)dateObj;
 
          Assert.Equal(date, date2);
       }
@@ -285,7 +282,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
          var row = new Value("partition", "ivan@si.com");
          await _tables.InsertAsync(_tableName, new Value[] { row });
 
-         Value foundRow = await _tables.GetAsync(_tableName, "partition", "ivan@si.com");
+         Value foundRow = await _tables.GetSingleAsync(_tableName, "partition", "ivan@si.com");
          Assert.NotNull(foundRow);
       }
 
@@ -322,7 +319,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
       public async Task Insert_AllSupportedTypes_Without_Crashing(object value, int repeats)
       {
          var rows = Enumerable.Range(0, repeats)
-            .Select(i => new Value("pk" + i, "rk" + i) { ["col"] = new DynamicValue(value) })
+            .Select(i => new Value("pk" + i, "rk" + i) { ["col"] = value })
             .ToList();
 
          await _tables.InsertAsync(_tableName, rows);
@@ -338,7 +335,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
 
          await _tables.InsertAsync(_tableName, new Value[] { row });
 
-         Value row1 = await _tables.GetAsync(_tableName, "pk", "rk");
+         Value row1 = await _tables.GetSingleAsync(_tableName, "pk", "rk");
          Assert.Equal("pk", row1.PartitionKey);
          Assert.Equal("rk", row1.RowKey);
          Assert.Equal("1", row1["C1"].ToString());
@@ -358,7 +355,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
          StorageException ex = await Assert.ThrowsAsync<StorageException>(() => _tables.InsertAsync(_tableName, rows));
          Assert.Equal(ErrorCode.DuplicateKey, ex.ErrorCode);
 
-         IEnumerable<Value> rows2 = await _tables.GetAsync(_tableName, "pk");
+         IEnumerable<Value> rows2 = await _tables.GetAsync(_tableName, new Key("pk", null));
          Assert.Empty(rows2);
       }
 
@@ -373,7 +370,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
          StorageException ex = await Assert.ThrowsAsync<StorageException>(() => _tables.InsertAsync(_tableName, insertRows));
          Assert.Equal(ErrorCode.DuplicateKey, ex.ErrorCode);
 
-         IEnumerable<Value> rows2 = await _tables.GetAsync(_tableName, "pk");
+         IEnumerable<Value> rows2 = await _tables.GetAsync(_tableName, new Key("pk", null));
          Assert.Single(rows2);
       }
 
@@ -391,7 +388,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
          StorageException ex = await Assert.ThrowsAsync<StorageException>(() => _tables.InsertOrReplaceAsync(_tableName, rows));
          Assert.Equal(ErrorCode.DuplicateKey, ex.ErrorCode);
 
-         IEnumerable<Value> rows2 = await _tables.GetAsync(_tableName, "pk");
+         IEnumerable<Value> rows2 = await _tables.GetAsync(_tableName, new Key("pk", null));
          Assert.Empty(rows2);
       }
 
@@ -410,44 +407,44 @@ namespace Storage.Net.Tests.Integration.KeyValue
          await _tables.InsertOrReplaceAsync(_tableName, new[] { row });
 
          //check it's updated
-         row = await _tables.GetAsync(_tableName, "pk", "rk");
+         row = await _tables.GetSingleAsync(_tableName, "pk", "rk");
          Assert.Equal("v2", (string)row["col1"]);
       }
 
       [Fact]
       public async Task Get_NullTablePartition_ArgumentNullException()
       {
-         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetAsync(null, "p"));
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetAsync(null, new Key("p", null)));
       }
 
       [Fact]
       public async Task Get_TableButNullPartition_ArgumentNullException()
       {
-         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetAsync(_tableName, null));
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetSingleAsync(_tableName, null));
       }
 
       [Fact]
       public async Task Get_TableNullPartitionRowKey_ArgumentNullException()
       {
-         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetAsync(_tableName, null, "rk"));
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetSingleAsync(_tableName, null, "rk"));
       }
 
       [Fact]
       public async Task Get_NullTablePartitionRowKey_ArgumentNullException()
       {
-         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetAsync(null, "pk", "rk"));
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetSingleAsync(null, "pk", "rk"));
       }
 
       [Fact]
       public async Task Get_TablePartitionNullRowKey_ArgumentNullException()
       {
-         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetAsync(_tableName, "pk", null));
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _tables.GetSingleAsync(_tableName, "pk", null));
       }
 
       [Fact]
       public async Task Get_NonExistingTable_EmptyNotNull()
       {
-         IEnumerable<Value> rows = await _tables.GetAsync(_tableName, "pk");
+         IEnumerable<Value> rows = await _tables.GetAsync(_tableName, new Key("pk", null));
 
          Assert.NotNull(rows);
          Assert.True(!rows.Any());
@@ -461,8 +458,8 @@ namespace Storage.Net.Tests.Integration.KeyValue
 
          await _tables.InsertAsync(_tableName, new[] { row1, row2 });
 
-         List<Value> rows1 = (await _tables.GetAsync(_tableName, "pk1")).ToList();
-         List<Value> rows2 = (await _tables.GetAsync(_tableName, "pk2")).ToList();
+         IReadOnlyCollection<Value> rows1 = await _tables.GetAsync(_tableName, new Key("pk1", null));
+         IReadOnlyCollection<Value> rows2 = await _tables.GetAsync(_tableName, new Key("pk2", null));
 
          Assert.True(rows1.Count >= 1);
          Assert.True(rows2.Count >= 1);
@@ -481,7 +478,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
          };
          await _tables.InsertAsync(_tableName, new[] { row1, row2 });
 
-         Value theOne = await _tables.GetAsync(_tableName, "part1", "2");
+         Value theOne = await _tables.GetSingleAsync(_tableName, "part1", "2");
          Assert.Equal("part1", theOne.PartitionKey);
          Assert.Equal("2", theOne.RowKey);
       }
@@ -494,8 +491,8 @@ namespace Storage.Net.Tests.Integration.KeyValue
 
          await _tables.InsertAsync(_tableName, new[] { row1, row2 });
 
-         Value row11 = await _tables.GetAsync(_tableName, "pk1", "rk1");
-         Value row22 = await _tables.GetAsync(_tableName, "pk2", "rk1");
+         Value row11 = await _tables.GetSingleAsync(_tableName, "pk1", "rk1");
+         Value row22 = await _tables.GetSingleAsync(_tableName, "pk2", "rk1");
 
          Assert.NotNull(row11);
          Assert.NotNull(row22);
@@ -508,7 +505,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
       [Fact]
       public async Task Get_PartitionDoesntExist_EmptyCollection()
       {
-         IEnumerable<Value> rows = await _tables.GetAsync(_tableName, Guid.NewGuid().ToString());
+         IEnumerable<Value> rows = await _tables.GetAsync(_tableName, new Key(Guid.NewGuid().ToString(), null));
 
          Assert.NotNull(rows);
          Assert.Empty(rows);
@@ -519,7 +516,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
       {
          await _tables.InsertAsync(_tableName, new[] { new Value("pk", "rk1") });
 
-         Value row = await _tables.GetAsync(_tableName, "pk", Guid.NewGuid().ToString());
+         Value row = await _tables.GetSingleAsync(_tableName, "pk", Guid.NewGuid().ToString());
 
          Assert.Null(row);
       }
@@ -530,9 +527,9 @@ namespace Storage.Net.Tests.Integration.KeyValue
          await _tables.InsertAsync(_tableName, new[] { new Value("pk", "rk1") });
          await _tables.DeleteAsync(_tableName, new[] { new Key("pk", "rk1")});
 
-         IEnumerable<Value> rows = await _tables.GetAsync(_tableName, "pk");
+         IReadOnlyCollection<Value> rows = await _tables.GetAsync(_tableName, new Key("pk", null));
          Assert.NotNull(rows);
-         Assert.Equal(0, rows.Count());
+         Assert.Equal(0, rows.Count);
       }
    }
 }

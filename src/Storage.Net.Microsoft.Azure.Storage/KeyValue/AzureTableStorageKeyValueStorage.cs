@@ -99,29 +99,17 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       }
 
       /// <summary>
-      /// Gets the list of rows in a specified partition
-      /// </summary>
-      public async Task<IReadOnlyCollection<Value>> GetAsync(string tableName, string partitionKey)
-      {
-         if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
-
-         return await InternalGetAsync(tableName, partitionKey, null, -1);
-      }
-
-      /// <summary>
       /// Gets the list of rows in a table by partition and row key
       /// </summary>
-      public async Task<Value> GetAsync(string tableName, string partitionKey, string rowKey)
+      public async Task<IReadOnlyCollection<Value>> GetAsync(string tableName, Key key)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
-         if (rowKey == null) throw new ArgumentNullException(nameof(rowKey));
+         if (key == null) throw new ArgumentNullException(nameof(key));
 
-         return (await InternalGetAsync(tableName, partitionKey, rowKey, -1))?.FirstOrDefault();
+         return await InternalGetAsync(tableName, key, -1);
       }
 
-      private async Task<IReadOnlyCollection<Value>> InternalGetAsync(string tableName, string partitionKey, string rowKey, int maxRecords)
+      private async Task<IReadOnlyCollection<Value>> InternalGetAsync(string tableName, Key key, int maxRecords)
       {
          CloudTable table = await GetTableAsync(tableName, false);
          if (table == null)
@@ -133,20 +121,20 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
 
          var filters = new List<string>();
 
-         if (partitionKey != null)
+         if (key.PartitionKey != null)
          {
             filters.Add(TableQuery.GenerateFilterCondition(
                PartitionKeyName,
                QueryComparisons.Equal,
-               EncodeKey(partitionKey)));
+               EncodeKey(key.PartitionKey)));
          }
 
-         if (rowKey != null)
+         if (key.RowKey != null)
          {
             filters.Add(TableQuery.GenerateFilterCondition(
                RowKeyName,
                QueryComparisons.Equal,
-               EncodeKey(rowKey)));
+               EncodeKey(key.RowKey)));
          }
 
          if (filters.Count > 0)
@@ -181,7 +169,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task InsertAsync(string tableName, IEnumerable<Value> rows)
+      public async Task InsertAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (rows == null) throw new ArgumentNullException(nameof(rows));
@@ -201,7 +189,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// See interface
       /// </summary>
-      public async Task InsertOrReplaceAsync(string tableName, IEnumerable<Value> rows)
+      public async Task InsertOrReplaceAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (rows == null) throw new ArgumentNullException(nameof(rows));
@@ -221,7 +209,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task UpdateAsync(string tableName, IEnumerable<Value> rows)
+      public async Task UpdateAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
          await BatchedOperationAsync(tableName, false,
             (b, te) => b.Replace(te),
@@ -231,7 +219,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task MergeAsync(string tableName, IEnumerable<Value> rows)
+      public async Task MergeAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
          await BatchedOperationAsync(tableName, true,
             (b, te) => b.InsertOrMerge(te),
@@ -241,7 +229,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task DeleteAsync(string tableName, IEnumerable<Key> rowIds)
+      public async Task DeleteAsync(string tableName, IReadOnlyCollection<Key> rowIds)
       {
          if (rowIds == null) return;
 
@@ -260,25 +248,28 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          CloudTable table = await GetTableAsync(tableName, createTable);
          if (table == null) return;
 
-         foreach (IGrouping<string, Value> group in rows.GroupBy(e => e.PartitionKey))
+         await Task.WhenAll(rows.GroupBy(e => e.PartitionKey).Select(g => BatchedOperationAsync(table, g, azAction)));
+      }
+
+      private async Task BatchedOperationAsync(CloudTable table, IGrouping<string, Value> group, Action<TableBatchOperation, IAzTableEntity> azAction)
+      {
+         foreach (IEnumerable<Value> chunk in group.Chunk(MaxInsertLimit))
          {
-            foreach (IEnumerable<Value> chunk in group.Chunk(MaxInsertLimit))
+            if (chunk == null)
+               break;
+
+            var chunkLst = new List<Value>(chunk);
+            var batch = new TableBatchOperation();
+            foreach (Value row in chunkLst)
             {
-               if (chunk == null) break;
+               azAction(batch, new EntityAdapter(row));
+            }
 
-               var chunkLst = new List<Value>(chunk);
-               var batch = new TableBatchOperation();
-               foreach (Value row in chunkLst)
-               {
-                  azAction(batch, new EntityAdapter(row));
-               }
-
-               List<TableResult> result = await ExecOrThrowAsync(table, batch);
-               for (int i = 0; i < result.Count && i < chunkLst.Count; i++)
-               {
-                  TableResult tr = result[i];
-                  Value row = chunkLst[i];
-               }
+            List<TableResult> result = await ExecOrThrowAsync(table, batch);
+            for (int i = 0; i < result.Count && i < chunkLst.Count; i++)
+            {
+               TableResult tr = result[i];
+               Value row = chunkLst[i];
             }
          }
       }

@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 namespace Storage.Net.KeyValue
 {
    /// <summary>
-   /// Common interface for working with table storage
+   /// Common interface for working with key-value storage
    /// </summary>
    public interface IKeyValueStorage : IDisposable
    {
       /// <summary>
-      /// Returns the list of all table names in the table storage.
+      /// Returns the list of all table names in the storage.
       /// </summary>
       /// <returns></returns>
       Task<IReadOnlyCollection<string>> ListTableNamesAsync();
@@ -22,63 +22,52 @@ namespace Storage.Net.KeyValue
       Task DeleteAsync(string tableName);
 
       /// <summary>
-      /// Gets rows by partition key.
+      /// Gets values by key
       /// </summary>
       /// <param name="tableName">Table name, required.</param>
-      /// <param name="partitionKey">Partition key of the table, required.</param>
+      /// <param name="key">Row key to look up against. The key must have partition key populated, however row key is optional.
+      /// When row key is not set, this method returns all of the values in a specifi</param>
       /// <returns>
-      /// List of table rows in the table's partition. This method never returns null and if no records
+      /// List of table values in the table's partition. This method never returns null and if no records
       /// are found an empty collection is returned.
       /// </returns>
-      Task<IReadOnlyCollection<Value>> GetAsync(string tableName, string partitionKey);
+      Task<IReadOnlyCollection<Value>> GetAsync(string tableName, Key key);
 
       /// <summary>
-      /// Gets a single row by partition key and row key as this uniquely idendifies a row.
+      /// Inserts values in the table.
       /// </summary>
       /// <param name="tableName">Table name, required.</param>
-      /// <param name="partitionKey">Partition key of the table, required.</param>
-      /// <param name="rowKey">Row key, required.</param>
-      /// <returns>
-      /// List of table rows in the table's partition. This method never returns null and if no records
-      /// are found an empty collection is returned.
-      /// </returns>
-      Task<Value> GetAsync(string tableName, string partitionKey, string rowKey);
-
-      /// <summary>
-      /// Inserts rows in the table.
-      /// </summary>
-      /// <param name="tableName">Table name, required.</param>
-      /// <param name="rows">Rows to insert, required. The rows can belong to different partitions.</param>
+      /// <param name="values">values to insert, required. The values can belong to different partitions.</param>
       /// <exception cref="StorageException">
-      /// If the row already exists throws this exception with <see cref="ErrorCode.DuplicateKey"/>.
-      /// Note that exception is thrown only for partiton batch. If rows contains more than one partition to insert
+      /// If the row already exists thvalues this exception with <see cref="ErrorCode.DuplicateKey"/>.
+      /// Note that exception is thrown only for partiton batch. If values contains more than one partition to insert
       /// some of them may succeed and some may fail.
       /// </exception>
-      Task InsertAsync(string tableName, IEnumerable<Value> rows);
+      Task InsertAsync(string tableName, IReadOnlyCollection<Value> values);
 
       /// <summary>
-      /// Inserts rows in the table, and if they exist replaces them with a new value.
+      /// Inserts values in the table, and if they exist replaces them with a new value.
       /// </summary>
       /// <param name="tableName">Table name, required.</param>
-      /// <param name="rows">Rows to insert, required. The rows can belong to different partitions.</param>
+      /// <param name="values">values to insert, required. The values can belong to different partitions.</param>
       /// <exception cref="StorageException">
-      /// If input rows have duplicated keys throws this exception with <see cref="ErrorCode.DuplicateKey"/>
+      /// If input values have duplicated keys thvalues this exception with <see cref="ErrorCode.DuplicateKey"/>
       /// </exception>
-      Task InsertOrReplaceAsync(string tableName, IEnumerable<Value> rows);
+      Task InsertOrReplaceAsync(string tableName, IReadOnlyCollection<Value> values);
 
       /// <summary>
-      /// Updates multiple rows. Note that all the rows must belong to the same partition.
+      /// Updates multiple values. Note that all the values must belong to the same partition.
       /// </summary>
-      Task UpdateAsync(string tableName, IEnumerable<Value> rows);
+      Task UpdateAsync(string tableName, IReadOnlyCollection<Value> values);
 
       /// <summary>
-      /// Merges multiple rows. Note that all rows must belong to the same partition
+      /// Merges multiple values. Note that all values must belong to the same partition
       /// </summary>
-      Task MergeAsync(string tableName, IEnumerable<Value> rows);
+      Task MergeAsync(string tableName, IReadOnlyCollection<Value> values);
 
       /// <summary>
-      /// Deletes multiple rows
+      /// Deletes multiple values
       /// </summary>
-      Task DeleteAsync(string tableName, IEnumerable<Key> rowIds);
+      Task DeleteAsync(string tableName, IReadOnlyCollection<Key> rowIds);
    }
 }

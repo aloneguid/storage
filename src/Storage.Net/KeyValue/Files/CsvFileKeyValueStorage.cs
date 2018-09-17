@@ -69,44 +69,32 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task<IReadOnlyCollection<Value>> GetAsync(string tableName, string partitionKey)
+      public Task<IReadOnlyCollection<Value>> GetAsync(string tableName, Key key)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
+         if (key == null) throw new ArgumentNullException(nameof(key));
 
-         return Task.FromResult(InternalGet(tableName, partitionKey, null));
+         return Task.FromResult(InternalGet(tableName, key));
       }
 
-      /// <summary>
-      /// See interface documentation
-      /// </summary>
-      public Task<Value> GetAsync(string tableName, string partitionKey, string rowKey)
-      {
-         if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
-         if (rowKey == null) throw new ArgumentNullException(nameof(rowKey));
-
-         return Task.FromResult(InternalGet(tableName, partitionKey, rowKey)?.FirstOrDefault());
-      }
-
-      private IReadOnlyCollection<Value> InternalGet(string tableName, string partitionKey, string rowKey)
+      private IReadOnlyCollection<Value> InternalGet(string tableName, Key key)
       {
          if(tableName == null) throw new ArgumentNullException(nameof(tableName));
 
-         IEnumerable<string> partitions = partitionKey == null
+         IEnumerable<string> partitions = key.PartitionKey == null
             ? GetAllPartitionNames(tableName)
-            : new List<string> { partitionKey };
+            : new List<string> { key.PartitionKey };
 
          var result = new List<Value>();
 
          foreach(string partition in partitions)
          {
-            Dictionary<string, Value> rows = ReadPartition(tableName, partition, rowKey);
+            Dictionary<string, Value> rows = ReadPartition(tableName, partition, key.RowKey);
             if(rows == null) continue;
 
-            if(rowKey != null)
+            if(key.RowKey != null)
             {
-               if (rows.TryGetValue(rowKey, out Value row))
+               if (rows.TryGetValue(key.RowKey, out Value row))
                {
                   result.Add(row);
                   break;
@@ -124,7 +112,7 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task InsertAsync(string tableName, IEnumerable<Value> rows)
+      public Task InsertAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (rows == null) throw new ArgumentNullException(nameof(rows));
@@ -137,7 +125,7 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface
       /// </summary>
-      public Task InsertOrReplaceAsync(string tableName, IEnumerable<Value> rows)
+      public Task InsertOrReplaceAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
          if (rows == null) throw new ArgumentNullException(nameof(rows));
@@ -149,7 +137,7 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task UpdateAsync(string tableName, IEnumerable<Value> rows)
+      public Task UpdateAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
          throw new NotImplementedException();
       }
@@ -157,7 +145,7 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task MergeAsync(string tableName, IEnumerable<Value> rows)
+      public Task MergeAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
          if(tableName == null) throw new ArgumentNullException(nameof(tableName));
          if(rows == null) return Task.FromResult(true);
@@ -178,7 +166,7 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task DeleteAsync(string tableName, IEnumerable<Key> rowIds)
+      public Task DeleteAsync(string tableName, IReadOnlyCollection<Key> rowIds)
       {
          if(tableName == null) throw new ArgumentNullException(nameof(tableName));
          if(rowIds == null) return Task.FromResult(true);
@@ -360,7 +348,18 @@ namespace Storage.Net.KeyValue.Files
             string name = allColumnNames[i];
             if (row.TryGetValue(name, out object cell))
             {
-               writeableRow[i] = cell?.ToString();
+               string s;
+
+               if (cell is DateTime dt)
+               {
+                  s = dt.ToUniversalTime().ToString("s") + "Z";
+               }
+               else
+               {
+                  s = cell?.ToString();
+               }
+
+               writeableRow[i] = s;
             }
             else
             {

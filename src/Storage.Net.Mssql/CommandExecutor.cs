@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Storage.Net.KeyValue;
+using NetBox.Extensions;
 
 namespace Storage.Net.Mssql
 {
@@ -139,9 +140,38 @@ namespace Storage.Net.Mssql
             ? reader[SqlConstants.RowKey] as string
             : null;
 
+         string document = (reader.FieldCount > 2 && reader.GetName(2) == SqlConstants.DocumentColumn)
+            ? reader[SqlConstants.DocumentColumn] as string
+            : null;
+
          colsUsed = (partitionKey == null ? 0 : 1) + (rowKey == null ? 0 : 1);
 
-         return new Value(partitionKey ?? "none", rowKey ?? "none");
+         var value = new Value(partitionKey ?? "none", rowKey ?? "none");
+
+         if (document != null)
+         {
+            IDictionary<string, object> dic = document.JsonDeserialiseDictionary();
+            foreach (KeyValuePair<string, object> kvp in dic)
+            {
+               value[kvp.Key] = ToStandard(kvp.Value);
+            }
+         }
+
+         return value;
+      }
+
+      private object ToStandard(object value)
+      {
+         if (value == null)
+            return null;
+
+         if (value is DateTime dt)
+            return dt.ToUniversalTime();
+
+         if (value is DateTimeOffset dto)
+            return dto.ToUniversalTime();
+
+         return value;
       }
    }
 }

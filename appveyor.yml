@@ -4,15 +4,13 @@ configuration: Release
 platform: Any CPU
 before_build:
 - ps: >-
+    dotnet tool install dotnet-housework -g
+
+    dotnet housework setbuildnumber %FileVersion%  build.ini -v
+
+    dotnet housework author src/*.csproj  build.ini -r
+
     dotnet restore src/storage.sln
-
-    cd src/Storage.Net
-
-    dotnet housework setbuildnumber %FileVersion%  ../../build.ini -v
-
-    dotnet housework author ../*.csproj  ../../build.ini -r -v
-
-    cd ../..
 build:
   project: src/storage.sln
   verbosity: minimal

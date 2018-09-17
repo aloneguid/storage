@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Text;
 using Storage.Net.KeyValue;
+using NetBox.Extensions;
 
 namespace Storage.Net.Mssql
 {
@@ -41,7 +42,7 @@ namespace Storage.Net.Mssql
 
          cmd.Parameters.AddWithValue("@pk", row.PartitionKey);
          cmd.Parameters.AddWithValue("@rk", row.RowKey);
-         cmd.Parameters.AddWithValue("@doc", row.ToString());
+         cmd.Parameters.AddWithValue("@doc", row.JsonSerialise());
 
          return cmd;
       }

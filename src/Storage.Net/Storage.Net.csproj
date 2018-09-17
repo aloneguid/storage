@@ -47,7 +47,4 @@
     <Folder Include="Blob\Extensions\" />
     <Folder Include="Properties\" />
   </ItemGroup>
-   <ItemGroup>
-      <DotNetCliToolReference Include="dotnet-housework" Version="0.0.7" />
-   </ItemGroup>
 </Project>

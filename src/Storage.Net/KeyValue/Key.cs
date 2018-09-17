@@ -15,7 +15,6 @@ namespace Storage.Net.KeyValue
       public Key(string partitionKey, string rowKey)
       {
          if(partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
-         if(rowKey == null) throw new ArgumentNullException(nameof(rowKey));
 
          PartitionKey = partitionKey;
          RowKey = rowKey;
