@@ -25,17 +25,17 @@ namespace Storage.Net.Tests.Integration.Blobs
       public AzureBlobStorageContainerProviderTest() : base("azure") { }
    }
 
-   public class AzureUniversalBlobStorageProviderTest : BlobStorageTest
+   /*public class AzureUniversalBlobStorageProviderTest : BlobStorageTest
    {
       public AzureUniversalBlobStorageProviderTest() : base("azure2", "testcontainer/") { }
-   }
+   }*/
 
-   /*public class AzureBlobStorageProviderBySasTest : BlobStorageTest
+   public class AzureBlobStorageProviderBySasTest : BlobStorageTest
    {
       public AzureBlobStorageProviderBySasTest() : base("azure-sas") { }
    }
 
-   public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
+   /*public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
    {
       public AzureDataLakeBlobStorageProviderTest() : base("azure-datalakestore") { }
    }
