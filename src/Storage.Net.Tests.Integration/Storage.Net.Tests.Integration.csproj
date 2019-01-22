@@ -24,7 +24,6 @@
     <ProjectReference Include="..\Storage.Net.Microsoft.Azure.ServiceBus\Storage.Net.Microsoft.Azure.ServiceBus.csproj" />
     <ProjectReference Include="..\Storage.Net.Microsoft.Azure.Storage\Storage.Net.Microsoft.Azure.Storage.csproj" />
     <ProjectReference Include="..\Storage.Net.Mssql\Storage.Net.Mssql.csproj" />
-    <ProjectReference Include="..\Storage.Net.ZipFile\Storage.Net.ZipFile.csproj" />
     <ProjectReference Include="..\Storage.Net.Amazon.Aws\Storage.Net.Amazon.Aws.csproj" />
   </ItemGroup>
 

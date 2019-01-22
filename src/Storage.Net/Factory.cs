@@ -88,6 +88,14 @@ namespace Storage.Net
       }
 
       /// <summary>
+      /// Zip file
+      /// </summary>
+      public static IBlobStorage ZipFile(this IBlobStorageFactory blobStorageFactory, string filePath)
+      {
+         return new ZipFileBlobStorageProvider(filePath);
+      }
+
+      /// <summary>
       /// Creates an instance of blob storage which stores everyting in memory. Useful for testing purposes only or if blobs don't
       /// take much space.
       /// </summary>

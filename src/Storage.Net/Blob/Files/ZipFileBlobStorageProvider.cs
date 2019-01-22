@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Storage.Net.Blob;
 using Storage.Net.Streaming;
 
-namespace Storage.Net.ZipFile
+namespace Storage.Net.Blob.Files
 {
    class ZipFileBlobStorageProvider : IBlobStorage
    {
