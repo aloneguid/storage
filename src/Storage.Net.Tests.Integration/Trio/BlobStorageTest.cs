@@ -67,7 +67,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 
    #endregion
 
-   public abstract class BlobStorageTest : AbstractTestFixture
+   public abstract class BlobStorageTest : AbstractTestFixture, IAsyncLifetime
    {
       private readonly string _type;
       private readonly string _blobPrefix;
@@ -97,8 +97,6 @@ namespace Storage.Net.Tests.Integration.Blobs
                _storage = StorageFactory.Blobs.AzureBlobStorageByContainerSasUri(_settings.AzureContainerSasUri);
                break;
             case "azure-datalakestore":
-               //Console.WriteLine("ac: {0}, tid: {1}, pid: {2}, ps: {3}", _settings.AzureDataLakeStoreAccountName, _settings.AzureDataLakeTenantId, _settings.AzureDataLakePrincipalId, _settings.AzureDataLakePrincipalSecret);
-
                _storage = StorageFactory.Blobs.AzureDataLakeStoreByClientSecret(
                   _settings.AzureDataLakeStoreAccountName,
                   _settings.AzureDataLakeTenantId,
@@ -128,10 +126,15 @@ namespace Storage.Net.Tests.Integration.Blobs
          }
       }
 
-      public override void Dispose()
+      public async Task InitializeAsync()
       {
-         IReadOnlyCollection<BlobId> allFiles = _storage.ListFilesAsync(null).Result;
-         _storage.DeleteAsync(allFiles.Select(id => id.FullPath)).Wait();
+
+      }
+
+      public async Task DisposeAsync()
+      {
+         IReadOnlyCollection<BlobId> allFiles = await _storage.ListFilesAsync(null);
+         await _storage.DeleteAsync(allFiles.Select(id => id.FullPath));
       }
 
       private async Task<string> GetRandomStreamIdAsync(string prefix = null)
