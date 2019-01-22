@@ -110,7 +110,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
 
          var resp = new OperationResponse();
          List<DirectoryEntry> page = await Core.ListStatusAsync(path, listAfter, listBefore, maxEntries, userIdFormat, _client,
-            new RequestOptions(new ExponentialRetryPolicy()),
+            new RequestOptions(new ExponentialRetryPolicy(2, 1000)),
             resp);
          return page;
          //return new FileStatusOutput(listBefore, listAfter, maxEntries, userIdFormat, _client, path);
