@@ -33,12 +33,12 @@ namespace Storage.Net.Tests.Integration.Blobs
    public class AzureBlobStorageProviderBySasTest : BlobStorageTest
    {
       public AzureBlobStorageProviderBySasTest() : base("azure-sas") { }
-   }*/
+   }
 
    public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
    {
       public AzureDataLakeBlobStorageProviderTest() : base("azure-datalakestore") { }
-   }
+   }*/
 
    public class DiskDirectoryBlobStorageProviderTest : BlobStorageTest
    {
