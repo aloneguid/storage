@@ -61,8 +61,7 @@ namespace Storage.Net.Tests
       {
          IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorage(
             _settings.AzureStorageName,
-            _settings.AzureStorageKey,
-            "container name");
+            _settings.AzureStorageKey);
 
          //upload it
          string content = "test content";
@@ -88,8 +87,7 @@ namespace Storage.Net.Tests
       {
          IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorage(
             _settings.AzureStorageName,
-            _settings.AzureStorageKey,
-            "container name");
+            _settings.AzureStorageKey);
 
          //upload it
          await storage.WriteTextAsync("someid", "test content");

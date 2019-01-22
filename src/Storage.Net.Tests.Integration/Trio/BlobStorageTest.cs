@@ -20,22 +20,12 @@ namespace Storage.Net.Tests.Integration.Blobs
 {
    #region [ Test Variations ]
 
-   public class AzureBlobStorageContainerProviderTest : BlobStorageTest
+   public class AzureBlobStorageProviderTest : BlobStorageTest
    {
-      public AzureBlobStorageContainerProviderTest() : base("azure") { }
+      public AzureBlobStorageProviderTest() : base("azure", "testcontainer/") { }
    }
 
-   /*public class AzureUniversalBlobStorageProviderTest : BlobStorageTest
-   {
-      public AzureUniversalBlobStorageProviderTest() : base("azure2", "testcontainer/") { }
-   }
-
-   public class AzureBlobStorageProviderBySasTest : BlobStorageTest
-   {
-      public AzureBlobStorageProviderBySasTest() : base("azure-sas") { }
-   }
-
-   public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
+   /*public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
    {
       public AzureDataLakeBlobStorageProviderTest() : base("azure-datalakestore") { }
    }*/
@@ -88,13 +78,7 @@ namespace Storage.Net.Tests.Integration.Blobs
          switch (_type)
          {
             case "azure":
-               _storage = StorageFactory.Blobs.AzureBlobStorage(_settings.AzureStorageName, _settings.AzureStorageKey, "blobstoragetest");
-               break;
-            case "azure2":
                _storage = StorageFactory.Blobs.AzureBlobStorage(_settings.AzureStorageName, _settings.AzureStorageKey);
-               break;
-            case "azure-sas":
-               _storage = StorageFactory.Blobs.AzureBlobStorageByContainerSasUri(_settings.AzureContainerSasUri);
                break;
             case "azure-datalakestore":
                _storage = StorageFactory.Blobs.AzureDataLakeStoreByClientSecret(

@@ -12,13 +12,11 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
    class AzureBlobDirectoryBrowser
    {
       private readonly CloudBlobContainer _container;
-      private readonly bool _prependContainerName;
       private readonly SemaphoreSlim _throttler;
 
-      public AzureBlobDirectoryBrowser(CloudBlobContainer container, bool prependContainerName, int maxTasks)
+      public AzureBlobDirectoryBrowser(CloudBlobContainer container, int maxTasks)
       {
          _container = container;
-         _prependContainerName = prependContainerName;
          _throttler = new SemaphoreSlim(maxTasks);
       }
 
@@ -100,25 +98,19 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          if (blob is CloudBlockBlob blockBlob)
          {
-            string fullName = _prependContainerName
-               ? StoragePath.Combine(_container.Name, blockBlob.Name)
-               : blockBlob.Name;
+            string fullName = StoragePath.Combine(_container.Name, blockBlob.Name);
 
             id = new BlobId(fullName, BlobItemKind.File);
          }
          else if (blob is CloudAppendBlob appendBlob)
          {
-            string fullName = _prependContainerName
-               ? StoragePath.Combine(_container.Name, appendBlob.Name)
-               : appendBlob.Name;
+            string fullName = StoragePath.Combine(_container.Name, appendBlob.Name);
 
             id = new BlobId(fullName, BlobItemKind.File);
          }
          else if (blob is CloudBlobDirectory dirBlob)
          {
-            string fullName = _prependContainerName
-               ? StoragePath.Combine(_container.Name, dirBlob.Prefix)
-               : dirBlob.Prefix;
+            string fullName = StoragePath.Combine(_container.Name, dirBlob.Prefix);
 
             id = new BlobId(fullName, BlobItemKind.Folder);
          }

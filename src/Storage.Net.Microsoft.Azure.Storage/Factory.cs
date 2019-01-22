@@ -56,39 +56,12 @@ namespace Storage.Net
       /// <param name="factory">Reference to factory</param>
       /// <param name="accountName">Storage Account name</param>
       /// <param name="key">Storage Account key</param>
-      /// <param name="containerName">Container name in the blob storage. If the container doesn't exist it will be automatically
-      /// created for you.</param>
-      /// <returns>Generic blob storage interface</returns>
-      public static IBlobStorage AzureBlobStorage(this IBlobStorageFactory factory,
-         string accountName,
-         string key,
-         string containerName)
-      {
-         return new AzureUniversalBlobStorageProvider(accountName, key, containerName);
-      }
-
-      /// <summary>
-      /// Creates a blob storage implementation based on Microsoft Azure Blob Storage using account name and key.
-      /// </summary>
-      /// <param name="factory">Reference to factory</param>
-      /// <param name="accountName">Storage Account name</param>
-      /// <param name="key">Storage Account key</param>
       /// <returns>Generic blob storage interface</returns>
       public static IBlobStorage AzureBlobStorage(this IBlobStorageFactory factory,
          string accountName,
          string key)
       {
          return new AzureUniversalBlobStorageProvider(accountName, key);
-      }
-
-      /// <summary>
-      /// Creates a blob storage implementation based on Microsoft Azure Blob Storage using a SAS UEI
-      /// bound to a container.
-      /// </summary>
-      public static IBlobStorage AzureBlobStorageByContainerSasUri(this IBlobStorageFactory factory,
-         Uri sasUri)
-      {
-         return AzureUniversalBlobStorageProvider.CreateWithContainerSasUri(sasUri);
       }
 
       /// <summary>

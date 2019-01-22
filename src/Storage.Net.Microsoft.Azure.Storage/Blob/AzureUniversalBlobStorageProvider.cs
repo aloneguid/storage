@@ -18,35 +18,16 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
    {
       private readonly CloudBlobClient _client;
       private readonly Dictionary<string, CloudBlobContainer> _containerNameToContainer = new Dictionary<string, CloudBlobContainer>();
-      private CloudBlobContainer _fixedContainer;
-      private readonly string _fixedContainerName;
 
       public CloudBlobClient NativeBlobClient => _client;
 
-      public AzureUniversalBlobStorageProvider(string accountName, string key, string containerName = null)
+      public AzureUniversalBlobStorageProvider(string accountName, string key)
       {
          var account = new CloudStorageAccount(
             new StorageCredentials(accountName, key),
             true);
 
          _client = account.CreateCloudBlobClient();
-         _fixedContainerName = containerName;
-      }
-
-      private AzureUniversalBlobStorageProvider(Uri sasUri)
-      {
-         if (sasUri == null)
-         {
-            throw new ArgumentNullException(nameof(sasUri));
-         }
-
-         _fixedContainer = new CloudBlobContainer(sasUri);
-         _client = _fixedContainer.ServiceClient;
-      }
-
-      public static AzureUniversalBlobStorageProvider CreateWithContainerSasUri(Uri sasUri)
-      {
-         return new AzureUniversalBlobStorageProvider(sasUri);
       }
 
       public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
@@ -144,13 +125,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          var result = new List<BlobId>();
          var containers = new List<CloudBlobContainer>();
-         CloudBlobContainer fixedContainer = await GetFixedContainerAsync();
 
-         if(fixedContainer != null)
-         {
-            containers.Add(fixedContainer);
-         }
-         else if(StoragePath.IsRootPath(options.FolderPath))
+         if(StoragePath.IsRootPath(options.FolderPath))
          {
             // list all of the containers
             containers.AddRange(await GetCloudBlobContainersAsync(cancellationToken));
@@ -172,7 +148,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
             //result.Add(new BlobId(container.Name, BlobItemKind.Folder));
          }
 
-         await Task.WhenAll(containers.Select(c => ListAsync(c, fixedContainer, result, options, cancellationToken)));
+         await Task.WhenAll(containers.Select(c => ListAsync(c, result, options, cancellationToken)));
 
          if(options.MaxResults != null)
          {
@@ -182,12 +158,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          return result;
       }
 
-      private async Task ListAsync(CloudBlobContainer container, CloudBlobContainer fixedContainer,
+      private async Task ListAsync(CloudBlobContainer container,
          List<BlobId> result,
          ListOptions options,
          CancellationToken cancellationToken)
       {
-         var browser = new AzureBlobDirectoryBrowser(container, _fixedContainer == null, options.MaxDegreeOfParalellism);
+         var browser = new AzureBlobDirectoryBrowser(container, options.MaxDegreeOfParalellism);
          IReadOnlyCollection<BlobId> containerBlobs = await browser.ListFolderAsync(options, cancellationToken);
          if (containerBlobs.Count > 0)
          {
@@ -279,34 +255,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
       #region [ Path forking ]
 
-      private async Task<CloudBlobContainer> GetFixedContainerAsync()
-      {
-         if (_fixedContainer != null)
-            return _fixedContainer;
-
-         if (_fixedContainerName != null)
-         {
-            _fixedContainer = _client.GetContainerReference(_fixedContainerName);
-            await _fixedContainer.CreateIfNotExistsAsync();
-            return _fixedContainer;
-         }
-
-         return null;
-      }
-
       private async Task<(CloudBlobContainer, string)> GetPartsAsync(string path, bool createContainer = true)
       {
          GenericValidation.CheckBlobId(path);
 
          path = StoragePath.Normalize(path);
          if (path == null) throw new ArgumentNullException(nameof(path));
-
-         CloudBlobContainer fixedContainer = await GetFixedContainerAsync();
-
-         if(fixedContainer != null)
-         {
-            return (_fixedContainer, path);
-         }
 
          int idx = path.IndexOf(StoragePath.PathSeparator);
          string containerName, relativePath;
