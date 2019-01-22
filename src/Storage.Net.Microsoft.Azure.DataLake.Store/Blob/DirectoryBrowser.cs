@@ -37,11 +37,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
 
          try
          {
-            /*IEnumerable<BlobId> entries = _client
-               .EnumerateDirectory(path, UserGroupRepresentation.ObjectID)
-               .Select(n => ToBlobId(path, n, options.IncludeMetaWhenKnown))
-               .Where(options.IsMatch);*/
-
             IEnumerable<BlobId> entries = 
                (await EnumerateDirectoryAsync(path, options, UserGroupRepresentation.ObjectID))
                .Where(options.IsMatch);

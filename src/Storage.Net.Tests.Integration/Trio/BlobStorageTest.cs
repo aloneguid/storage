@@ -25,10 +25,10 @@ namespace Storage.Net.Tests.Integration.Blobs
       public AzureBlobStorageProviderTest() : base("azure", "testcontainer/") { }
    }
 
-   /*public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
+   public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
    {
       public AzureDataLakeBlobStorageProviderTest() : base("azure-datalakestore") { }
-   }*/
+   }
 
    public class DiskDirectoryBlobStorageProviderTest : BlobStorageTest
    {
