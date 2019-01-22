@@ -134,7 +134,15 @@ namespace Storage.Net.Tests.Integration.Blobs
       public async Task DisposeAsync()
       {
          IReadOnlyCollection<BlobId> allFiles = await _storage.ListFilesAsync(null);
-         await _storage.DeleteAsync(allFiles.Select(id => id.FullPath));
+
+         try
+         {
+            await _storage.DeleteAsync(allFiles.Select(id => id.FullPath));
+         }
+         catch
+         {
+            //just don't care
+         }
       }
 
       private async Task<string> GetRandomStreamIdAsync(string prefix = null)
