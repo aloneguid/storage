@@ -22,6 +22,7 @@ namespace Storage.Net.Aws.Blob
       private readonly string _bucketName;
       private readonly AmazonS3Client _client;
       private readonly TransferUtility _fileTransferUtility;
+      private bool _initialised;
 
       //https://github.com/awslabs/aws-sdk-net-samples/blob/master/ConsoleSamples/AmazonS3Sample/AmazonS3Sample/S3Sample.cs
 
@@ -56,34 +57,27 @@ namespace Storage.Net.Aws.Blob
 
          _client = new AmazonS3Client(new BasicAWSCredentials(accessKeyId, secretAccessKey), clientConfig);
          _fileTransferUtility = new TransferUtility(_client);
-
-         Initialise();
       }
 
-
-      private void Initialise()
+      private async Task<AmazonS3Client> GetClientAsync()
       {
-         try
+         if (!_initialised)
          {
-            var request = new PutBucketRequest { BucketName = _bucketName };
+            try
+            {
+               var request = new PutBucketRequest { BucketName = _bucketName };
 
-#if NETSTANDARD
-            _client.PutBucketAsync(request).Wait();
-#else
-            _client.PutBucket(request);
-#endif
-         }
-         catch(AmazonS3Exception ex)
-         {
-            if(ex.ErrorCode == "BucketAlreadyOwnedByYou")
+               await _client.PutBucketAsync(request);
+
+               _initialised = true;
+            }
+            catch (AmazonS3Exception ex) when (ex.ErrorCode == "BucketAlreadyOwnedByYou")
             {
                //ignore this error as bucket already exists
             }
-            else
-            {
-               throw;
-            }
          }
+
+         return _client;
       }
 
       /// <summary>
@@ -104,7 +98,8 @@ namespace Storage.Net.Aws.Blob
 
 
          //todo: paging
-         ListObjectsV2Response response = await _client.ListObjectsV2Async(request, cancellationToken);
+         AmazonS3Client client = await GetClientAsync();
+         ListObjectsV2Response response = await client.ListObjectsV2Async(request, cancellationToken);
 
          return response.S3Objects
             .Select(s3Obj => new BlobId(StoragePath.RootFolderPath, s3Obj.Key, BlobItemKind.File))
@@ -163,12 +158,13 @@ namespace Storage.Net.Aws.Blob
          return Task.WhenAll(ids.Select(id => DeleteAsync(id, cancellationToken)));
       }
 
-      private Task DeleteAsync(string id, CancellationToken cancellationToken)
+      private async Task DeleteAsync(string id, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(id);
 
          id = StoragePath.Normalize(id, false);
-         return _client.DeleteObjectAsync(_bucketName, id, cancellationToken);
+         AmazonS3Client client = await GetClientAsync();
+         await client.DeleteObjectAsync(_bucketName, id, cancellationToken);
       }
 
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -226,10 +222,11 @@ namespace Storage.Net.Aws.Blob
       private async Task<GetObjectResponse> GetObjectAsync(string key)
       {
          var request = new GetObjectRequest { BucketName = _bucketName, Key = key };
+         AmazonS3Client client = await GetClientAsync();
 
          try
          {
-            GetObjectResponse response = await _client.GetObjectAsync(request);
+            GetObjectResponse response = await client.GetObjectAsync(request);
             return response;
          }
          catch (AmazonS3Exception ex)
