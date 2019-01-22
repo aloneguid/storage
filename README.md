@@ -8,9 +8,9 @@ It provides generic interface for popular cloud storage providers like Amazon S3
 
 It also implements in-memory and on-disk versions of all the abstractions for faster local machine development. [Connection strings](doc/cs.md) are supported too!
 
-| Build |
-|-------|
-|[![Build status](https://aloneguid.visualstudio.com/Storage.Net/_apis/build/status/Primary%20Build)](https://aloneguid.visualstudio.com/Storage.Net/_build/latest?definitionId=36)|
+| Build | Integration Tests |
+|-------|-------------------|
+|[![Build status](https://aloneguid.visualstudio.com/Storage.Net/_apis/build/status/Primary%20Build)](https://aloneguid.visualstudio.com/Storage.Net/_build/latest?definitionId=36)|[![Build status](https://aloneguid.visualstudio.com/Storage.Net/_apis/build/status/Integration%20Tests)](https://aloneguid.visualstudio.com/Storage.Net/_build/latest?definitionId=35)|
 
 ## Intentions
 
@@ -28,7 +28,7 @@ Storage.Net supports **Azure Service Bus**, **Azure Event Hub**, **Azure Storage
 
 Storage.Net also implements inmemory and on disk versions of all the abstractions, therefore you can develop fast on local machine or use vendor free serverless implementations for parts of your applciation which don't require a separate third party backend at a particular point in development.
 
-This framework supports `.NET 4.5.2` and `.NET Standard 1.6`, and most of the implementations exist for all frameworks.
+This framework supports `.NET 4.5.2` and `.NET Standard 1.6`, and all of the plugins exist for all frameworks.
 
 ## Implementations
 
