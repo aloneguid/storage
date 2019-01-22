@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <VersionPrefix>3.5.0-alpha-4</VersionPrefix>
     <AssemblyName>Storage.Net.Tests</AssemblyName>
     <AssemblyOriginatorKeyFile>../storage.snk</AssemblyOriginatorKeyFile>
@@ -15,14 +15,15 @@
     <None Remove="Azure\**" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Storage.Net.Microsoft.Azure.Storage\Storage.Net.Microsoft.Azure.Storage.csproj" />
     <ProjectReference Include="..\Storage.Net\Storage.Net.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="LogMagic" Version="2.5.70" />
-    <PackageReference Include="Config.Net" Version="4.8.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="xunit" Version="2.3.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <PackageReference Include="LogMagic" Version="2.16.0" />
+    <PackageReference Include="Config.Net" Version="4.10.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="xunit" Version="2.4.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>

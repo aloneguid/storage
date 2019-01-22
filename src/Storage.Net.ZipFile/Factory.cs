@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Storage.Net.Blob;
+﻿using Storage.Net.Blob;
 using Storage.Net.ZipFile;
 
 namespace Storage.Net
@@ -13,6 +8,9 @@ namespace Storage.Net
    /// </summary>
    public static class Factory
    {
+      /// <summary>
+      /// Zip file
+      /// </summary>
       public static IBlobStorage ZipFile(this IBlobStorageFactory blobStorageFactory, string filePath)
       {
          return new ZipFileBlobStorageProvider(filePath);

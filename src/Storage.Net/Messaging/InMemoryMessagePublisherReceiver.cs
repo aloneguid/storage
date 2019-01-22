@@ -1,13 +1,25 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using NetBox.Extensions;
 
 namespace Storage.Net.Messaging
 {
    class InMemoryMessagePublisherReceiver : PollingMessageReceiver, IMessagePublisher
    {
+      private static readonly Dictionary<string, InMemoryMessagePublisherReceiver> _inMemoryMessagingNameToInstance =
+         new Dictionary<string, InMemoryMessagePublisherReceiver>();
+
       private readonly ConcurrentQueue<QueueMessage> _queue = new ConcurrentQueue<QueueMessage>();
+
+      public static InMemoryMessagePublisherReceiver CreateOrGet(string name)
+      {
+         if (name == null) throw new ArgumentNullException(nameof(name));
+
+         return _inMemoryMessagingNameToInstance.GetOrAdd(name, () => new InMemoryMessagePublisherReceiver());
+      }
 
       public Task PutMessagesAsync(IEnumerable<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
@@ -33,9 +45,11 @@ namespace Storage.Net.Messaging
          return Task.FromResult((IReadOnlyCollection<QueueMessage>)result);
       }
 
-      public override Task ConfirmMessageAsync(QueueMessage message, CancellationToken cancellationToken = default)
+      public override Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
          return Task.FromResult(true);
       }
+
+      public override Task<int> GetMessageCountAsync() => Task.FromResult(_queue.Count);
    }
 }

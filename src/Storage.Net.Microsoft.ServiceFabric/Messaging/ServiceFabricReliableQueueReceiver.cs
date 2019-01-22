@@ -9,112 +9,39 @@ using System.Threading.Tasks;
 
 namespace Storage.Net.Microsoft.ServiceFabric.Messaging
 {
-   class ServiceFabricReliableQueueReceiver : IMessageReceiver
+   class ServiceFabricReliableQueueReceiver : AbstractServiceFabricReliableQueueReceiver
    {
-      private IReliableStateManager _stateManager;
+      private readonly IReliableStateManager _stateManager;
       private readonly string _queueName;
-      private readonly TimeSpan _scanInterval;
-      private bool _disposed;
 
       public ServiceFabricReliableQueueReceiver(IReliableStateManager stateManager, string queueName, TimeSpan scanInterval)
+         : base(stateManager, queueName, scanInterval)
       {
-         _stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));
-         _queueName = queueName ?? throw new ArgumentNullException(nameof(queueName));
-
-         if (scanInterval < TimeSpan.FromSeconds(1)) throw new ArgumentException("scan interval must be at least 1 second", nameof(scanInterval));
-
-         _scanInterval = scanInterval;
+         _stateManager = stateManager;
+         _queueName = queueName;
       }
 
-      /// <summary>
-      /// See interface
-      /// </summary>
-      public async Task<int> GetMessageCountAsync()
+      protected override async Task<IReliableState> GetCollectionAsync()
       {
-         using (var tx = new ServiceFabricTransaction(_stateManager, null))
-         {
-            IReliableQueue<byte[]> collection = await GetCollectionAsync();
-
-            long count = await collection.GetCountAsync(tx.Tx);
-
-            return (int)count;
-         }
+         return await _stateManager.GetOrAddAsync<IReliableQueue<byte[]>>(_queueName);
       }
 
-      public async Task StartMessagePumpAsync(Func<IEnumerable<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
+      protected override async Task<int> GetMessageCountAsync(IReliableState reliableState, ServiceFabricTransaction transaction)
       {
-         Task.Run(() => ReceiveMessagesAsync(onMessage, maxBatchSize, cancellationToken));
+         IReliableQueue<byte[]> collection = (IReliableQueue<byte[]>)reliableState;
+
+         long count = await collection.GetCountAsync(transaction.Tx);
+
+         return (int)count;
       }
 
-      public Task ConfirmMessageAsync(QueueMessage message, CancellationToken cancellationToken)
+      protected override async Task<ConditionalValue<byte[]>> TryDequeueAsync(ServiceFabricTransaction tx, IReliableState collectionBase, CancellationToken cancellationToken)
       {
-         return Task.FromResult(true);
-      }
+         IReliableQueue<byte[]> collection = (IReliableQueue<byte[]>)collectionBase;
 
-      public Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken)
-      {
-         return Task.FromResult(true);
-      }
+         ConditionalValue<byte[]> message = await collection.TryDequeueAsync(tx.Tx, TimeSpan.FromSeconds(4), cancellationToken);
 
-      private async Task ReceiveMessagesAsync(Func<IEnumerable<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
-      {
-         var messages = new List<QueueMessage>();
-
-         while (!cancellationToken.IsCancellationRequested && !_disposed)
-         {
-            try
-            {
-               using (var tx = new ServiceFabricTransaction(_stateManager, null))
-               {
-                  IReliableQueue<byte[]> collection = await GetCollectionAsync();
-
-                  while (messages.Count < maxBatchSize)
-                  {
-                     ConditionalValue<byte[]> message = await collection.TryDequeueAsync(tx.Tx, TimeSpan.FromSeconds(4), cancellationToken);
-                     if (message.HasValue)
-                     {
-                        QueueMessage qm = QueueMessage.FromByteArray(message.Value);
-
-                        messages.Add(qm);
-                     }
-                     else
-                     {
-                        break;
-                     }
-                  }
-
-                  //make the call before committing the transaction
-                  if (messages.Count > 0)
-                  {
-                     await onMessage(messages);
-                     messages.Clear();
-                  }
-
-                  await tx.CommitAsync();
-               }
-            }
-            catch(Exception ex)
-            {
-               Trace.Fail($"failed to listen to messages on queue '{_queueName}'", ex.ToString());
-            }
-
-            await Task.Delay(_scanInterval);
-         }
-      }
-
-      public void Dispose()
-      {
-         _disposed = true;
-      }
-
-      public async Task<ITransaction> OpenTransactionAsync()
-      {
-         return EmptyTransaction.Instance;
-      }
-
-      private Task<IReliableQueue<byte[]>> GetCollectionAsync()
-      {
-         return _stateManager.GetOrAddAsync<IReliableQueue<byte[]>>(_queueName);
+         return message;
       }
    }
 }

@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NetBox;
 using NetBox.Data;
-using Storage.Net.Table;
+using Storage.Net.KeyValue;
 
 namespace Storage.Net.Mssql
 {
@@ -26,9 +26,9 @@ namespace Storage.Net.Mssql
          _tableName = tableName;
       }
 
-      public async Task InsertAsync(IEnumerable<TableRow> rows)
+      public async Task InsertAsync(IEnumerable<Value> rows)
       {
-         List<TableRow> rowsList = rows.ToList();
+         List<Value> rowsList = rows.ToList();
 
          using (var sbc = new SqlBulkCopy(_connection))
          {
@@ -39,17 +39,16 @@ namespace Storage.Net.Mssql
             AddColumns(dataTable, rowsList);
 
             //copy to rows
-            foreach (TableRow row in rows)
+            foreach (Value row in rows)
             {
                DataRow dataRow = dataTable.NewRow();
 
-               dataRow[_configuration.PartitionKeyColumnName] = row.PartitionKey;
-               dataRow[_configuration.RowKeyColumnName] = row.RowKey;
+               dataRow[SqlConstants.PartitionKey] = row.PartitionKey;
+               dataRow[SqlConstants.RowKey] = row.RowKey;
 
                foreach (string key in row.Keys.OrderBy(kv => kv))
                {
-                  DynamicValue value;
-                  row.TryGetValue("key", out value);
+                  row.TryGetValue("key", out object value);
                   dataRow[key] = value;
                }
 
@@ -72,14 +71,7 @@ namespace Storage.Net.Mssql
                   await CreateTableAsync(rowsList);
 
                   //run it again
-                  try
-                  {
-                     await sbc.WriteToServerAsync(dataTable);
-                  }
-                  catch(Exception ex1)
-                  {
-                     throw;
-                  }
+                  await sbc.WriteToServerAsync(dataTable);
                }
             }
             catch(SqlException ex) when (ex.Number == SqlCodes.DuplicateKey)
@@ -101,20 +93,20 @@ namespace Storage.Net.Mssql
          return dv.OriginalValue;
       }
 
-      private async Task CreateTableAsync(List<TableRow> rowsList)
+      private async Task CreateTableAsync(List<Value> rowsList)
       {
          var composer = new TableComposer(_connection, _configuration);
-         SqlCommand cmd = composer.BuildCreateSchemaCommand(_tableName, TableRow.Merge(rowsList));
+         SqlCommand cmd = composer.BuildCreateSchemaCommand(_tableName, Value.Merge(rowsList));
          await CheckConnection();
          await cmd.ExecuteNonQueryAsync();
       }
 
-      private void AddColumns(DataTable dataTable, IReadOnlyCollection<TableRow> rows)
+      private void AddColumns(DataTable dataTable, IReadOnlyCollection<Value> rows)
       {
-         TableRow schemaRow = TableRow.Merge(rows);
+         Value schemaRow = Value.Merge(rows);
 
-         dataTable.Columns.Add(_configuration.PartitionKeyColumnName);
-         dataTable.Columns.Add(_configuration.RowKeyColumnName);
+         dataTable.Columns.Add(SqlConstants.PartitionKey);
+         dataTable.Columns.Add(SqlConstants.RowKey);
 
          foreach (string key in schemaRow.Keys.OrderBy(kv => kv))
          {

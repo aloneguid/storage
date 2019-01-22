@@ -8,14 +8,22 @@ using System.Threading.Tasks;
 using System.Threading;
 using NetBox.Extensions;
 using NetBox;
+using Storage.Net.Streaming;
 
 namespace Storage.Net.Blob
 {
    class InMemoryBlobStorage : IBlobStorage
    {
-      private readonly Dictionary<BlobId, MemoryStream> _idToData = new Dictionary<BlobId, MemoryStream>();
+      struct Tag
+      {
+         public byte[] data;
+         public DateTimeOffset lastMod;
+         public string md5;
+      }
 
-      public Task<IEnumerable<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken)
+      private readonly Dictionary<BlobId, Tag> _idToData = new Dictionary<BlobId, Tag>();
+
+      public Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken)
       {
          if (options == null) options = new ListOptions();
 
@@ -29,10 +37,11 @@ namespace Storage.Net.Blob
 
             .Select(e => e.Key)
             .Where(options.IsMatch)
+            .Where(e => options.BrowseFilter == null || options.BrowseFilter(e))
             .Take(options.MaxResults == null ? int.MaxValue : options.MaxResults.Value)
             .ToList();
 
-         return Task.FromResult((IEnumerable<BlobId>)matches);
+         return Task.FromResult((IReadOnlyCollection<BlobId>)matches);
       }
 
       public Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)
@@ -47,11 +56,10 @@ namespace Storage.Net.Blob
             }
             else
             {
-               MemoryStream ms = _idToData[id];
+               Tag tag = _idToData[id];
+               byte[] data = tag.data.Concat(sourceStream.ToByteArray()).ToArray();
 
-               byte[] part1 = ms.ToArray();
-               byte[] part2 = sourceStream.ToByteArray();
-               _idToData[id] = new MemoryStream(part1.Concat(part2).ToArray());
+               _idToData[id] = ToTag(data);
             }
          }
          else
@@ -62,14 +70,27 @@ namespace Storage.Net.Blob
          return Task.FromResult(true);
       }
 
+      public Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
+      {
+         GenericValidation.CheckBlobId(id);
+
+         var result = new FixedStream(new MemoryStream(), null, fx =>
+         {
+            MemoryStream ms = (MemoryStream)fx.Parent;
+            ms.Position = 0;
+            WriteAsync(id, ms, append, cancellationToken).Wait();
+         });
+
+         return Task.FromResult<Stream>(result);
+      }
+
       public Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(id);
 
-         if (!_idToData.TryGetValue(id, out MemoryStream ms)) return Task.FromResult<Stream>(null);
+         if (!_idToData.TryGetValue(id, out Tag tag)) return Task.FromResult<Stream>(null);
 
-         ms.Seek(0, SeekOrigin.Begin);
-         return Task.FromResult<Stream>(new NonCloseableStream(ms));
+         return Task.FromResult<Stream>(new NonCloseableStream(new MemoryStream(tag.data)));
       }
 
       public Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -84,7 +105,7 @@ namespace Storage.Net.Blob
          return Task.FromResult(true);
       }
 
-      public Task<IEnumerable<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
       {
          var result = new List<bool>();
 
@@ -93,7 +114,7 @@ namespace Storage.Net.Blob
             result.Add(_idToData.ContainsKey(id));
          }
 
-         return Task.FromResult<IEnumerable<bool>>(result);
+         return Task.FromResult<IReadOnlyCollection<bool>>(result);
       }
 
       public Task<IEnumerable<BlobMeta>> GetMetaAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -104,15 +125,13 @@ namespace Storage.Net.Blob
 
          foreach (string id in ids)
          {
-            if (!_idToData.TryGetValue(id, out MemoryStream ms))
+            if (!_idToData.TryGetValue(id, out Tag tag))
             {
                result.Add(null);
             }
             else
             {
-               ms.Seek(0, SeekOrigin.Begin);
-
-               var meta = new BlobMeta(ms.Length, ms.GetHash(HashType.Md5));
+               var meta = new BlobMeta(tag.data.Length, tag.md5, tag.lastMod);
 
                result.Add(meta);
             }
@@ -123,8 +142,24 @@ namespace Storage.Net.Blob
 
       private void Write(string id, Stream sourceStream)
       {
-         var ms = new MemoryStream(sourceStream.ToByteArray());
-         _idToData[new BlobId(id, BlobItemKind.File)] = ms;
+         Tag tag = ToTag(sourceStream);
+
+         _idToData[id] = tag;
+      }
+
+      private static Tag ToTag(Stream s)
+      {
+         if (s is MemoryStream ms) ms.Position = 0;
+         return ToTag(s.ToByteArray());
+      }
+
+      private static Tag ToTag(byte[] data)
+      {
+         var tag = new Tag();
+         tag.data = data;
+         tag.lastMod = DateTimeOffset.UtcNow;
+         tag.md5 = tag.data.GetHash(HashType.Md5).ToHexString();
+         return tag;
       }
 
       private bool Exists(string id)

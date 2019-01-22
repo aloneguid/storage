@@ -18,12 +18,12 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          _blobStorage = blobStorage;
       }
 
-      public async Task<string> GetPartitionOffset(string partitionId)
+      public async Task<EventPosition> GetPartitionPosition(string partitionId)
       {
          if (partitionId == null)
             throw new ArgumentNullException(nameof(partitionId));
 
-         if (_blobStorage == null) return PartitionReceiver.StartOfStream;
+         if (_blobStorage == null) return EventPosition.FromStart();
 
          string state;
 
@@ -36,21 +36,21 @@ namespace Storage.Net.Microsoft.Azure.EventHub
             state = null;
          }
 
-         if (state == null) return PartitionReceiver.StartOfStream;
+         if (state == null) return EventPosition.FromStart();
 
          StateToken token = state.AsJsonObject<StateToken>();
 
-         return token.Offset;
+         return token.SequenceNumber == null ? EventPosition.FromStart() : EventPosition.FromSequenceNumber(token.SequenceNumber.Value);
       }
 
-      public async Task SetPartitionStateAsync(string partitionId, string offset, string sequenceNumber)
+      public async Task SetPartitionStateAsync(string partitionId, long? sequenceNumber)
       {
          if (partitionId == null)
             throw new ArgumentNullException(nameof(partitionId));
 
          if (_blobStorage == null) return;
 
-         if(offset == null)
+         if(sequenceNumber == null)
          {
             await _blobStorage.DeleteAsync(GetBlobName(partitionId));
          }
@@ -60,7 +60,6 @@ namespace Storage.Net.Microsoft.Azure.EventHub
             {
                PartitionId = partitionId,
                SequenceNumber = sequenceNumber,
-               Offset = offset,
                CreatedAt = DateTime.UtcNow
             };
 
@@ -79,10 +78,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          public string PartitionId { get; set; }
 
          [JsonProperty("sequenceNumber")]
-         public string SequenceNumber { get; set; }
-
-         [JsonProperty("offset")]
-         public string Offset { get; set; }
+         public long? SequenceNumber { get; set; }
 
          [JsonProperty("createdAt")]
          public DateTime CreatedAt { get; set; }

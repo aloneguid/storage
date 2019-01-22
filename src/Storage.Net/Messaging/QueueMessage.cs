@@ -116,7 +116,8 @@ namespace Storage.Net.Messaging
       }
 
       /// <summary>
-      /// Extremely compact binary representation of the message
+      /// Extremely compact binary representation of the message.
+      /// It's library specific, therefore try not to use it if portability is required.
       /// </summary>
       /// <returns></returns>
       public byte[] ToByteArray()

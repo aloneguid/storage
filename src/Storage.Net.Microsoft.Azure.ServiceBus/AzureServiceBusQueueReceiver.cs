@@ -65,13 +65,18 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       /// <summary>
       /// Call at the end when done with the message.
       /// </summary>
-      /// <param name="message"></param>
-      public async Task ConfirmMessageAsync(QueueMessage message, CancellationToken cancellationToken)
+      public async Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken)
       {
          if(!_peekLock) return;
 
+         await Task.WhenAll(messages.Select(m => ConfirmAsync(m)));
+      }
+
+      private async Task ConfirmAsync(QueueMessage message)
+      {
          //delete the message and get the deleted element, very nice method!
-         if (!_messageIdToBrokeredMessage.TryRemove(message.Id, out Message bm)) return;
+         if (!_messageIdToBrokeredMessage.TryRemove(message.Id, out Message bm))
+            return;
 
          await _client.CompleteAsync(bm.SystemProperties.LockToken);
       }
@@ -79,8 +84,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       /// <summary>
       /// Starts message pump with AutoComplete = false, 1 minute session renewal and 1 concurrent call.
       /// </summary>
-      /// <param name="onMessage"></param>
-      public Task StartMessagePumpAsync(Func<IEnumerable<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
+      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
       {
          if (onMessage == null) throw new ArgumentNullException(nameof(onMessage));
 
@@ -98,7 +102,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
             {
                QueueMessage qm = Converter.ToQueueMessage(message);
                _messageIdToBrokeredMessage[qm.Id] = message;
-               await onMessage(Enumerable.Repeat(qm, 1));
+               await onMessage(new[] { qm });
             },
             options);
 
@@ -118,9 +122,12 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
          _client.CloseAsync().Wait();  //this also stops the message pump
       }
 
-      public async Task<ITransaction> OpenTransactionAsync()
+      /// <summary>
+      /// Transactions are not supported, returns empty transation
+      /// </summary>
+      public Task<ITransaction> OpenTransactionAsync()
       {
-         return EmptyTransaction.Instance;
+         return Task.FromResult(EmptyTransaction.Instance);
       }
    }
 }

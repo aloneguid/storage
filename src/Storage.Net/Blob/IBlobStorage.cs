@@ -17,11 +17,12 @@ namespace Storage.Net.Blob
       /// <param name="options"></param>
       /// <param name="cancellationToken"></param>
       /// <returns>List of blob IDs</returns>
-      Task<IEnumerable<BlobId>> ListAsync(ListOptions options,
-         CancellationToken cancellationToken = default(CancellationToken));
+      Task<IReadOnlyCollection<BlobId>> ListAsync(
+         ListOptions options = null,
+         CancellationToken cancellationToken = default);
 
       /// <summary>
-      /// Creates a new blob and returns a writeable stream to it. If the blob already exists it will be
+      /// Creates a new blob and uploads data intor it. If the blob already exists it will be
       /// overwritten.
       /// </summary>
       /// <param name="id">Blob ID</param>
@@ -32,6 +33,20 @@ namespace Storage.Net.Blob
       /// <exception cref="ArgumentNullException">Thrown when any parameter is null</exception>
       /// <exception cref="ArgumentException">Thrown when ID is too long. Long IDs are the ones longer than 50 characters.</exception>
       Task WriteAsync(string id, Stream sourceStream, bool append = false, CancellationToken cancellationToken = default);
+
+      /// <summary>
+      /// Creates a new blob and opens a writeable stream for it. If the blob already exists it will be
+      /// overwritten. Please note that <see cref="WriteAsync(string, Stream, bool, CancellationToken)"/> is always
+      /// more effective than this method, because not all of the providers support holding a write stream natively and
+      /// some will incur workaround options to support this.
+      /// </summary>
+      /// <param name="id">Blob ID</param>
+      /// <param name="cancellationToken"></param>
+      /// <param name="append">When true, appends to the file instead of writing a new one.</param>
+      /// <returns>Writeable stream</returns>
+      /// <exception cref="ArgumentNullException">Thrown when any parameter is null</exception>
+      /// <exception cref="ArgumentException">Thrown when ID is too long. Long IDs are the ones longer than 50 characters.</exception>
+      Task<Stream> OpenWriteAsync(string id, bool append = false, CancellationToken cancellationToken = default);
 
       /// <summary>
       /// Opens the blob stream to read.
@@ -59,7 +74,7 @@ namespace Storage.Net.Blob
       /// <param name="ids">List of ids</param>
       /// <param name="cancellationToken"></param>
       /// <returns>List of results of true and false indicating existence</returns>
-      Task<IEnumerable<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default);
+      Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default);
 
       /// <summary>
       /// Gets basic blob metadata

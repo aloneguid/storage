@@ -15,6 +15,28 @@ In addition to this interface, there are plency of extension methods which enric
 
 All the storage implementations can be created either directly or using factory methods available in the `Storage.Net.StorageFactory.Blobs` class. More methods appear in that class as you reference an assembly containing specific implementations.
 
+## Creating an instance of blob storage
+
+### Declaratively in code
+
+After referencing an appropriate package from NuGet you can call to a storage factory to create a respective storage implementation. Some implementations like filesystem mapped blobs are part of the core library and are available immediately:
+
+![](storagefactory-intellisense.gif)
+
+### Connection strings
+
+You can also use connection strings to create blob storage instances. Connection strings are often useful if you want to completely abstract yourself from the underlying implementation. Please read the appropriate implementation details for connection string details. For instance, to create an instance of Azure Blob Storage provider you could write:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blobs://...parameters...");
+```
+
+See the [full list of supported connection strings](../cs.md).
+
+## Operations
+
+todo
+
 ## Use Cases
 
 These example use cases simulate some most common blob operations which should help you to get started.

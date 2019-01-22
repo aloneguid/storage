@@ -26,13 +26,13 @@ namespace Storage.Net.Blob
       /// <param name="options"></param>
       /// <param name="cancellationToken"></param>
       /// <returns>List of blob IDs</returns>
-      public static async Task<IEnumerable<BlobId>> ListFilesAsync(this IBlobStorage provider,
+      public static async Task<IReadOnlyCollection<BlobId>> ListFilesAsync(this IBlobStorage provider,
          ListOptions options,
          CancellationToken cancellationToken = default)
       {
          IEnumerable<BlobId> all = await provider.ListAsync(options, cancellationToken);
 
-         return all.Where(i => i.Kind == BlobItemKind.File);
+         return all.Where(i => i.Kind == BlobItemKind.File).ToList();
       }
 
       #endregion
@@ -85,17 +85,37 @@ namespace Storage.Net.Blob
       #region [ Singletons ]
 
       /// <summary>
+      /// Checksi if blobs exists in the storage
+      /// </summary>
+      public static async Task<bool> ExistsAsync(this IBlobStorage blobStorage,
+         string id, CancellationToken cancellationToken = default)
+      {
+         IEnumerable<bool> r = await blobStorage.ExistsAsync(new[] { id }, cancellationToken);
+         return r.First();
+      }
+
+      /// <summary>
       /// Deletes a single blob
       /// </summary>
-      /// <param name="provider"></param>
+      /// <param name="storage"></param>
       /// <param name="id"></param>
       /// <param name="cancellationToken"></param>
       /// <returns></returns>
       public static Task DeleteAsync(
-         this IBlobStorage provider,
+         this IBlobStorage storage,
          string id, CancellationToken cancellationToken = default)
       {
-         return provider.DeleteAsync(new[] {id}, cancellationToken);
+         return storage.DeleteAsync(new[] {id}, cancellationToken);
+      }
+
+      /// <summary>
+      /// Gets basic blob metadata
+      /// </summary>
+      /// <returns>Blob metadata or null if blob doesn't exist</returns>
+      public static async Task<BlobMeta> GetMetaAsync(this IBlobStorage storage,
+         string id, CancellationToken cancellationToken = default)
+      {
+         return (await storage.GetMetaAsync(new[] { id }, cancellationToken)).First();
       }
 
       #endregion
@@ -187,7 +207,7 @@ namespace Storage.Net.Blob
       /// <param name="cancellationToken"></param>
       public static async Task CopyToAsync(
          this IBlobStorage provider,
-         string blobId, IBlobStorage targetStorage, string newId, CancellationToken cancellationToken = default(CancellationToken))
+         string blobId, IBlobStorage targetStorage, string newId, CancellationToken cancellationToken = default)
       {
          Stream src = await provider.OpenReadAsync(blobId, cancellationToken);
          if (src == null) return;

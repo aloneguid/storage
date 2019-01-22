@@ -13,7 +13,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
    /// <summary>
    /// Microsoft Azure Event Hub receiver
    /// </summary>
-   public class AzureEventHubReceiver : IMessageReceiver
+   class AzureEventHubReceiver : IMessageReceiver
    {
       private readonly EventHubClient _hubClient;
       private readonly HashSet<string> _partitionIds;
@@ -84,8 +84,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
                PartitionReceiver receiver = _hubClient.CreateReceiver(
                   _consumerGroupName ?? PartitionReceiver.DefaultConsumerGroupName,
                   partitionId,
-                  (await _state.GetPartitionOffset(partitionId)),
-                  false);
+                  (await _state.GetPartitionPosition(partitionId)));
 
                receivers.Add(receiver);
             }
@@ -105,7 +104,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <summary>
       /// See interface
       /// </summary>
-      public Task ConfirmMessageAsync(QueueMessage message, CancellationToken cancellationToken)
+      public Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> message, CancellationToken cancellationToken)
       {
          //nothing to confirm
          return Task.FromResult(true);
@@ -123,7 +122,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <summary>
       /// See interface
       /// </summary>
-      public async Task StartMessagePumpAsync(Func<IEnumerable<QueueMessage>, Task> onMessageAsync, int maxBatchSize, CancellationToken cancellationToken)
+      public async Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize, CancellationToken cancellationToken)
       {
          IEnumerable<PartitionReceiver> receivers = await CreateReceivers();
 
@@ -133,7 +132,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          }
       }
 
-      private async Task ReceiverPump(PartitionReceiver receiver, Func<IEnumerable<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
+      private async Task ReceiverPump(PartitionReceiver receiver, Func<IReadOnlyCollection<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
       {
          while (true)
          {
@@ -153,13 +152,16 @@ namespace Storage.Net.Microsoft.Azure.EventHub
                   if (lastMessage != null)
                   {
                      const string sequenceNumberPropertyName = "x-opt-sequence-number";
-                     const string offsetPropertyName = "x-opt-offset";
 
-                     if (lastMessage.Properties.TryGetValue(offsetPropertyName, out string offset))
+                     if (lastMessage.Properties.TryGetValue(sequenceNumberPropertyName, out string sequenceNumber))
                      {
-                        lastMessage.Properties.TryGetValue(sequenceNumberPropertyName, out string sequenceNumber);
+                        long? sequenceNumberLong = null;
+                        if(long.TryParse(sequenceNumber, out long seqenceNumberNonNullable))
+                        {
+                           sequenceNumberLong = seqenceNumberNonNullable;
+                        }
 
-                        await _state.SetPartitionStateAsync(receiver.PartitionId, offset, sequenceNumber);
+                        await _state.SetPartitionStateAsync(receiver.PartitionId, sequenceNumberLong);
                      }
                   }
                }
@@ -175,7 +177,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
             {
                Console.WriteLine("failed with message: '{0}', clearing partition state.", ex);
 
-               await _state.SetPartitionStateAsync(receiver.PartitionId, PartitionReceiver.StartOfStream, null);
+               await _state.SetPartitionStateAsync(receiver.PartitionId, EventPosition.FromStart().SequenceNumber);
             }
             catch(OperationCanceledException)
             {
@@ -197,7 +199,9 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       {
       }
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
       public async Task<ITransaction> OpenTransactionAsync()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
       {
          return EmptyTransaction.Instance;
       }

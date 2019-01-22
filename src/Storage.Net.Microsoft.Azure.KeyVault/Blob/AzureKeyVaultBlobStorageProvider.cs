@@ -14,6 +14,8 @@ using System.Threading;
 using System.Text.RegularExpressions;
 using NetBox.Extensions;
 using NetBox;
+using System.Net;
+using Storage.Net.Streaming;
 
 namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
 {
@@ -35,26 +37,34 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
 
       #region [ IBlobStorage ]
 
-      public async Task<IEnumerable<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken)
+      public async Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken)
       {
          if (options == null) options = new ListOptions();
 
-         GenericValidation.CheckBlobPrefix(options.Prefix);
+         GenericValidation.CheckBlobPrefix(options.FilePrefix);
+
+         if (options.FolderPath != null) return new List<BlobId>();
 
          var secretNames = new List<BlobId>();
          IPage<SecretItem> page = await _vaultClient.GetSecretsAsync(_vaultUri);
 
          do
          {
-            secretNames.AddRange(page.Select(ToBlobId));
+            List<BlobId> ids = page
+               .Select(ToBlobId)
+               .Where(options.IsMatch)
+               .Where(s => options.BrowseFilter == null || options.BrowseFilter(s))
+               .ToList();
+            secretNames.AddRange(ids);
+
+            if(options.MaxResults != null && secretNames.Count >= options.MaxResults.Value)
+            {
+               return secretNames.Take(options.MaxResults.Value).ToList();
+            }
          }
          while (page.NextPageLink != null && (page = await _vaultClient.GetSecretsNextAsync(page.NextPageLink)) != null);
 
-         if (options.Prefix == null) return secretNames;
-
-         return secretNames
-            .Where(options.IsMatch)
-            .Take(options.MaxResults == null ? int.MaxValue : options.MaxResults.Value);
+         return secretNames;
       }
 
       private static BlobId ToBlobId(SecretItem item)
@@ -73,6 +83,23 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
          string value = Encoding.UTF8.GetString(sourceStream.ToByteArray());
 
          await _vaultClient.SetSecretAsync(_vaultUri, id, value);
+      }
+
+      public Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
+      {
+         GenericValidation.CheckBlobId(id);
+         ValidateSecretName(id);
+         if (append) throw new ArgumentException("appending to secrets is not supported", nameof(append));
+
+         var callbackStream = new FixedStream(new MemoryStream(), null, fx =>
+         {
+            string value = Encoding.UTF8.GetString(((MemoryStream)fx.Parent).ToArray());
+
+            _vaultClient.SetSecretAsync(_vaultUri, id, value).Wait();
+         });
+
+         return Task.FromResult<Stream>(callbackStream);
+         
       }
 
       public async Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken)
@@ -104,7 +131,7 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
          await Task.WhenAll(ids.Select(id => _vaultClient.DeleteSecretAsync(_vaultUri, id)));
       }
 
-      public async Task<IEnumerable<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(ids);
 
@@ -136,10 +163,21 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
 
       private async Task<BlobMeta> GetMetaAsync(string id)
       {
-         SecretBundle secret = await _vaultClient.GetSecretAsync(_vaultUri, id);
+         SecretBundle secret;
+
+         try
+         {
+            secret = await _vaultClient.GetSecretAsync(_vaultUri, id);
+         }
+         catch(KeyVaultErrorException ex) when(ex.Response.StatusCode == HttpStatusCode.NotFound)
+         {
+            return null;
+         }
+
+
          byte[] data = Encoding.UTF8.GetBytes(secret.Value);
 
-         return new BlobMeta(data.Length, secret.Value.GetHash(HashType.Md5));
+         return new BlobMeta(data.Length, secret.Value.GetHash(HashType.Md5), secret.Attributes.Updated);
       }
 
       #endregion
@@ -202,5 +240,7 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
       {
          return Task.FromResult(EmptyTransaction.Instance);
       }
+
+
    }
 }

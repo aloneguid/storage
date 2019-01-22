@@ -2,27 +2,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.Management.DataLake.Store;
-using Microsoft.Azure.Management.DataLake.Store.Models;
+using Microsoft.Azure.DataLake.Store;
+using Microsoft.Azure.DataLake.Store.RetryPolicies;
 using Storage.Net.Blob;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
 {
    class DirectoryBrowser
    {
-      private readonly DataLakeStoreFileSystemManagementClient _client;
-      private readonly string _accountName;
+      private readonly AdlsClient _client;
+      private readonly int _listBatchSize;
 
-      public DirectoryBrowser(DataLakeStoreFileSystemManagementClient client, string accountName)
+      public DirectoryBrowser(AdlsClient client, int listBatchSize)
       {
-         _client = client;
-         _accountName = accountName;
+         _client = client ?? throw new ArgumentNullException(nameof(client));
+         _listBatchSize = listBatchSize;
       }
 
-      public async Task<IEnumerable<BlobId>> Browse(ListOptions options, CancellationToken token)
+      public async Task<IReadOnlyCollection<BlobId>> Browse(ListOptions options, CancellationToken token)
       {
          string path = StoragePath.Normalize(options.FolderPath);
          var result = new List<BlobId>();
@@ -34,51 +33,102 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
 
       private async Task Browse(string path, ListOptions options, ICollection<BlobId> container, CancellationToken token)
       {
-         FileStatusesResult statuses;
+         List<BlobId> batch;
 
          try
          {
-            statuses = await _client.FileSystem.ListFileStatusAsync(_accountName, path,
-               null, null, null, null,
-               token);
+            /*IEnumerable<BlobId> entries = _client
+               .EnumerateDirectory(path, UserGroupRepresentation.ObjectID)
+               .Select(n => ToBlobId(path, n, options.IncludeMetaWhenKnown))
+               .Where(options.IsMatch);*/
+
+            IEnumerable<BlobId> entries = 
+               (await EnumerateDirectoryAsync(path, options, UserGroupRepresentation.ObjectID))
+               .Where(options.IsMatch);
+
+            if (options.BrowseFilter != null)
+            {
+               entries = entries.Where(options.BrowseFilter);
+            }
+
+            batch = entries.ToList();
          }
          //skip files with forbidden access
-         catch (AdlsErrorException ex) when (ex.Response.StatusCode == HttpStatusCode.Forbidden)
+         catch (AdlsException ex) when (ex.HttpStatus == HttpStatusCode.Forbidden || ex.HttpStatus == HttpStatusCode.NotFound)
          {
-            statuses = null;
+            batch = null;
          }
 
-         if (statuses == null) return;
-
-         List<BlobId> batch =
-            statuses.FileStatuses.FileStatus
-               .Select(p => ToBlobId(path, p))
-               .Where(options.IsMatch)
-               .ToList();
+         if (batch == null) return;
 
          if (options.Add(container, batch)) return;
 
          if(options.Recurse)
          {
-            int folderCount = batch.Count(b => b.Kind == BlobItemKind.Folder);
-            if(folderCount > 0)
+            List<BlobId> folders = batch.Where(b => b.Kind == BlobItemKind.Folder).ToList();
+
+            if(folders.Count > 0)
             {
-               await Task.WhenAll(batch.Select(bid => Browse(
-                  StoragePath.Combine(path, bid.Id),
-                  options,
-                  container,
-                  token
+               await Task.WhenAll(
+                  folders.Select(bid => Browse(
+                     StoragePath.Combine(path, bid.Id),
+                     options,
+                     container,
+                     token
                   )));
             }
          }
       }
-
-      private static BlobId ToBlobId(string path, FileStatusProperties properties)
+      private async Task<IReadOnlyCollection<BlobId>> EnumerateDirectoryAsync(
+         string path,
+         ListOptions options,
+         UserGroupRepresentation userIdFormat = UserGroupRepresentation.ObjectID,
+         CancellationToken cancelToken = default)
       {
-         if (properties.Type == FileType.FILE)
-            return new BlobId(path, properties.PathSuffix, BlobItemKind.File);
+         var result = new List<BlobId>();
+
+         string listAfter = "";
+
+         while(options.MaxResults == null || result.Count < options.MaxResults.Value)
+         {
+            List<DirectoryEntry> page = await EnumerateDirectoryAsync(path, _listBatchSize, listAfter, "", userIdFormat, cancelToken);
+
+            //no more results
+            if(page == null || page.Count == 0)
+            {
+               break;
+            }
+
+            //set pointer to next page
+            listAfter = page[page.Count - 1].Name;
+
+            result.AddRange(page.Select(p => ToBlobId(path, p, options.IncludeMetaWhenKnown)));
+         }
+
+         return result;
+      }
+
+      internal async Task<List<DirectoryEntry>> EnumerateDirectoryAsync(string path,
+         int maxEntries, string listAfter, string listBefore, UserGroupRepresentation userIdFormat = UserGroupRepresentation.ObjectID, CancellationToken cancelToken = default(CancellationToken))
+      {
+         if (string.IsNullOrEmpty(path)) throw new ArgumentException("Path is null");
+
+         var resp = new OperationResponse();
+         List<DirectoryEntry> page = await Core.ListStatusAsync(path, listAfter, listBefore, maxEntries, userIdFormat, _client,
+            new RequestOptions(new ExponentialRetryPolicy()),
+            resp);
+         return page;
+         //return new FileStatusOutput(listBefore, listAfter, maxEntries, userIdFormat, _client, path);
+      }
+
+      private static BlobId ToBlobId(string path, DirectoryEntry entry, bool includeMeta)
+      {
+         BlobMeta meta = includeMeta ? new BlobMeta(entry.Length, null, entry.LastModifiedTime) : null;
+
+         if (entry.Type == DirectoryEntryType.FILE)
+            return new BlobId(path, entry.Name, BlobItemKind.File) { Meta = meta };
          else
-            return new BlobId(path, properties.PathSuffix, BlobItemKind.Folder);
+            return new BlobId(path, entry.Name, BlobItemKind.Folder) { Meta = meta };
       }
    }
 }

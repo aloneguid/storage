@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Storage.Net.Blob;
+using Storage.Net.Streaming;
 
 namespace Storage.Net.ZipFile
 {
@@ -19,11 +20,6 @@ namespace Storage.Net.ZipFile
       public ZipFileBlobStorageProvider(string filePath)
       {
          _filePath = filePath;
-      }
-
-      public Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default(CancellationToken))
-      {
-         throw new NotImplementedException();
       }
 
       public void Dispose()
@@ -42,9 +38,26 @@ namespace Storage.Net.ZipFile
          }
       }
 
-      public Task<IEnumerable<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default(CancellationToken))
+      public Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default(CancellationToken))
       {
-         throw new NotImplementedException();
+         ZipArchive zipArchive = GetArchive(false);
+         if(zipArchive == null)
+         {
+            return Task.FromResult<IReadOnlyCollection<bool>>(new bool[ids.Count()]);
+         }
+
+         var result = new List<bool>();
+
+         foreach(string id in ids)
+         {
+            string nid = StoragePath.Normalize(id, false);
+
+            ZipArchiveEntry entry = zipArchive.GetEntry(nid);
+
+            result.Add(entry != null);
+         }
+
+         return Task.FromResult<IReadOnlyCollection<bool>>(result);
       }
 
       public Task<IEnumerable<BlobMeta>> GetMetaAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default(CancellationToken))
@@ -52,32 +65,40 @@ namespace Storage.Net.ZipFile
          var result = new List<BlobMeta>();
          ZipArchive zipArchive = GetArchive(false);
 
-         foreach(string id in ids)
+         foreach (string id in ids)
          {
             string nid = StoragePath.Normalize(id, false);
 
-            ZipArchiveEntry entry = zipArchive.GetEntry(id);
+            try
+            {
+               ZipArchiveEntry entry = zipArchive.GetEntry(nid);
 
-            long originalLength = entry.Length;
+               long originalLength = entry.Length;
 
-            result.Add(new BlobMeta(originalLength, null));
+               result.Add(new BlobMeta(originalLength, null, entry.LastWriteTime));
+            }
+            catch (NullReferenceException)
+            {
+               result.Add(null);
+            }
          }
 
          return Task.FromResult<IEnumerable<BlobMeta>>(result);
       }
 
-      public Task<IEnumerable<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken = default(CancellationToken))
+      public Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken = default(CancellationToken))
       {
-         if (!File.Exists(_filePath)) return Task.FromResult(Enumerable.Empty<BlobId>());
+         if (!File.Exists(_filePath)) return Task.FromResult<IReadOnlyCollection<BlobId>>(new List<BlobId>());
 
          ZipArchive archive = GetArchive(false);
 
          if (options == null) options = new ListOptions();
          IEnumerable<BlobId> ids = archive.Entries.Select(ze => new BlobId(ze.FullName, BlobItemKind.File));
+         if (options.FilePrefix != null) ids = ids.Where(id => id.Id.StartsWith(options.FilePrefix));
+         if (options.BrowseFilter != null) ids = ids.Where(id => options.BrowseFilter(id));
          if (options.MaxResults != null) ids = ids.Take(options.MaxResults.Value);
-         if (options.Prefix != null) ids = ids.Where(id => id.Id.StartsWith(options.Prefix));
 
-         return Task.FromResult<IEnumerable<BlobId>>(ids.ToList());
+         return Task.FromResult<IReadOnlyCollection<BlobId>>(ids.ToList());
       }
 
       public Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken = default(CancellationToken))
@@ -98,16 +119,60 @@ namespace Storage.Net.ZipFile
          return Task.FromResult(EmptyTransaction.Instance);
       }
 
-      public async Task WriteAsync(string id, Stream sourceStream, bool append = false, CancellationToken cancellationToken = default(CancellationToken))
+      public async Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)
       {
          id = StoragePath.Normalize(id, false);
          ZipArchive archive = GetArchive(true);
+
 
          ZipArchiveEntry entry = archive.CreateEntry(id, CompressionLevel.Optimal);
          using (Stream dest = entry.Open())
          {
             await sourceStream.CopyToAsync(dest);
          }
+      }
+
+      public Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      {
+         ZipArchive archive = GetArchive(true);
+
+         foreach(string id in ids)
+         {
+            string nid = StoragePath.Normalize(id, false);
+
+            ZipArchiveEntry entry = archive.GetEntry(nid);
+            if (entry == null) continue;
+
+            try
+            {
+               entry.Delete();
+            }
+            catch(NotSupportedException)
+            {
+
+            }
+         }
+
+         return Task.FromResult(true);
+      }
+
+
+      public Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
+      {
+         var callbackStream = new FixedStream(new MemoryStream(), null, fx =>
+         {
+            id = StoragePath.Normalize(id, false);
+            ZipArchive archive = GetArchive(true);
+
+            ZipArchiveEntry entry = archive.CreateEntry(id, CompressionLevel.Optimal);
+            using (Stream dest = entry.Open())
+            {
+               fx.Parent.Position = 0;
+               fx.Parent.CopyTo(dest);
+            }
+         });
+
+         return Task.FromResult<Stream>(callbackStream);
       }
 
       private ZipArchive GetArchive(bool? forWriting)
@@ -130,8 +195,19 @@ namespace Storage.Net.ZipFile
             {
                _fileStream = File.Open(_filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
 
+               if (!exists)
+               {
+                  //create archive, then reopen in Update mode as certain operations only work in update mode
+
+                  using (var archive = new ZipArchive(_fileStream, ZipArchiveMode.Create, true))
+                  {
+
+                  }
+
+               }
+
                _archive = new ZipArchive(_fileStream,
-                  exists ? ZipArchiveMode.Update : ZipArchiveMode.Create,
+                  ZipArchiveMode.Update,
                   true);
             }
             else

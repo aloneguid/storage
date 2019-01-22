@@ -1,6 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;netstandard1.6</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
     <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
     <AssemblyTitle>Storage.Net.Microsoft.Azure.EventHub</AssemblyTitle>
     <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
@@ -27,9 +27,9 @@
     <Compile Include="..\JsonExtensions.cs" Link="JsonExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.EventHubs" Version="1.0.3" />
-    <PackageReference Include="Microsoft.Azure.EventHubs.Processor" Version="1.0.3" />
-    <PackageReference Include="NetBox" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Azure.EventHubs" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Azure.EventHubs.Processor" Version="2.1.0" />
+    <PackageReference Include="NetBox" Version="2.1.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Storage.Net\Storage.Net.csproj" />

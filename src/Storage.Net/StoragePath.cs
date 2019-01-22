@@ -24,6 +24,9 @@ namespace Storage.Net
       /// </summary>
       public static string PathStrSeparator = new string(PathSeparator, 1);
 
+      /// <summary>
+      /// Returns '/'
+      /// </summary>
       public static readonly string RootFolderPath = "/";
 
       /// <summary>
@@ -49,11 +52,12 @@ namespace Storage.Net
       }
 
       /// <summary>
-      /// Normalizes path
+      /// Normalizes path. Normalisation makes sure that:
+      /// - When path is null returns root path '/'
+      /// - path separators are trimmed from both ends
       /// </summary>
       /// <param name="path"></param>
       /// <param name="includeTrailingRoot">When true, includes trailing '/' as path prefix</param>
-      /// <returns></returns>
       public static string Normalize(string path, bool includeTrailingRoot = false)
       {
          if (path == null) return RootFolderPath;
@@ -78,15 +82,22 @@ namespace Storage.Net
       }
 
       /// <summary>
-      /// Splits path in parts
+      /// Splits path in parts. Leading and trailing path separators are totally ignored. Note that it returns
+      /// null if input path is null.
       /// </summary>
-      /// <param name="path"></param>
-      /// <returns></returns>
-      public static string[] GetParts(string path)
+      public static string[] Split(string path)
       {
          if (path == null) return null;
 
          return path.Split(new[] { PathSeparator }, StringSplitOptions.RemoveEmptyEntries).Select(NormalizePart).ToArray();
+      }
+
+      /// <summary>
+      /// Checks if path is root folder path
+      /// </summary>
+      public static bool IsRootPath(string path)
+      {
+         return string.IsNullOrEmpty(path) || path == RootFolderPath;
       }
    }
 }

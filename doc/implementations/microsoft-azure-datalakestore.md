@@ -2,33 +2,44 @@
 
 Microsoft Azure implementations reside in a separate package hosted on [NuGet](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.DataLake.Store/). Follow the link for installation instructions.
 
-This package tries to abstract access to [Azure Data Lake Store](https://azure.microsoft.com/en-gb/services/data-lake-store/) and making them available as `IBlobStorage`.
+This package tries to abstract access to [Azure Data Lake Store](https://azure.microsoft.com/en-gb/services/data-lake-store/) and making them available as `IBlobStorage`. It's internals are heavily optimised for performance and includes a lot of workarounds in order to make the official ADLS SDK actually be useful to a user without spending weeks on StackOverflow. 
 
 ## Using
 
-This library supports service-to-service authentication either with a **client secret** or a **client certificate** (not supported in preview yet).
+This library supports service-to-service authentication with **client secret**. This authentication requires the following parts:
 
-To create an instance of the client:
+- **Account name** is the name of the ADLS account as displayed in the portal: ![Adl 04](adl-04.png)
+- **TenantId** is active directory __tenant id__
+- **PrincipalId** is active directory principal's __client id__ (application id)
+- **PrincipalSecret** is active directory principal's __secret__
+
+Please see appendix at the end of this page which helps to set this up for the first time.
+
+## Connecting
+
+### With code
 
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeStoreByClientSecret(
-	"account_name", credentials);
+	"account_name", "tenantId", "principalId", "principalSecret");
 ```
 
-where:
-- **Account name** is the name of the ADLS account as displayed in the portal: ![Adl 04](adl-04.png)
-- **Credentials** is an instance of `NetworkCredential` class where:
-  - **domain** is active directory __tenant id__
-  - **username** is active directory principal's __client id__ (application id)
-  - **password** is active directory principal's __secret__
+### With connection string
 
-see appendix below on how to obtain this information.
+```csharp
+// do not forget to initialise azure module before your application uses connection strings:
+StorageFactory.Modules.UseAzureDataLakeStorage();
+
+// create the storage
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.datalakestore://accountName=...;tenantId=...;principalId=...;principalSecret=...");
+```
 
 ### Important Implementation Notes
 
 - Uploading a file always overwrites existing file if it exists, otherwise a new file is created. This still takes one network call.
 - Appending to a file checks if a file exists first, so this operation results in two network calls.
 - List operation supports folder hierary, folders, recursion, and limiting by number of items, i.e. no limitations whatsoever.
+- Application that creates an instance of IBlobStorage is highly recomended to set `ServicePointManager.DefaultConnectionLimit` to the number of threads application wants the sdk to use before creating any instance of IBlobStorage. By default ServicePointManager.DefaultConnectionLimit is set to 2 by .NET runtime which might be a small number.
 
 
 ## Appendix. Creating a Service Principal

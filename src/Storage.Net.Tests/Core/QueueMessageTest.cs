@@ -24,7 +24,7 @@ namespace Storage.Net.Tests.Core
          Assert.Equal("id", qm2.Id);
          Assert.Equal("content", qm2.StringContent);
          Assert.Equal(4, qm2.DequeueCount);
-         Assert.Equal(1, qm2.Properties.Count);
+         Assert.Single(qm2.Properties);
          Assert.Equal("value", qm2.Properties["key"]);
       }
 

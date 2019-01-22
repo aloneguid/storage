@@ -1,64 +1,54 @@
-﻿/*using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Storage.Net.Application;
+using System.Threading;
+using System.Threading.Tasks;
 using Storage.Net.Messaging;
 
 namespace Storage.Net.Queue.Files
 {
-   class DiskMessagePublisherReceiver : IMessagePublisher, IMessageReceiver
+   /// <summary>
+   /// Messages themselves can be human readable. THe speed is not an issue because the main bottleneck is disk anyway.
+   /// </summary>
+   class DiskMessagePublisherReceiver : PollingMessageReceiver, IMessagePublisher
    {
-      private readonly SqliteDriver _sql;
+      private readonly string _root;
 
-      public DiskMessagePublisherReceiver(DirectoryInfo directory)
+      public DiskMessagePublisherReceiver(string directoryPath)
       {
-         _sql = new SqliteDriver(directory);
-
-         //_sql.EnsureTable("message", "Id");
+         _root = directoryPath ?? throw new ArgumentNullException(nameof(directoryPath));
       }
 
       #region [ Publisher ]
 
-      public void PutMessage(QueueMessage message)
+      public Task PutMessagesAsync(IEnumerable<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
-         throw new NotImplementedException();
-      }
+         foreach (QueueMessage msg in messages)
+         {
+            string filePath = Path.Combine(_root, GenerateDiskId());
 
-      public void PutMessages(IEnumerable<QueueMessage> messages)
-      {
-         throw new NotImplementedException();
+            File.WriteAllBytes(filePath, msg.ToByteArray());
+         }
+
+         return Task.FromResult(true);
       }
 
       #endregion
 
       #region [ Receiver ]
 
-      public QueueMessage ReceiveMessage()
-      {
-         throw new NotImplementedException();
-      }
-
-      public IEnumerable<QueueMessage> ReceiveMessages(int count)
-      {
-         throw new NotImplementedException();
-      }
-
-      public void ConfirmMessage(QueueMessage message)
-      {
-         throw new NotImplementedException();
-      }
-
-      public void StartMessagePump(Action<QueueMessage> onMessage)
+      protected override Task<IReadOnlyCollection<QueueMessage>> ReceiveMessagesAsync(int maxBatchSize, CancellationToken cancellationToken)
       {
          throw new NotImplementedException();
       }
 
       #endregion
 
-      public void Dispose()
+      private static string GenerateDiskId()
       {
-      }
+         DateTime now = DateTime.UtcNow;
 
+         return now.ToString("yyyy-MM-dd-hh-mm-ss-ffff") + ".txt";
+      }
    }
 }
-*/

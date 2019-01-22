@@ -22,9 +22,9 @@ namespace Storage.Net.Messaging
       /// Client must call this when message processing has succeeded, otherwise the message will reappear,
       /// however this depends on implementation details when and how.
       /// </summary>
-      /// <param name="message"></param>
+      /// <param name="messages"></param>
       /// <param name="cancellationToken"></param>
-      Task ConfirmMessageAsync(QueueMessage message, CancellationToken cancellationToken = default);
+      Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default);
 
       /// <summary>
       /// Moves the message to a dead letter queue
@@ -35,7 +35,7 @@ namespace Storage.Net.Messaging
       /// Starts automatic message pumping trying to use native features as much as possible. Message pump stops when you dispose the instance.
       /// Disposing the instance will also stop message pump for you.
       /// </summary>
-      Task StartMessagePumpAsync(Func<IEnumerable<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default);
+      Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default);
 
       /// <summary>
       /// Starts a new transaction

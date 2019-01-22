@@ -38,9 +38,31 @@ _provider = StorageFactory.Blobs.AzureBlobStorageByContainerSasUri(containerSasU
 
 Note that URI in this case should be a **container SAS URI**, and this is the only option supported.
 
+Alternatively, you can create it with a storage.net connection string:
+
+```csharp
+// do not forget to initialise azure module before your application uses connection strings:
+StorageFactory.Modules.UseAzureStorage();
+
+// create the storage
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blob://account=account_name;container=container_name;key=storage_key;createIfNotExists=false/true");
+```
+
+The last parameter *createIfNotExists* is optional.
+
 ## Tables
 
-> todo
+Create using factory:
+
+```csharp
+IKeyValueStorage storage = StorageFactory.KeyValue.AzureTableStorage("account_name", "account_key");
+```
+
+Create using connection string:
+
+```csharp
+IKeyValueStorage storage = StorageFactory.KeyValue.FromConnectionString("azure.table://account=account_name;key=storage_key");
+```
 
 ## Messaging
 
@@ -53,7 +75,7 @@ Azure Storage has built-in support for [queues](https://docs.microsoft.com/en-us
 To create a queue publisher:
 
 ```csharp
-IMessagePublisherpublisher = StorageFactory.Messages.AzureStorageQueuePublisher("storage_name", "storage_key", "queue_name");
+IMessagePublisherPublisher = StorageFactory.Messages.AzureStorageQueuePublisher("storage_name", "storage_key", "queue_name");
 ```
 
 This publisher is attached to the queue **queue_name** which will be created if it doesnt exist.
@@ -66,12 +88,16 @@ IMessageReceiver receiver = StorageFactory.Messages.AzureStorageQueueReceiver("s
 
 This receiver will be attached to **queue_name** queue. **invisibility_timeout** specifies for how long the message will be invisible to other receivers after it's received from the queue. If you don't confirm the message receive operation, message will appear on the queue again.
 
-### Azure Service Bus
+#### Create with connection strings
 
-This functionality is only available to `.NET 4.5.1` framework users due to limited support in .NET SDK.
+Publisher:
 
-> todo
+```csharp
+IMessagePublisher publisher = StorageFactory.Messaging.PublisherFromConnectionString("azure.queue://account=account_name;key=account_key;queue=queue_name");
+```
 
-### Azure Event Hub
+Receiver:
 
-> todo
+```csharp
+IMessageReceiver receiver = StorageFactory.Messaging.ReceiverFromConnectionString("azure.queue://account=account_name;key=account_key;queue=queue_name[;invisibility=invisibility_timeout_timespan][;poll=polling_interval_timespan]");
+```

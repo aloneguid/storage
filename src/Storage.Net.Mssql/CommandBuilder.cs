@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Text;
-using NetBox;
-using NetBox.Data;
-using Storage.Net.Table;
+using Storage.Net.KeyValue;
+using NetBox.Extensions;
 
 namespace Storage.Net.Mssql
 {
@@ -19,14 +18,14 @@ namespace Storage.Net.Mssql
          _config = config;
       }
 
-      public SqlCommand BuidInsertRowCommand(string tableName, TableRow row, bool isUpsert)
+      public SqlCommand BuidInsertRowCommand(string tableName, Value row, bool isUpsert)
       {
          var s = new StringBuilder();
 
          if(isUpsert && row.Keys.Count > 0)
          {
             s.Append("IF EXISTS (SELECT [");
-            s.Append(_config.PartitionKeyColumnName);
+            s.Append(SqlConstants.PartitionKey);
             s.Append("] FROM [");
             s.Append(tableName);
             s.Append("]");
@@ -43,42 +42,18 @@ namespace Storage.Net.Mssql
 
          cmd.Parameters.AddWithValue("@pk", row.PartitionKey);
          cmd.Parameters.AddWithValue("@rk", row.RowKey);
-
-         int c = 0;
-         foreach(KeyValuePair<string, DynamicValue> cell in row)
-         {
-            string pn = $"@c{c++}";
-            cmd.Parameters.AddWithValue(pn, cell.Value.OriginalValue);
-         }
+         cmd.Parameters.AddWithValue("@doc", row.JsonSerialise());
 
          return cmd;
       }
 
-      private void AddUpdate(string tableName, StringBuilder s, TableRow row)
+      private void AddUpdate(string tableName, StringBuilder s, Value row)
       {
          s.Append("UPDATE [");
          s.Append(tableName);
-         s.Append("] SET ");
-
-         bool first = true;
-         int i = 0;
-         foreach(KeyValuePair<string, DynamicValue> cell in row)
-         {
-            if(first)
-            {
-               first = false;
-            }
-            else
-            {
-               s.Append(", ");
-            }
-
-            s.Append("[");
-            s.Append(cell.Key);
-            s.Append("] = ");
-            s.Append("@c");
-            s.Append(i++);
-         }
+         s.Append("] SET [");
+         s.Append(SqlConstants.DocumentColumn);
+         s.Append("] = @doc");
 
          AddWhereLimit(s);
       }
@@ -86,36 +61,23 @@ namespace Storage.Net.Mssql
       private void AddWhereLimit(StringBuilder s)
       {
          s.Append(" WHERE [");
-         s.Append(_config.PartitionKeyColumnName);
+         s.Append(SqlConstants.PartitionKey);
          s.Append("] = @pk AND [");
-         s.Append(_config.RowKeyColumnName);
+         s.Append(SqlConstants.RowKey);
          s.Append("] = @rk");
       }
 
-      private void AddInsert(string tableName, StringBuilder s, TableRow row)
+      private void AddInsert(string tableName, StringBuilder s, Value row)
       {
          s.Append("INSERT INTO [");
          s.Append(tableName);
          s.Append("] (");
-         s.Append(_config.PartitionKeyColumnName);
+         s.Append(SqlConstants.PartitionKey);
          s.Append(", ");
-         s.Append(_config.RowKeyColumnName);
-
-         foreach (KeyValuePair<string, DynamicValue> cell in row)
-         {
-            s.Append(", [");
-            s.Append(cell.Key);
-            s.Append("]");
-         }
-
-         s.Append(") values (@pk, @rk");
-         for (int i = 0; i < row.Count; i++)
-         {
-            s.Append(", @c");
-            s.Append(i);
-         }
-
-         s.Append(")");
+         s.Append(SqlConstants.RowKey);
+         s.Append(", ");
+         s.Append(SqlConstants.DocumentColumn);
+         s.Append(") values (@pk, @rk, @doc)");
       }
    }
 }

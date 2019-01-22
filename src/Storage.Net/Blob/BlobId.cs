@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Storage.Net.Blob
@@ -24,9 +25,19 @@ namespace Storage.Net.Blob
       public string Id { get; private set; }
 
       /// <summary>
+      /// Contains blob metadata when known, optional.
+      /// </summary>
+      public BlobMeta Meta { get; set; }
+
+      /// <summary>
       /// Gets full path to this blob which is a combination of folder path and blob name
       /// </summary>
       public string FullPath => StoragePath.Combine(FolderPath, Id);
+
+      /// <summary>
+      /// Custom provider-specific properties
+      /// </summary>
+      public Dictionary<string, string> Properties { get; set; }
 
       /// <summary>
       /// Create a new instance
@@ -36,7 +47,7 @@ namespace Storage.Net.Blob
       public BlobId(string fullId, BlobItemKind kind = BlobItemKind.File)
       {
          string path = StoragePath.Normalize(fullId);
-         string[] parts = StoragePath.GetParts(path);
+         string[] parts = StoragePath.Split(path);
 
          Id = parts.Last();
          FolderPath = parts.Length > 1

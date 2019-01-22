@@ -35,6 +35,9 @@ namespace Storage.Net
          return new AzureServiceBusQueueReceiver(connectionString, queueName, peekLock);
       }
 
+      /// <summary>
+      /// Creates an instance of Azure Service Bus Topic publisher.
+      /// </summary>
       public static IMessagePublisher AzureServiceBusTopicPublisher(this IMessagingFactory factory,
          string connectionString,
          string topicName)
@@ -42,6 +45,9 @@ namespace Storage.Net
          return new AzureServiceBusTopicPublisher(connectionString, topicName);
       }
 
+      /// <summary>
+      /// Creates Azure Service Bus Receiver
+      /// </summary>
       public static IMessageReceiver AzureServiceBusTopicReceiver(this IMessagingFactory factory,
          string connectionString,
          string topicName,

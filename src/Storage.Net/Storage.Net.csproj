@@ -22,9 +22,7 @@
     <PackageLicenseUrl>https://github.com/aloneguid/storage/blob/master/LICENSE</PackageLicenseUrl>
     <Description>Storage.Net abstracts storage implementation like blobs, tables and messages from the .NET Application Developer. It's aimed to provide a generic interface regardless on which storage provider you are using. It also provides both synchronous and asynchronous alternatives of all methods and implements it to the best effort possible. Supports .NET 4.5.1 and .NET Standard 1.6.</Description>
     <LangVersion>latest</LangVersion>
-    <PackageReleaseNotes>v5.9.0
-- new feature: in-memory implementation for message queues
-- azure storage queue stability greatly improved</PackageReleaseNotes>
+    <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -43,13 +41,10 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NetBox" Version="2.0.1" />
+    <PackageReference Include="NetBox" Version="2.1.1" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Blob\Extensions\" />
     <Folder Include="Properties\" />
   </ItemGroup>
-   <ItemGroup>
-      <DotNetCliToolReference Include="dotnet-housework" Version="0.0.7" />
-   </ItemGroup>
 </Project>

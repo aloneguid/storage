@@ -1,5 +1,6 @@
 ﻿using Microsoft.ServiceFabric.Data;
 using Microsoft.ServiceFabric.Data.Collections;
+using NetBox;
 using NetBox.Extensions;
 using Storage.Net.Blob;
 using System;
@@ -22,7 +23,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
          _collectionName = collectionName ?? throw new ArgumentNullException(nameof(collectionName));
       }
 
-      public async Task<IEnumerable<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken)
+      public async Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken)
       {
          if (options == null) options = new ListOptions();
 
@@ -41,7 +42,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
                {
                   KeyValuePair<string, byte[]> current = enumerator.Current;
 
-                  if (options.Prefix == null || current.Key.StartsWith(options.Prefix))
+                  if (options.FilePrefix == null || current.Key.StartsWith(options.FilePrefix))
                   {
                      result.Add(new BlobId(current.Key, BlobItemKind.File));
                   }
@@ -66,6 +67,11 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
          }
       }
 
+      public Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
+      {
+         throw new NotImplementedException();
+      }
+
       private async Task WriteAsync(string id, Stream sourceStream, CancellationToken cancellationToken)
       {
          id = ToId(id);
@@ -75,7 +81,16 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
          using (ServiceFabricTransaction tx = GetTransaction())
          {
             IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
+            IReliableDictionary<string, BlobMetaTag> metaColl = await OpenMetaCollectionAsync();
 
+            var meta = new BlobMetaTag
+            {
+               LastModificationTime = DateTimeOffset.UtcNow,
+               Length = value.LongLength,
+               Md = value.GetHash(HashType.Md5).ToHexString()
+            };
+
+            await metaColl.AddOrUpdateAsync(tx.Tx, id, meta, (k, v) => meta);
             await coll.AddOrUpdateAsync(tx.Tx, id, value, (k, v) => value);
 
             await tx.CommitAsync();
@@ -142,7 +157,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
          }
       }
 
-      public async Task<IEnumerable<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(ids);
 
@@ -181,7 +196,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
                }
                else
                {
-                  var meta = new BlobMeta(value.Value.Length, null);
+                  var meta = new BlobMeta(value.Value.Length, null, null);
                   result.Add(meta);
                }
             }
@@ -193,6 +208,14 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
       {
          IReliableDictionary<string, byte[]> collection = 
             await _stateManager.GetOrAddAsync<IReliableDictionary<string, byte[]>>(_collectionName);
+
+         return collection;
+      }
+
+      private async Task<IReliableDictionary<string, BlobMetaTag>> OpenMetaCollectionAsync()
+      {
+         IReliableDictionary<string, BlobMetaTag> collection =
+            await _stateManager.GetOrAddAsync<IReliableDictionary<string, BlobMetaTag>>(_collectionName + "_meta");
 
          return collection;
       }

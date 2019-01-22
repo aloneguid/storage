@@ -12,22 +12,26 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
    class AzureBlobDirectoryBrowser
    {
       private readonly CloudBlobContainer _container;
+      private readonly bool _prependContainerName;
+      private readonly SemaphoreSlim _throttler;
 
-      public AzureBlobDirectoryBrowser(CloudBlobContainer container)
+      public AzureBlobDirectoryBrowser(CloudBlobContainer container, bool prependContainerName, int maxTasks)
       {
          _container = container;
+         _prependContainerName = prependContainerName;
+         _throttler = new SemaphoreSlim(maxTasks);
       }
 
-      public async Task<IEnumerable<BlobId>> ListFolder(ListOptions options, CancellationToken cancellationToken)
+      public async Task<IReadOnlyCollection<BlobId>> ListFolderAsync(ListOptions options, CancellationToken cancellationToken)
       {
          var result = new List<BlobId>();
 
-         await ListFolder(result, options.FolderPath, options, cancellationToken);
+         await ListFolderAsync(result, options.FolderPath, options, cancellationToken);
 
          return result;
       }
 
-      public async Task ListFolder(List<BlobId> container, string path, ListOptions options, CancellationToken cancellationToken)
+      private async Task ListFolderAsync(List<BlobId> container, string path, ListOptions options, CancellationToken cancellationToken)
       {
          CloudBlobDirectory dir = GetCloudBlobDirectory(path);
 
@@ -35,49 +39,49 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          var batch = new List<BlobId>();
 
-         do
+         await _throttler.WaitAsync();
+         try
          {
-            BlobResultSegment segment = await dir.ListBlobsSegmentedAsync(
-               false, BlobListingDetails.None, null, token, null, null, cancellationToken);
-
-            token = segment.ContinuationToken;
-
-            foreach (IListBlobItem blob in segment.Results)
+            do
             {
-               BlobId id;
+               BlobResultSegment segment = await dir.ListBlobsSegmentedAsync(
+                  false, BlobListingDetails.None, null, token, null, null, cancellationToken);
 
-               if (blob is CloudBlockBlob blockBlob)
-                  id = new BlobId(blockBlob.Name, BlobItemKind.File);
-               else if (blob is CloudAppendBlob appendBlob)
-                  id = new BlobId(appendBlob.Name, BlobItemKind.File);
-               else if (blob is CloudBlobDirectory dirBlob)
-                  id = new BlobId(dirBlob.Prefix, BlobItemKind.Folder);
-               else
-                  throw new InvalidOperationException($"unknown item type {blob.GetType()}");
+               token = segment.ContinuationToken;
 
-               if (options.IsMatch(id))
+               foreach (IListBlobItem blob in segment.Results)
                {
-                  batch.Add(id);
-               }
-            }
+                  BlobId id = ToBlobId(blob, options.IncludeMetaWhenKnown);
 
+                  if (options.IsMatch(id) && (options.BrowseFilter == null || options.BrowseFilter(id)))
+                  {
+                     batch.Add(id);
+                  }
+               }
+
+            }
+            while (token != null && ((options.MaxResults == null) || (container.Count + batch.Count < options.MaxResults.Value)));
          }
-         while (token != null && ((options.MaxResults == null) || ( container.Count + batch.Count < options.MaxResults.Value)));
+         finally
+         {
+            _throttler.Release();
+         }
 
          batch = batch.Where(options.IsMatch).ToList();
          if (options.Add(container, batch)) return;
 
+         options.ListProgressCallback?.Invoke(container.Count, -1);
+
          if (options.Recurse)
          {
             List<BlobId> folderIds = batch.Where(r => r.Kind == BlobItemKind.Folder).ToList();
-            foreach (BlobId folderId in folderIds)
-            {
-               await ListFolder(
+
+            await Task.WhenAll(
+               folderIds.Select(folderId => ListFolderAsync(
                   container,
                   StoragePath.Combine(path, folderId.Id),
                   options,
-                  cancellationToken);
-            }
+                  cancellationToken)));
          }
       }
 
@@ -88,6 +92,49 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          CloudBlobDirectory dir = _container.GetDirectoryReference(path);
 
          return dir;
+      }
+
+      private BlobId ToBlobId(IListBlobItem blob, bool attachMetadata)
+      {
+         BlobId id;
+
+         if (blob is CloudBlockBlob blockBlob)
+         {
+            string fullName = _prependContainerName
+               ? StoragePath.Combine(_container.Name, blockBlob.Name)
+               : blockBlob.Name;
+
+            id = new BlobId(fullName, BlobItemKind.File);
+         }
+         else if (blob is CloudAppendBlob appendBlob)
+         {
+            string fullName = _prependContainerName
+               ? StoragePath.Combine(_container.Name, appendBlob.Name)
+               : appendBlob.Name;
+
+            id = new BlobId(fullName, BlobItemKind.File);
+         }
+         else if (blob is CloudBlobDirectory dirBlob)
+         {
+            string fullName = _prependContainerName
+               ? StoragePath.Combine(_container.Name, dirBlob.Prefix)
+               : dirBlob.Prefix;
+
+            id = new BlobId(fullName, BlobItemKind.Folder);
+         }
+         else
+         {
+            throw new InvalidOperationException($"unknown item type {blob.GetType()}");
+         }
+
+         //attach metadata if we can
+         if(attachMetadata && blob is CloudBlob cloudBlob)
+         {
+            id.Meta = AzureUniversalBlobStorageProvider.GetblobMeta(cloudBlob);
+         }
+
+         return id;
+
       }
 
    }

@@ -1,7 +1,7 @@
 ﻿using System;
 using Storage.Net.Blob;
 using Storage.Net.Messaging;
-using Storage.Net.Table;
+using Storage.Net.KeyValue;
 using System.Net;
 using Storage.Net.Microsoft.Azure.EventHub;
 using System.Collections.Generic;
