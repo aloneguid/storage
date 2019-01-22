@@ -25,7 +25,7 @@ namespace Storage.Net.Tests.Integration.Blobs
       public AzureBlobStorageContainerProviderTest() : base("azure") { }
    }
 
-   public class AzureUniversalBlobStorageProviderTest : BlobStorageTest
+   /*public class AzureUniversalBlobStorageProviderTest : BlobStorageTest
    {
       public AzureUniversalBlobStorageProviderTest() : base("azure2", "testcontainer/") { }
    }
@@ -63,7 +63,7 @@ namespace Storage.Net.Tests.Integration.Blobs
    public class ZipFileBlobStorageProviderTest : BlobStorageTest
    {
       public ZipFileBlobStorageProviderTest() : base("zip") { }
-   }
+   }*/
 
 
    #endregion
