@@ -25,10 +25,10 @@ namespace Storage.Net.Tests.Integration.Aws
         private const string TestFileName = @"test.bin";
         private const string TestFilePath = @"Data\" + TestFileName;
 
-        private const string AccessKey = "";
-        private const string SecretKey = "";
+        private const string AccessKey = "Q3AM3UQ867SPQQA43P2F";
+        private const string SecretKey = "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG";
 
-        private const string ServiceUrl = "";
+        private const string ServiceUrl = "https://play.minio.io:9000";
 
         private const string TestBucket = "storage-test-bucket";
 
