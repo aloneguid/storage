@@ -25,8 +25,10 @@ namespace Storage.Net.Tests.Integration.Aws
         private const string TestFileName = @"test.bin";
         private const string TestFilePath = @"Data\" + TestFileName;
 
-        private const string AccessKey = "admin";
-        private const string SecretKey = "password";
+        private const string AccessKey = "";
+        private const string SecretKey = "";
+
+        private const string ServiceUrl = "";
 
         private const string TestBucket = "storage-test-bucket";
 
@@ -40,7 +42,7 @@ namespace Storage.Net.Tests.Integration.Aws
                 .AmazonS3BlobStorage(AccessKey, SecretKey, TestBucket, new AmazonS3Config()
                 {
                     RegionEndpoint = RegionEndpoint.USEast1,
-                    ServiceURL = "https://127.0.0.1:9000",
+                    ServiceURL = ServiceUrl,
                     ForcePathStyle = true
                 });
             _awsClient = ((IAwsS3BlobStorageNativeOperations)_blobStorage);
