@@ -8,38 +8,6 @@ namespace Storage.Net.Tests.Integration.Utils
 {
     public static class Utility
     {
-        public static string CalculateMd5(byte[] bytes)
-        {
-            using (var stream = new MemoryStream(bytes))
-            {
-                return CalculateMd5(stream);
-            }
-        }
-
-        public static string CalculateMd5(Stream stream)
-        {
-            using (var md5 = MD5.Create())
-            {
-                var hash = md5.ComputeHash(stream);
-                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-            }
-        }
-
-        public static string CalculateMd5(string path)
-        {
-            using (var stream = File.OpenRead(path))
-            {
-                return CalculateMd5(stream);
-            }
-        }
-
-        public static bool VerifyMd5Hash(string lHash, string rHash)
-        {
-            // Create a StringComparer an compare the hashes.
-            StringComparer comparer = StringComparer.OrdinalIgnoreCase;
-            return 0 == comparer.Compare(lHash, rHash);
-        }
-
         public static void ClearTestData(string fileProjectRelativePath)
         {
             var fileName = fileProjectRelativePath.Split(Path.DirectorySeparatorChar).LastOrDefault();
