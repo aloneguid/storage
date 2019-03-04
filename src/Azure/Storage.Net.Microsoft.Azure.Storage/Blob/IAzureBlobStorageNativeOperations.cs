@@ -16,6 +16,11 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       /// </summary>
       CloudBlobClient NativeBlobClient { get; }
 
+      /// <summary>
+      /// Returns Uri to Azure Blob with Shared Access Token.
+      /// </summary>
+      Task<string> GetSasUriAsync(string id, SharedAccessBlobPolicy sasConstraints, CancellationToken cancellationToken = default);
+
 #if DEBUG
       /// <summary>
       /// Opens Azure Blob for random access
