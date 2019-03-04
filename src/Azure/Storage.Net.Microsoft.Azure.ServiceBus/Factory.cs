@@ -1,5 +1,6 @@
-﻿using Storage.Net.Messaging;
-using Storage.Net.Microsoft.Azure.ServiceBus;
+﻿using Microsoft.Azure.ServiceBus;
+using Storage.Net.Messaging;
+using Storage.Net.Microsoft.Azure.ServiceBus.Messaging;
 
 namespace Storage.Net
 {
@@ -29,10 +30,12 @@ namespace Storage.Net
       /// <param name="connectionString">Service Bus connection string</param>
       /// <param name="queueName">Queue name in Service Bus</param>
       /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
+      /// <param name="messageHandlerOptions">Optional native message handler options if you need to override them</param>
       public static IMessageReceiver AzureServiceBusQueueReceiver(this IMessagingFactory factory,
-         string connectionString, string queueName, bool peekLock = true)
+         string connectionString, string queueName, bool peekLock = true,
+         MessageHandlerOptions messageHandlerOptions = null)
       {
-         return new AzureServiceBusQueueReceiver(connectionString, queueName, peekLock);
+         return new AzureServiceBusQueueReceiver(connectionString, queueName, peekLock, messageHandlerOptions);
       }
 
       /// <summary>
@@ -52,9 +55,10 @@ namespace Storage.Net
          string connectionString,
          string topicName,
          string subscriptionName,
-         bool peekLock = true)
+         bool peekLock = true,
+         MessageHandlerOptions messageHandlerOptions = null)
       {
-         return new AzureServiceBusTopicReceiver(connectionString, topicName, subscriptionName, peekLock);
+         return new AzureServiceBusTopicReceiver(connectionString, topicName, subscriptionName, peekLock, messageHandlerOptions);
       }
 
    }

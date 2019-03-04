@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using System.Threading;
 
-namespace Storage.Net.Microsoft.Azure.ServiceBus
+namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
 {
    /// <summary>
    /// Implements Azure Service Bus Queue

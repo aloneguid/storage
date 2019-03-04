@@ -4,24 +4,19 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Config.Net;
 using NetBox;
 using NetBox.Extensions;
 using NetBox.Generator;
-using Storage.Net.Aws.Blob;
 using Storage.Net.Blob;
-using Storage.Net.Blob.Files;
-using Storage.Net.Microsoft.Azure.Storage.Blob;
-using Storage.Net.Tests.Integration;
 using Xunit;
 
 namespace Storage.Net.Tests.Integration.Blobs
 {
-   #region [ Test Variations ]
+    #region [ Test Variations ]
 
-   public class AzureBlobStorageProviderTest : BlobStorageTest
+    public class AzureBlobStorageProviderTest : BlobStorageTest
    {
       public AzureBlobStorageProviderTest() : base("azure", "testcontainer/") { }
    }
