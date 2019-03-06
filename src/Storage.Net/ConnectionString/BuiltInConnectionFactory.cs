@@ -25,6 +25,13 @@ namespace Storage.Net.ConnectionString
             return new InMemoryBlobStorage();
          }
 
+         if(connectionString.Prefix == "zip")
+         {
+            connectionString.GetRequired("path", true, out string path);
+
+            return new ZipFileBlobStorageProvider(path);
+         }
+
          return null;
       }
 

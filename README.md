@@ -10,6 +10,17 @@ It provides generic interface for popular cloud storage providers like Amazon S3
 
 It also implements in-memory and on-disk versions of all the abstractions for faster local machine development. [Connection strings](doc/cs.md) are supported too!
 
+## Index
+
+- [Intentions](#intentions)
+  - [Local Development](#local-development)
+- [Implementations](#implementations)
+- [Getting Started](#getting-started)
+  - [Blob Storage](#blob-storage)
+  - [Key-Value Storage](#key-value-storage)
+  - [Messaging](#messaging)
+- [Contributing](#contributing)
+
 ## Intentions
 
 I'm not really sure why there are so many similar storage providers performing almost identical function but no standard. Why do we need to learn a new SDK to achieve something trivial we've done so many times before? I have no idea. If you don't either, use this library.
@@ -33,6 +44,12 @@ Storage.Net defines three different storage types:
 - **Blob Storage** is used to store arbitrary files of any size, that do not have any structure. The data is essentially a binary file. Examples of a blog storage is Azure Blob Storage, Amazon S3, local folder etc.
 - **Key-Value Storage** is essentialy a large dictionary where key points to some value. Examples are Azure Table Storage, etcd etc.
 - **Messaging** is an asynchronous mechanism to send and receive messages between disconnected systems. For instance MSMQ, Azure Service Bus, Amazon Simple Queue etc.
+
+Some effort has been made to document the supported storage options, you are welcome to contribute to documentation, or browse the following sections:
+
+- [Blob Storage Implementations](doc/blobs.md)
+- Messaging Implementations (todo)
+- Key-Value Implementations (todo)
 
 ## Geting Started
 
