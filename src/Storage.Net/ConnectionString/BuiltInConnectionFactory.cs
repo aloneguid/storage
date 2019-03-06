@@ -6,6 +6,7 @@ using Storage.Net.Blob.Files;
 using Storage.Net.KeyValue;
 using Storage.Net.KeyValue.Files;
 using Storage.Net.Messaging;
+using Storage.Net.Messaging.Files;
 
 namespace Storage.Net.ConnectionString
 {
@@ -56,6 +57,13 @@ namespace Storage.Net.ConnectionString
             return InMemoryMessagePublisherReceiver.CreateOrGet(name);
          }
 
+         if(connectionString.Prefix == "disk")
+         {
+            connectionString.GetRequired("path", true, out string path);
+
+            return new DiskMessagePublisherReceiver(path);
+         }
+
          return null;
       }
 
@@ -67,6 +75,14 @@ namespace Storage.Net.ConnectionString
 
             return InMemoryMessagePublisherReceiver.CreateOrGet(name);
          }
+
+         if(connectionString.Prefix == "disk")
+         {
+            connectionString.GetRequired("path", true, out string path);
+
+            return new DiskMessagePublisherReceiver(path);
+         }
+
 
          return null;
       }

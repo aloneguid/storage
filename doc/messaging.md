@@ -33,3 +33,28 @@ IMessageReceiver receiver = StorageFactory.Messages.ReceiverFromConnectionString
 
 ### Local Disk
 
+Local disk messaging is backed by a local folder on disk. Every message publish call creates a new file in that folder with `.snm` extension (**S**torage **N**et **M**essage) which is a binary representation of the message.
+
+Message receiver polls this folder every second to check for new files, get the oldest ones and transforms into `QueueMessage`. 
+
+The provider is built into Storage.Net main package.
+
+To construct, use:
+
+```csharp
+IMessagePublisher publisher = StorageFactory.Messages.DirectoryFilesPublisher(path);
+
+IMessageReceiver receiver = StorageFactory.Messages.DirectoryFilesReceiver(path);
+```
+
+`path` is the path to the storage directory. It doesn't have to exist at the moment of construction, and will be created automagically.
+
+To construct from a connection string, use:
+
+```csharp
+IMessagePublisher publisher = StorageFactory.Messages.PublisherFromConnectionString("disk://path=the_path");
+
+IMessageReceiver receiver = StorageFactory.Messages.ReceiverFromConnectionString("disk://path=the_path");
+```
+
+...
