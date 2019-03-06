@@ -49,11 +49,25 @@ namespace Storage.Net.ConnectionString
 
       public IMessagePublisher CreateMessagePublisher(StorageConnectionString connectionString)
       {
+         if(connectionString.Prefix == "inmemory")
+         {
+            connectionString.GetRequired("name", true, out string name);
+
+            return InMemoryMessagePublisherReceiver.CreateOrGet(name);
+         }
+
          return null;
       }
 
       public IMessageReceiver CreateMessageReceiver(StorageConnectionString connectionString)
       {
+         if(connectionString.Prefix == "inmemory")
+         {
+            connectionString.GetRequired("name", true, out string name);
+
+            return InMemoryMessagePublisherReceiver.CreateOrGet(name);
+         }
+
          return null;
       }
    }

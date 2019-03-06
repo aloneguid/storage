@@ -48,7 +48,7 @@ Storage.Net defines three different storage types:
 Some effort has been made to document the supported storage options, you are welcome to contribute to documentation, or browse the following sections:
 
 - [Blob Storage Implementations](doc/blobs.md)
-- Messaging Implementations (todo)
+- [Messaging Implementations](doc/messaging.md)
 - Key-Value Implementations (todo)
 
 ## Geting Started
