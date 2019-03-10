@@ -7,6 +7,7 @@ using Storage.Net.ConnectionString;
 using Storage.Net.KeyValue;
 using Storage.Net.KeyValue.Files;
 using Storage.Net.Messaging.Large;
+using Storage.Net.Messaging.Files;
 
 namespace Storage.Net
 {
@@ -126,6 +127,28 @@ namespace Storage.Net
       public static IMessageReceiver InMemoryReceiver(this IMessagingFactory factory, string name)
       {
          return InMemoryMessagePublisherReceiver.CreateOrGet(name);
+      }
+
+      /// <summary>
+      /// Creates a message publisher that uses local disk directory as a backing store
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="path">Path to directory to use as a backing store. If it doesn't exist, it will be created.</param>
+      /// <returns></returns>
+      public static IMessagePublisher DirectoryFilesPublisher(this IMessagingFactory factory, string path)
+      {
+         return new DiskMessagePublisherReceiver(path);
+      }
+
+      /// <summary>
+      /// Creates a message receiver that uses local disk directory as a backing store
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="path">Path to directory to use as a backing store. If it doesn't exist, it will be created.</param>
+      /// <returns></returns>
+      public static IMessageReceiver DirectoryFilesReceiver(this IMessagingFactory factory, string path)
+      {
+         return new DiskMessagePublisherReceiver(path);
       }
 
       /// <summary>

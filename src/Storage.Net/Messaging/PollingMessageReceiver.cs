@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NetBox.Extensions;
@@ -12,6 +11,17 @@ namespace Storage.Net.Messaging
    /// </summary>
    public abstract class PollingMessageReceiver : IMessageReceiver
    {
+      private readonly int _pollIntervalSeconds;
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="pollIntervalSeconds">Poll interval, defaults to one second</param>
+      protected PollingMessageReceiver(int pollIntervalSeconds = 1)
+      {
+         _pollIntervalSeconds = pollIntervalSeconds;
+      }
+
       /// <summary>
       /// See interface
       /// </summary>
@@ -60,10 +70,10 @@ namespace Storage.Net.Messaging
       {
          if (onMessageAsync == null) throw new ArgumentNullException(nameof(onMessageAsync));
 
-         PollTasks(onMessageAsync, maxBatchSize, cancellationToken).Forget();
+         PollTasksAsync(onMessageAsync, maxBatchSize, cancellationToken).Forget();
       }
 
-      private async Task PollTasks(Func<IReadOnlyCollection<QueueMessage>, Task> callback, int maxBatchSize, CancellationToken cancellationToken)
+      private async Task PollTasksAsync(Func<IReadOnlyCollection<QueueMessage>, Task> callback, int maxBatchSize, CancellationToken cancellationToken)
       {
          IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesAsync(maxBatchSize, cancellationToken);
          while (messages != null && messages.Count > 0)
@@ -73,9 +83,9 @@ namespace Storage.Net.Messaging
             messages = await ReceiveMessagesAsync(maxBatchSize, cancellationToken);
          }
 
-         await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken).ContinueWith(async (t) =>
+         await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), cancellationToken).ContinueWith(async (t) =>
          {
-            await PollTasks(callback, maxBatchSize, cancellationToken);
+            await PollTasksAsync(callback, maxBatchSize, cancellationToken);
          });
       }
 

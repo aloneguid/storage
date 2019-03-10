@@ -8,7 +8,7 @@ using NetBox.Extensions;
 using Shouldly;
 using Storage.Net.Amazon.Aws.Blob;
 using Storage.Net.Blob;
-using Storage.Net.Misc;
+using Storage.Net.Model;
 using Storage.Net.Tests.Integration.Utils;
 using Xunit;
 using Xunit.Abstractions;
@@ -20,7 +20,7 @@ namespace Storage.Net.Tests.Integration.Aws
         private readonly ITestOutputHelper _output;
         private readonly IBlobStorage _blobStorage;
         private readonly IAwsS3BlobStorageNativeOperations _awsClient;
-        private const string MimeType = Misc.MimeType.ApplicationOctetStream;
+        private const string OctMimeType = MimeType.ApplicationOctetStream;
 
         private const string TestFileName = @"test.bin";
         private const string TestFilePath = @"Data\" + TestFileName;
@@ -63,7 +63,7 @@ namespace Storage.Net.Tests.Integration.Aws
 
             // Act
 
-            uploadUrl = await _awsClient.GetUploadUrlAsync(id, MimeType);
+            uploadUrl = await _awsClient.GetUploadUrlAsync(id, OctMimeType);
 
             // Assert
 
@@ -82,7 +82,7 @@ namespace Storage.Net.Tests.Integration.Aws
             long srcSize = 0;
             long dstSize = -1;
 
-            string uploadUrl = await _awsClient.GetUploadUrlAsync(id, MimeType);
+            string uploadUrl = await _awsClient.GetUploadUrlAsync(id, OctMimeType);
 
             // Act
 
@@ -92,7 +92,7 @@ namespace Storage.Net.Tests.Integration.Aws
 
                 using (var client = new WebClient())
                 {
-                    client.Headers.Add("Content-Type", MimeType);
+                    client.Headers.Add("Content-Type", OctMimeType);
                     await client.UploadDataTaskAsync(uploadUrl, HttpVerb.PUT.ToString(), fs.ToByteArray());
                 }
             }
@@ -124,7 +124,7 @@ namespace Storage.Net.Tests.Integration.Aws
 
             // Act
 
-            downloadUrl = await _awsClient.GetDownloadUrlAsync(id, MimeType);
+            downloadUrl = await _awsClient.GetDownloadUrlAsync(id, OctMimeType);
 
             // Assert
 
@@ -143,7 +143,7 @@ namespace Storage.Net.Tests.Integration.Aws
             long srcSize = await UploadFileAsync(id, TestFileName);
             long dstSize = -1;
 
-            string downloadUrl = await _awsClient.GetDownloadUrlAsync(id, MimeType);
+            string downloadUrl = await _awsClient.GetDownloadUrlAsync(id, OctMimeType);
 
             _output.WriteLine(downloadUrl);
 
@@ -151,7 +151,7 @@ namespace Storage.Net.Tests.Integration.Aws
 
             using (var client = new WebClient())
             {
-                client.Headers.Add("Content-Type", MimeType);
+                client.Headers.Add("Content-Type", OctMimeType);
                 var result = await client.DownloadDataTaskAsync(downloadUrl);
                 dstSize = result.LongLength;
             }

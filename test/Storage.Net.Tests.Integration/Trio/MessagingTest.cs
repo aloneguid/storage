@@ -42,6 +42,11 @@ namespace Storage.Net.Tests.Integration.Messaging
         public AzureEventHubMessageQeueueTest() : base("azure-eventhub") { }
     }
 
+    public class DirectoryFilesMessagingTest : MessagingTest
+    {
+        public DirectoryFilesMessagingTest() : base("directory") { }
+    }
+
     /*public class InMemoryMessageQeueueTest : MessagingTest
     {
         public InMemoryMessageQeueueTest() : base("inmemory") { }
@@ -141,6 +146,11 @@ namespace Storage.Net.Tests.Integration.Messaging
                     string inMemoryTag = RandomGenerator.RandomString;
                     _receiver = StorageFactory.Messages.InMemoryReceiver(inMemoryTag);
                     _publisher = StorageFactory.Messages.InMemoryPublisher(inMemoryTag);
+                    break;
+                case "directory":
+                    string path = TestDir.FullName;
+                    _publisher = StorageFactory.Messages.DirectoryFilesPublisher(path);
+                    _receiver = StorageFactory.Messages.DirectoryFilesReceiver(path);
                     break;
 #if DEBUG
                 case "amazon-sqs":
