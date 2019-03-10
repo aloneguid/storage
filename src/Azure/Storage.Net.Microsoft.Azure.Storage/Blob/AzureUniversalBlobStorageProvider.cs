@@ -271,11 +271,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       public async Task<string> GetSasUriAsync(
          string id,
          SharedAccessBlobPolicy sasConstraints,
+         bool createContainer,
          CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(id);
 
-         (CloudBlobContainer container, string path) = await GetPartsAsync(id, false);
+         (CloudBlobContainer container, string path) = await GetPartsAsync(id, createContainer);
 
          if (container == null) return null;
 

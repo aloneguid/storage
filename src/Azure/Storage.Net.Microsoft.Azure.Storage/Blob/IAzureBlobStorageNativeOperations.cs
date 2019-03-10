@@ -19,7 +19,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       /// <summary>
       /// Returns Uri to Azure Blob with Shared Access Token.
       /// </summary>
-      Task<string> GetSasUriAsync(string id, SharedAccessBlobPolicy sasConstraints, CancellationToken cancellationToken = default);
+      Task<string> GetSasUriAsync(string id, SharedAccessBlobPolicy sasConstraints, bool createContainer = false, CancellationToken cancellationToken = default);
 
 #if DEBUG
       /// <summary>

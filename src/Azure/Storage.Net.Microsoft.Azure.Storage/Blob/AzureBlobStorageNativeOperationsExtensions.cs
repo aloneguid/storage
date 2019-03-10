@@ -23,6 +23,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          return await provider.GetSasUriAsync(
             id,
             GetSharedAccessBlobPolicy(minutesToExpiration, SharedAccessBlobPermissions.Read),
+            createContainer: false,
             cancellationToken);
       }
 
@@ -38,6 +39,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          return await provider.GetSasUriAsync(
             id,
             GetSharedAccessBlobPolicy(minutesToExpiration, SharedAccessBlobPermissions.Write),
+            createContainer: true,
             cancellationToken);
       }
 
@@ -53,6 +55,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          return await provider.GetSasUriAsync(
             id,
             GetSharedAccessBlobPolicy(minutesToExpiration, SharedAccessBlobPermissions.Read | SharedAccessBlobPermissions.Write),
+            createContainer: true,
             cancellationToken);
       }
 
