@@ -7,6 +7,7 @@ This page lists blob storage providers available in Storage.Net
 - [In-Memory](#inmemory)
 - [Local Disk](#local-disk)
 - [Zip File](#zip-file)
+- [FTP](#ftp)
 
 ### In-Memory
 
@@ -63,4 +64,8 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("zip://path=pat
 ```
 
 ...
+
+### FTP
+
+FTP implementation is wrapping an amazing [FluentFTP](https://github.com/robinrodricks/FluentFTP) library. 
 
