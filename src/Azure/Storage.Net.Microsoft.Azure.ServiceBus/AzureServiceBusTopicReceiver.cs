@@ -20,14 +20,21 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
 
       private readonly SubscriptionClient _client;
       private readonly bool _peekLock;
+      private readonly AzureReceiverOptions _azureRegisterMessageOptions;
       private readonly ConcurrentDictionary<string, Message> _messageIdToBrokeredMessage = new ConcurrentDictionary<string, Message>();
 
       /// <summary>
       /// Creates an instance of Azure Service Bus receiver with connection
       /// </summary>
       public AzureServiceBusTopicReceiver(string connectionString, string topicName, string subscriptionName, bool peekLock = true)
+         : this(connectionString, topicName, subscriptionName, new AzureReceiverOptions() { MaxAutoRenewDuration = TimeSpan.FromMinutes(1), MaxConcurrentCalls = 1 }, peekLock)
+      {
+      }
+
+      public AzureServiceBusTopicReceiver(string connectionString, string topicName, string subscriptionName, AzureReceiverOptions azureRegisterMessageOptions, bool peekLock = true)
       {
          _client = new SubscriptionClient(connectionString, topicName, subscriptionName, peekLock ? ReceiveMode.PeekLock : ReceiveMode.ReceiveAndDelete);
+         _azureRegisterMessageOptions = azureRegisterMessageOptions;
          _peekLock = peekLock;
       }
 
@@ -82,11 +89,11 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       {
          if (onMessage == null) throw new ArgumentNullException(nameof(onMessage));
 
-         var options = new MessageHandlerOptions(ExceptionReceiverHandler)
+         var options = new MessageHandlerOptions(_azureRegisterMessageOptions.ExceptionReceivedHandler ?? ExceptionReceiverHandler)
          {
             AutoComplete = false,
-            MaxAutoRenewDuration = TimeSpan.FromMinutes(1),
-            MaxConcurrentCalls = 1
+            MaxAutoRenewDuration = _azureRegisterMessageOptions.MaxAutoRenewDuration,
+            MaxConcurrentCalls = _azureRegisterMessageOptions.MaxConcurrentCalls
          };
 
          _client.PrefetchCount = maxBatchSize;

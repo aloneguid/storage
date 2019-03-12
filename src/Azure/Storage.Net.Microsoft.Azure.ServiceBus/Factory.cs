@@ -1,4 +1,5 @@
-﻿using Storage.Net.Messaging;
+﻿using System;
+using Storage.Net.Messaging;
 using Storage.Net.Microsoft.Azure.ServiceBus;
 
 namespace Storage.Net
@@ -55,6 +56,26 @@ namespace Storage.Net
          bool peekLock = true)
       {
          return new AzureServiceBusTopicReceiver(connectionString, topicName, subscriptionName, peekLock);
+      }
+
+      /// <summary>
+      /// Creates Azure Service Bus Receiver
+      /// </summary>
+      public static IMessageReceiver AzureServiceBusTopicReceiver(this IMessagingFactory factory,
+         string connectionString,
+         string topicName,
+         string subscriptionName,
+         int maxConcurrentCalls,
+         TimeSpan maxAutoRenewDuration,
+         bool peekLock = true)
+      {
+         var registerOptions = new AzureReceiverOptions
+         {
+            MaxAutoRenewDuration = maxAutoRenewDuration,
+            MaxConcurrentCalls = maxConcurrentCalls
+         };
+
+         return new AzureServiceBusTopicReceiver(connectionString, topicName, subscriptionName, registerOptions, peekLock);
       }
 
    }

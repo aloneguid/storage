@@ -20,6 +20,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
 
       private readonly QueueClient _client;
       private readonly bool _peekLock;
+      private readonly AzureReceiverOptions _azureRegisterMessageOptions;
       private readonly ConcurrentDictionary<string, Message> _messageIdToBrokeredMessage = new ConcurrentDictionary<string, Message>();
 
       /// <summary>
