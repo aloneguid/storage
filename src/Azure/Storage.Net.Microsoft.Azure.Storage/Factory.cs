@@ -97,6 +97,7 @@ namespace Storage.Net
       {
          return new AzureStorageQueueReceiver(accountName, storageKey, queueName, messageVisibilityTimeout);
       }
+
       /// <summary>
       /// Creates an instance of a receiver from Azure Storage Queues
       /// </summary>
@@ -118,5 +119,67 @@ namespace Storage.Net
          return new AzureStorageQueueReceiver(accountName, storageKey, queueName, messageVisibilityTimeout, messagePollingInterval);
       }
 
+      /// <summary>
+      /// Creates an instance of Azure Table Storage using development storage.
+      /// </summary>
+      /// <param name="factory">Factory reference</param>
+      /// <returns></returns>
+      public static IKeyValueStorage AzureTableDevelopmentStorage(this IKeyValueStorageFactory factory)
+      {
+         return new AzureTableStorageKeyValueStorage();
+      }
+
+      /// <summary>
+      /// Creates a blob storage implementation based on Microsoft Azure Blob Storage using development storage.
+      /// </summary>
+      /// <param name="factory">Reference to factory</param>
+      /// <returns>Generic blob storage interface</returns>
+      public static IBlobStorage AzureBlobDevelopmentStorage(this IBlobStorageFactory factory)
+      {
+         return new AzureUniversalBlobStorageProvider();
+      }
+
+      /// <summary>
+      /// Creates an instance of a publisher to Azure Storage Queues using development storage.
+      /// </summary>
+      /// <param name="factory">Factory reference</param>
+      /// <param name="queueName">Queue name</param>
+      /// <returns>Generic message publisher interface</returns>
+      public static IMessagePublisher AzureDevelopmentStorageQueuePublisher(this IMessagingFactory factory,
+         string queueName)
+      {
+         return new AzureStorageQueuePublisher(queueName);
+      }
+
+      /// <summary>
+      /// Creates an instance of a receiver from Azure Storage Queues using development storage.
+      /// </summary>
+      /// <param name="factory">Factory reference</param>
+      /// <param name="queueName">Queue name</param>
+      /// <param name="messageVisibilityTimeout">Message visibility timeout</param>
+      /// <returns>Generic message receiver interface</returns>
+      public static IMessageReceiver AzureDevelopmentStorageQueueReceiver(this IMessagingFactory factory,
+         string queueName,
+         TimeSpan messageVisibilityTimeout)
+      {
+         return new AzureStorageQueueReceiver(queueName, messageVisibilityTimeout);
+      }
+
+      /// <summary>
+      /// Creates an instance of a receiver from Azure Storage Queues using development storage.
+      /// </summary>
+      /// <param name="factory">Factory reference</param>
+      /// <param name="queueName">Queue name</param>
+      /// <param name="messageVisibilityTimeout">Message visibility timeout</param>
+      /// <param name="messagePollingInterval">Storage Queues do not support listening therefore internally we poll for new messages. This parameters
+      /// indicates how often this happens</param>
+      /// <returns>Generic message receiver interface</returns>
+      public static IMessageReceiver AzureDevelopmentStorageQueueReceiver(this IMessagingFactory factory,
+         string queueName,
+         TimeSpan messageVisibilityTimeout,
+         TimeSpan messagePollingInterval)
+      {
+         return new AzureStorageQueueReceiver(queueName, messageVisibilityTimeout, messagePollingInterval);
+      }
    }
 }

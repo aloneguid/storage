@@ -30,6 +30,21 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          _client = account.CreateCloudBlobClient();
       }
 
+      /// <summary>
+      /// For use with local development storage.
+      /// </summary>
+      public AzureUniversalBlobStorageProvider()
+      {
+         if(CloudStorageAccount.TryParse(Constants.UseDevelopmentStorageConnectionString, out CloudStorageAccount account))
+         {
+            _client = account.CreateCloudBlobClient();
+         }
+         else
+         {
+            throw new InvalidOperationException($"Cannot connect to local development environment when creating blob storage provider.");
+         }
+      }
+
       public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobId(ids);

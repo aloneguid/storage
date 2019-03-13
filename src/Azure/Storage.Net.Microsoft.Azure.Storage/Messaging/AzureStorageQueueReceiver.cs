@@ -67,6 +67,52 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
       }
 
       /// <summary>
+      /// For use with local development storage.
+      /// Creates an instance of Azure Storage Queue receiver 
+      /// </summary>
+      /// <param name="queueName">Queue name</param>
+      /// <param name="messageVisibilityTimeout">
+      /// Timeout value passed in GetMessage call in the Storage Queue. The value indicates how long the message
+      /// will be hidden before it reappears in the queue. Therefore you must call <see cref="ConfirmMessagesAsync(IReadOnlyCollection{QueueMessage}, CancellationToken)"/>
+      /// to complete and delete it.
+      /// </param>
+      public AzureStorageQueueReceiver(string queueName, TimeSpan messageVisibilityTimeout)
+         : this(queueName, messageVisibilityTimeout, TimeSpan.FromMinutes(1))
+      {
+      }
+
+      /// <summary>
+      /// For use with local development storage.
+      /// Creates an instance of Azure Storage Queue receiver 
+      /// </summary>
+      /// <param name="queueName">Queue name</param>
+      /// <param name="messageVisibilityTimeout">
+      /// Timeout value passed in GetMessage call in the Storage Queue. The value indicates how long the message
+      /// will be hidden before it reappears in the queue. Therefore you must call <see cref="ConfirmMessagesAsync(IReadOnlyCollection{QueueMessage}, CancellationToken)"/>
+      /// to complete and delete it.
+      /// </param>
+      /// <param name="messagePumpPollingTimeout">
+      /// Indicates how often message pump will ping for new messages in the queue.
+      /// </param>
+      public AzureStorageQueueReceiver(string queueName, TimeSpan messageVisibilityTimeout, TimeSpan messagePumpPollingTimeout)
+      {
+         if(CloudStorageAccount.TryParse(Constants.UseDevelopmentStorageConnectionString, out CloudStorageAccount account))
+         {
+            _client = account.CreateCloudQueueClient();
+         }
+         else
+         {
+            throw new InvalidOperationException($"Cannot connect to local development environment when creating queue receiver.");
+         }
+
+         _queueName = queueName;
+         _queue = _client.GetQueueReference(queueName);
+         _queue.CreateIfNotExistsAsync().Wait();
+         _messageVisibilityTimeout = messageVisibilityTimeout;
+         _messagePumpPollingTimeout = messagePumpPollingTimeout;
+      }
+
+      /// <summary>
       /// Returns an approximate message count for this queue
       /// </summary>
       /// <returns></returns>
@@ -77,9 +123,9 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
          return _queue.ApproximateMessageCount ?? 0;
       }
 
-      private async Task<CloudQueue> GetDeadLetterQueue()
+      private async Task<CloudQueue> GetDeadLetterQueueAsync()
       {
-         if (_deadLetterQueue == null)
+         if(_deadLetterQueue == null)
          {
             _deadLetterQueue = _client.GetQueueReference(_queueName + "-deadletter");
             await _deadLetterQueue.CreateIfNotExistsAsync();
@@ -101,7 +147,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
       private async Task ConfirmAsync(QueueMessage message)
       {
          Converter.SplitId(message.Id, out string id, out string popReceipt);
-         if (popReceipt == null)
+         if(popReceipt == null)
             throw new ArgumentException("cannot delete message by short id", id);
 
          await _queue.DeleteMessageAsync(id, popReceipt);
@@ -117,7 +163,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
          dead.Properties["deadLetterReason"] = reason;
          dead.Properties["deadLetterError"] = errorDescription;
 
-         CloudQueue deadLetterQueue = await GetDeadLetterQueue();
+         CloudQueue deadLetterQueue = await GetDeadLetterQueueAsync();
 
          await deadLetterQueue.AddMessageAsync(Converter.ToCloudQueueMessage(message));
 
@@ -130,11 +176,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
       protected override async Task<IReadOnlyCollection<QueueMessage>> ReceiveMessagesAsync(int count, CancellationToken cancellationToken)
       {
          //storage queue can get up to 32 messages
-         if (count > 32)
+         if(count > 32)
             count = 32;
 
          IEnumerable<CloudQueueMessage> batch = await _queue.GetMessagesAsync(count, _messageVisibilityTimeout, null, null, cancellationToken);
-         if(batch == null) return null;
+         if(batch == null)
+            return null;
          List<QueueMessage> result = batch.Select(Converter.ToQueueMessage).ToList();
          return result.Count == 0 ? null : result;
       }

@@ -13,12 +13,20 @@ namespace Storage.Net.Microsoft.Azure.Storage
    {
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == "azure.blob")
+         if(connectionString.Prefix == Constants.AzureBlobConnectionPrefix)
          {
-            connectionString.GetRequired("account", true, out string accountName);
-            connectionString.GetRequired("key", true, out string key);
+            if(bool.TryParse(connectionString.Get(Constants.DevelopmentParam), out bool useDevelopment)
+               && useDevelopment)
+            {
+               return new AzureUniversalBlobStorageProvider();
+            }
+            else
+            {
+               connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
+               connectionString.GetRequired(Constants.KeyParam, true, out string key);
 
-            return new AzureUniversalBlobStorageProvider(accountName, key);
+               return new AzureUniversalBlobStorageProvider(accountName, key);
+            }
          }
 
          return null;
@@ -26,12 +34,20 @@ namespace Storage.Net.Microsoft.Azure.Storage
 
       public IKeyValueStorage CreateKeyValueStorage(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == "azure.tables")
+         if(connectionString.Prefix == Constants.AzureTablesConnectionPrefix)
          {
-            connectionString.GetRequired("account", true, out string acctountName);
-            connectionString.GetRequired("key", true, out string key);
+            if(bool.TryParse(connectionString.Get(Constants.DevelopmentParam), out bool useDevelopment)
+               && useDevelopment)
+            {
+               return new AzureTableStorageKeyValueStorage();
+            }
+            else
+            {
+               connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
+               connectionString.GetRequired(Constants.KeyParam, true, out string key);
 
-            return new AzureTableStorageKeyValueStorage(acctountName, key);
+               return new AzureTableStorageKeyValueStorage(accountName, key);
+            }
          }
 
          return null;
@@ -39,13 +55,22 @@ namespace Storage.Net.Microsoft.Azure.Storage
 
       public IMessagePublisher CreateMessagePublisher(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == "azure.queue")
+         if(connectionString.Prefix == Constants.AzureQueueConnectionPrefix)
          {
-            connectionString.GetRequired("account", true, out string accountName);
-            connectionString.GetRequired("key", true, out string key);
-            connectionString.GetRequired("queue", true, out string queueName);
+            connectionString.GetRequired(Constants.QueueParam, true, out string queueName);
 
-            return new AzureStorageQueuePublisher(accountName, key, queueName);
+            if(bool.TryParse(connectionString.Get(Constants.DevelopmentParam), out bool useDevelopment)
+               && useDevelopment)
+            {
+               return new AzureStorageQueuePublisher(queueName);
+            }
+            else
+            {
+               connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
+               connectionString.GetRequired(Constants.KeyParam, true, out string key);
+
+               return new AzureStorageQueuePublisher(accountName, key, queueName);
+            }
          }
 
          return null;
@@ -53,14 +78,12 @@ namespace Storage.Net.Microsoft.Azure.Storage
 
       public IMessageReceiver CreateMessageReceiver(StorageConnectionString connectionString)
       {
-         if (connectionString.Prefix == "azure.queue")
+         if(connectionString.Prefix == Constants.AzureQueueConnectionPrefix)
          {
-            connectionString.GetRequired("account", true, out string accountName);
-            connectionString.GetRequired("key", true, out string key);
-            connectionString.GetRequired("queue", true, out string queueName);
+            connectionString.GetRequired(Constants.QueueParam, true, out string queueName);
 
-            string invisibilityString = connectionString.Get("invisibility");
-            string pollingTimeoutString = connectionString.Get("poll");
+            string invisibilityString = connectionString.Get(Constants.InvisibilityParam);
+            string pollingTimeoutString = connectionString.Get(Constants.PollParam);
 
             if(!TimeSpan.TryParse(invisibilityString, out TimeSpan invisibility))
             {
@@ -72,7 +95,18 @@ namespace Storage.Net.Microsoft.Azure.Storage
                polling = TimeSpan.FromMinutes(1);
             }
 
-            return new AzureStorageQueueReceiver(accountName, key, queueName, invisibility, polling);
+            if(bool.TryParse(connectionString.Get(Constants.DevelopmentParam), out bool useDevelopment)
+               && useDevelopment)
+            {
+               return new AzureStorageQueueReceiver(queueName, invisibility, polling);
+            }
+            else
+            {
+               connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
+               connectionString.GetRequired(Constants.KeyParam, true, out string key);
+
+               return new AzureStorageQueueReceiver(accountName, key, queueName, invisibility, polling);
+            }
          }
 
          return null;

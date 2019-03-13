@@ -48,6 +48,20 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blob://a
 
 The last parameter *createIfNotExists* is optional.
 
+### Using Azure Storage Emulator
+
+In order to develop against a locally installed Azure Storage Emulator, you can either use the factory method:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureBlobDevelopmentStorage();
+```
+
+or use the special connection string:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blob://development=true");
+```
+
 ## Tables
 
 Create using factory:
@@ -59,7 +73,21 @@ IKeyValueStorage storage = StorageFactory.KeyValue.AzureTableStorage("account_na
 Create using connection string:
 
 ```csharp
-IKeyValueStorage storage = StorageFactory.KeyValue.FromConnectionString("azure.table://account=account_name;key=storage_key");
+IKeyValueStorage storage = StorageFactory.KeyValue.FromConnectionString("azure.tables://account=account_name;key=storage_key");
+```
+
+### Using Azure Storage Emulator
+
+Either use the factory method:
+
+```csharp
+IKeyValueStorage storage = StorageFactory.KeyValue.AzureTableDevelopmentStorage();
+```
+
+or use the special connection string:
+
+```csharp
+IKeyValueStorage storage = StorageFactory.KeyValue.FromConnectionString("azure.tables://development=true");
 ```
 
 ## Messaging
@@ -98,4 +126,36 @@ Receiver:
 
 ```csharp
 IMessageReceiver receiver = StorageFactory.Messaging.ReceiverFromConnectionString("azure.queue://account=account_name;key=account_key;queue=queue_name[;invisibility=invisibility_timeout_timespan][;poll=polling_interval_timespan]");
+```
+
+### Using Azure Storage Emulator
+
+To create a publisher, either use the factory method:
+
+```csharp
+IMessagePublisher publisher = StorageFactory.Messages.AzureDevelopmentStorageQueuePublisher("queue_name");
+```
+
+or use the special connection string:
+
+```csharp
+IMessagePublisher publisher = StorageFactory.Messaging.PublisherFromConnectionString("azure.queue://development=true;queue=queue_name");
+```
+
+To create a receiver, either use one of the factory methods:
+
+```csharp
+IMessageReceiver receiver = StorageFactory.Messages.AzureDevelopmentStorageQueueReceiver("queue_name", "invisibility_timeout", "polling_interval");
+```
+
+or
+
+```csharp
+IMessageReceiver receiver = StorageFactory.Messages.AzureDevelopmentStorageQueueReceiver("queue_name", "invisibility_timeout");
+```
+
+or use the special connection string:
+
+```csharp
+IMessageReceiver receiver = StorageFactory.Messages.ReceiverFromConnectionString("azure.queue://development=true;queue=queue_name[;invisibility=invisibility_timeout_timespan][;poll=polling_interval_timespan]");
 ```
