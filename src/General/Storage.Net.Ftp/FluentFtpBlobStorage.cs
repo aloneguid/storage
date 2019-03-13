@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentFTP;
@@ -14,10 +13,17 @@ namespace Storage.Net.Ftp
    class FluentFtpBlobStorage : IBlobStorage
    {
       private readonly FtpClient _client;
+      private readonly bool _dispose;
 
       public FluentFtpBlobStorage(string hostNameOrAddress, NetworkCredential credentials)
+         : this(new FtpClient(hostNameOrAddress, credentials), true)
       {
-         _client = new FtpClient(hostNameOrAddress, credentials);
+      }
+
+      public FluentFtpBlobStorage(FtpClient ftpClient, bool dispose = false)
+      {
+         _client = ftpClient ?? throw new ArgumentNullException(nameof(ftpClient));
+         _dispose = dispose;
       }
 
       private async Task<FtpClient> GetClientAsync()
@@ -167,7 +173,7 @@ namespace Storage.Net.Ftp
 
       public void Dispose()
       {
-         if (!_client.IsDisposed)
+         if (_dispose && _client.IsDisposed)
          {
             _client.Dispose();
          }
