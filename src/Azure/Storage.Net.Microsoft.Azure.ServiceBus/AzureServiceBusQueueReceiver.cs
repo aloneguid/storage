@@ -125,7 +125,10 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
 
       private Task ExceptionReceiverHandler(ExceptionReceivedEventArgs args)
       {
-         return Task.FromResult(true);
+         if (args != null && args.Exception != null)
+            return Task.FromResult(args.Exception.Message);
+
+         return Task.CompletedTask;
       }
 
       /// <summary>
