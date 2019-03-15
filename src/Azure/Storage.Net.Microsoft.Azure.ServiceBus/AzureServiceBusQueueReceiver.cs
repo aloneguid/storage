@@ -23,15 +23,28 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       private readonly AzureReceiverOptions _azureRegisterMessageOptions;
       private readonly ConcurrentDictionary<string, Message> _messageIdToBrokeredMessage = new ConcurrentDictionary<string, Message>();
 
-      /// <summary>
-      /// Creates an instance of Azure Service Bus receiver with connection
-      /// </summary>
-      /// <param name="connectionString">Service Bus connection string</param>
-      /// <param name="queueName">Queue name in Service Bus</param>
-      /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
-      public AzureServiceBusQueueReceiver(string connectionString, string queueName, bool peekLock = true)
+
+        /// <summary>
+        /// Creates an instance of Azure Service Bus receiver with connection
+        /// </summary>
+        /// <param name="connectionString">Service Bus connection string</param>
+        /// <param name="queueName">Queue name in Service Bus</param>
+        /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
+        public AzureServiceBusQueueReceiver(string connectionString, string queueName, bool peekLock = true)
+            : this(connectionString,queueName,new AzureReceiverOptions(),peekLock)
+        {
+        }
+
+        /// <summary>
+        /// Creates an instance of Azure Service Bus receiver with connection
+        /// </summary>
+        /// <param name="connectionString">Service Bus connection string</param>
+        /// <param name="queueName">Queue name in Service Bus</param>
+        /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
+        public AzureServiceBusQueueReceiver(string connectionString, string queueName,AzureReceiverOptions azureRegisterMessageOptions, bool peekLock = true)
       {
          _client = new QueueClient(connectionString, queueName, peekLock ? ReceiveMode.PeekLock : ReceiveMode.ReceiveAndDelete);
+         _azureRegisterMessageOptions = azureRegisterMessageOptions;
          _peekLock = peekLock;
       }
 
@@ -89,11 +102,11 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       {
          if (onMessage == null) throw new ArgumentNullException(nameof(onMessage));
 
-         var options = new MessageHandlerOptions(ExceptionReceiverHandler)
+         var options = new MessageHandlerOptions(_azureRegisterMessageOptions.ExceptionReceivedHandler ?? ExceptionReceiverHandler)
          {
             AutoComplete = false,
-            MaxAutoRenewDuration = TimeSpan.FromMinutes(1),
-            MaxConcurrentCalls = 1
+            MaxAutoRenewDuration = _azureRegisterMessageOptions.MaxAutoRenewDuration,
+            MaxConcurrentCalls = _azureRegisterMessageOptions.MaxConcurrentCalls
          };
 
          _client.PrefetchCount = maxBatchSize;

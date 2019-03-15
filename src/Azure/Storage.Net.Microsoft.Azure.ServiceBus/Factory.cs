@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Microsoft.Azure.ServiceBus;
 using Storage.Net.Messaging;
 using Storage.Net.Microsoft.Azure.ServiceBus;
 
@@ -37,6 +39,27 @@ namespace Storage.Net
       }
 
       /// <summary>
+      /// Creates Azure Service Bus Queue Receiver
+      /// </summary>
+      public static IMessageReceiver AzureServiceBusQueueReceiver(this IMessagingFactory factory,
+           string connectionString,
+           string queueName,
+           int maxConcurrentCalls,
+           TimeSpan maxAutoRenewDuration,
+           Func<ExceptionReceivedEventArgs, Task> exceptionReceivedHandler,
+           bool peekLock = true)
+      {
+         var registerOptions = new AzureReceiverOptions
+         {
+            MaxAutoRenewDuration = maxAutoRenewDuration,
+            MaxConcurrentCalls = maxConcurrentCalls,
+            ExceptionReceivedHandler = exceptionReceivedHandler
+         };
+
+         return new AzureServiceBusQueueReceiver(connectionString, queueName, registerOptions, peekLock);
+      }
+
+      /// <summary>
       /// Creates an instance of Azure Service Bus Topic publisher.
       /// </summary>
       public static IMessagePublisher AzureServiceBusTopicPublisher(this IMessagingFactory factory,
@@ -67,12 +90,14 @@ namespace Storage.Net
          string subscriptionName,
          int maxConcurrentCalls,
          TimeSpan maxAutoRenewDuration,
+         Func<ExceptionReceivedEventArgs, Task> exceptionReceivedHandler,
          bool peekLock = true)
       {
          var registerOptions = new AzureReceiverOptions
          {
             MaxAutoRenewDuration = maxAutoRenewDuration,
-            MaxConcurrentCalls = maxConcurrentCalls
+            MaxConcurrentCalls = maxConcurrentCalls,
+            ExceptionReceivedHandler = exceptionReceivedHandler
          };
 
          return new AzureServiceBusTopicReceiver(connectionString, topicName, subscriptionName, registerOptions, peekLock);
