@@ -12,6 +12,9 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
    /// </summary>
    public class AzureReceiverOptions
    {
+      /// <summary>
+      /// Function that handle the excepetion received.
+      /// </summary>
       public Func<ExceptionReceivedEventArgs, Task> ExceptionReceivedHandler { get; set; }
 
       /// <summary>
