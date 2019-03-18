@@ -16,32 +16,30 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
    {
       //https://github.com/Azure/azure-service-bus/blob/master/samples/DotNet/Microsoft.Azure.ServiceBus/ReceiveSample/readme.md
 
-      private static readonly TimeSpan AutoRenewTimeout = TimeSpan.FromMinutes(1);
-
       private readonly QueueClient _client;
       private readonly bool _peekLock;
       private readonly AzureReceiverOptions _azureRegisterMessageOptions;
       private readonly ConcurrentDictionary<string, Message> _messageIdToBrokeredMessage = new ConcurrentDictionary<string, Message>();
 
+      /// <summary>
+      /// Creates an instance of Azure Service Bus receiver with connection
+      /// </summary>
+      /// <param name="connectionString">Service Bus connection string</param>
+      /// <param name="queueName">Queue name in Service Bus</param>
+      /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
+      public AzureServiceBusQueueReceiver(string connectionString, string queueName, bool peekLock = true)
+          : this(connectionString, queueName, new AzureReceiverOptions(), peekLock)
+      {
+      }
 
-        /// <summary>
-        /// Creates an instance of Azure Service Bus receiver with connection
-        /// </summary>
-        /// <param name="connectionString">Service Bus connection string</param>
-        /// <param name="queueName">Queue name in Service Bus</param>
-        /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
-        public AzureServiceBusQueueReceiver(string connectionString, string queueName, bool peekLock = true)
-            : this(connectionString,queueName,new AzureReceiverOptions(),peekLock)
-        {
-        }
-
-        /// <summary>
-        /// Creates an instance of Azure Service Bus receiver with connection
-        /// </summary>
-        /// <param name="connectionString">Service Bus connection string</param>
-        /// <param name="queueName">Queue name in Service Bus</param>
-        /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
-        public AzureServiceBusQueueReceiver(string connectionString, string queueName,AzureReceiverOptions azureRegisterMessageOptions, bool peekLock = true)
+      /// <summary>
+      /// Creates an instance of Azure Service Bus receiver with connection
+      /// </summary>
+      /// <param name="connectionString">Service Bus connection string</param>
+      /// <param name="queueName">Queue name in Service Bus</param>
+      /// <param name="azureRegisterMessageOptions">The receiver options</param>
+      /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
+      public AzureServiceBusQueueReceiver(string connectionString, string queueName, AzureReceiverOptions azureRegisterMessageOptions, bool peekLock = true)
       {
          _client = new QueueClient(connectionString, queueName, peekLock ? ReceiveMode.PeekLock : ReceiveMode.ReceiveAndDelete);
          _azureRegisterMessageOptions = azureRegisterMessageOptions;
@@ -72,7 +70,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       private QueueMessage ProcessAndConvert(Message bm)
       {
          QueueMessage qm = Converter.ToQueueMessage(bm);
-         if(_peekLock) _messageIdToBrokeredMessage[qm.Id] = bm;
+         if (_peekLock) _messageIdToBrokeredMessage[qm.Id] = bm;
          return qm;
       }
 
@@ -81,7 +79,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       /// </summary>
       public async Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken)
       {
-         if(!_peekLock) return;
+         if (!_peekLock) return;
 
          await Task.WhenAll(messages.Select(m => ConfirmAsync(m)));
       }
@@ -96,11 +94,11 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       }
 
       /// <summary>
-      /// Starts message pump with AutoComplete = false, 1 minute session renewal and 1 concurrent call.
+      /// Starts message pump with AutoComplete = false and the defined <see cref="AzureReceiverOptions"/>.
       /// </summary>
-      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
+      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default(CancellationToken))
       {
-         if (onMessage == null) throw new ArgumentNullException(nameof(onMessage));
+         if (onMessageAsync == null) throw new ArgumentNullException(nameof(onMessageAsync));
 
          var options = new MessageHandlerOptions(_azureRegisterMessageOptions.ExceptionReceivedHandler ?? ExceptionReceiverHandler)
          {
@@ -116,7 +114,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
             {
                QueueMessage qm = Converter.ToQueueMessage(message);
                _messageIdToBrokeredMessage[qm.Id] = message;
-               await onMessage(new[] { qm });
+               await onMessageAsync(new[] { qm });
             },
             options);
 

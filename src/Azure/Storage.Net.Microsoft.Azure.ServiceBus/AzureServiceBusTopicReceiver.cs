@@ -16,8 +16,6 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
    {
       //https://github.com/Azure/azure-service-bus/blob/master/samples/DotNet/Microsoft.Azure.ServiceBus/ReceiveSample/readme.md
 
-      private static readonly TimeSpan AutoRenewTimeout = TimeSpan.FromMinutes(1);
-
       private readonly SubscriptionClient _client;
       private readonly bool _peekLock;
       private readonly AzureReceiverOptions _azureRegisterMessageOptions;
@@ -27,7 +25,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       /// Creates an instance of Azure Service Bus receiver with connection
       /// </summary>
       public AzureServiceBusTopicReceiver(string connectionString, string topicName, string subscriptionName, bool peekLock = true)
-         : this(connectionString, topicName, subscriptionName, new AzureReceiverOptions() { MaxAutoRenewDuration = TimeSpan.FromMinutes(1), MaxConcurrentCalls = 1 }, peekLock)
+         : this(connectionString, topicName, subscriptionName, new AzureReceiverOptions(), peekLock)
       {
       }
 
@@ -58,7 +56,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       private QueueMessage ProcessAndConvert(Message bm)
       {
          QueueMessage qm = Converter.ToQueueMessage(bm);
-         if(_peekLock) _messageIdToBrokeredMessage[qm.Id] = bm;
+         if (_peekLock) _messageIdToBrokeredMessage[qm.Id] = bm;
          return qm;
       }
 
@@ -83,11 +81,11 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       }
 
       /// <summary>
-      /// Starts message pump with AutoComplete = false, 1 minute session renewal and 1 concurrent call.
+      /// Starts message pump with AutoComplete = false and the defined <see cref="AzureReceiverOptions"/>.
       /// </summary>
-      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
+      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default(CancellationToken))
       {
-         if (onMessage == null) throw new ArgumentNullException(nameof(onMessage));
+         if (onMessageAsync == null) throw new ArgumentNullException(nameof(onMessageAsync));
 
          var options = new MessageHandlerOptions(_azureRegisterMessageOptions.ExceptionReceivedHandler ?? ExceptionReceiverHandler)
          {
@@ -103,7 +101,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
             {
                QueueMessage qm = Converter.ToQueueMessage(message);
                _messageIdToBrokeredMessage[qm.Id] = message;
-               await onMessage(new[] { qm });
+               await onMessageAsync(new[] { qm });
             },
             options);
 

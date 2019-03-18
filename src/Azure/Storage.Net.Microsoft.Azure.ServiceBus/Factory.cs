@@ -82,7 +82,7 @@ namespace Storage.Net
       }
 
       /// <summary>
-      /// Creates Azure Service Bus Receiver
+      /// Creates Azure Service Bus Receiver with <see cref="AzureReceiverOptions"/>
       /// </summary>
       public static IMessageReceiver AzureServiceBusTopicReceiver(this IMessagingFactory factory,
          string connectionString,
@@ -99,9 +99,7 @@ namespace Storage.Net
             MaxConcurrentCalls = maxConcurrentCalls,
             ExceptionReceivedHandler = exceptionReceivedHandler
          };
-
          return new AzureServiceBusTopicReceiver(connectionString, topicName, subscriptionName, registerOptions, peekLock);
       }
-
    }
 }
