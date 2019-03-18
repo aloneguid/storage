@@ -8,6 +8,7 @@ This page lists blob storage providers available in Storage.Net
 - [Local Disk](#local-disk)
 - [Zip File](#zip-file)
 - [FTP](#ftp)
+- [Microsoft Azure Blob Storage](#microsoft-azure-blob-storage)
 
 ### In-Memory
 
@@ -86,3 +87,42 @@ To create from connection string, first register the module when your program st
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("ftp://host=hostname;user=username;password=password");
 ```
+
+
+### Microsoft Azure Blob Storage
+
+In order to use Microsoft Azure blob storage you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.Storage.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage/) package first. The provider wraps around the standard Microsoft Storage SDK.
+
+There are a few overloads in this package, for instance:
+
+```csharp
+//create from account name and key (secret)
+IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorage(accountName, accountKey);
+
+//create to use local development storage emulator
+IBlobStorage storage = StorageFactory.Blobs.AzureBlobDevelopmentStorage();
+
+//create an instance of Microsoft Azure Blob Storage that wraps around native CloudBlobClient
+IBlobStorage storage = StorageFactory.Blobs.AzureBloStorage(client);
+```
+
+Please use the native option with caution, as it exposes the internal native client reference which may change in future.
+
+To use connection strings, first register the module when your program starts by calling `StorageFactory.Modules.UseAzureStorage();` then use the following:
+
+```csharp
+//using account name and key
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blob://account=account_name;key=secret_value");
+
+//local development emulator
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blob://development=true");
+```
+
+This storage is working with `block blobs` only. We are planning to add `append blobs` support but that requires some architectural changes and as always you're welcome to help.
+
+This package treats the first part of the path as **container name**. This allows you to have access to all the containers at once. For instance, path `root/file.txt` creates file `file.txt` in the root of container called `root`. `root/folder1/file.txt` creates file `file.txt` in folder `folder1` under container `root` and so on.
+
+
+
+
+

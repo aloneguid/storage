@@ -15,17 +15,16 @@ namespace Storage.Net.Microsoft.Azure.Storage
       {
          if(connectionString.Prefix == Constants.AzureBlobConnectionPrefix)
          {
-            if(bool.TryParse(connectionString.Get(Constants.DevelopmentParam), out bool useDevelopment)
-               && useDevelopment)
+            if(bool.TryParse(connectionString.Get(Constants.UseDevelopmentStorage), out bool useDevelopment) && useDevelopment)
             {
-               return new AzureUniversalBlobStorageProvider();
+               return AzureUniversalBlobStorageProvider.CreateForLocalEmulator();
             }
             else
             {
                connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
                connectionString.GetRequired(Constants.KeyParam, true, out string key);
 
-               return new AzureUniversalBlobStorageProvider(accountName, key);
+               return AzureUniversalBlobStorageProvider.CreateFromAccountNameAndKey(accountName, key);
             }
          }
 
@@ -36,7 +35,7 @@ namespace Storage.Net.Microsoft.Azure.Storage
       {
          if(connectionString.Prefix == Constants.AzureTablesConnectionPrefix)
          {
-            if(bool.TryParse(connectionString.Get(Constants.DevelopmentParam), out bool useDevelopment)
+            if(bool.TryParse(connectionString.Get(Constants.UseDevelopmentStorage), out bool useDevelopment)
                && useDevelopment)
             {
                return new AzureTableStorageKeyValueStorage();
@@ -59,7 +58,7 @@ namespace Storage.Net.Microsoft.Azure.Storage
          {
             connectionString.GetRequired(Constants.QueueParam, true, out string queueName);
 
-            if(bool.TryParse(connectionString.Get(Constants.DevelopmentParam), out bool useDevelopment)
+            if(bool.TryParse(connectionString.Get(Constants.UseDevelopmentStorage), out bool useDevelopment)
                && useDevelopment)
             {
                return new AzureStorageQueuePublisher(queueName);
@@ -95,7 +94,7 @@ namespace Storage.Net.Microsoft.Azure.Storage
                polling = TimeSpan.FromMinutes(1);
             }
 
-            if(bool.TryParse(connectionString.Get(Constants.DevelopmentParam), out bool useDevelopment)
+            if(bool.TryParse(connectionString.Get(Constants.UseDevelopmentStorage), out bool useDevelopment)
                && useDevelopment)
             {
                return new AzureStorageQueueReceiver(queueName, invisibility, polling);

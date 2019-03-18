@@ -13,6 +13,7 @@
       public const string QueueParam = "queue";
       public const string InvisibilityParam = "invisibility";
       public const string PollParam = "poll";
-      public const string DevelopmentParam = "development";
+
+      public const string UseDevelopmentStorage = "development";
    }
 }

@@ -7,6 +7,7 @@ using Storage.Net.Microsoft.Azure.Storage.KeyValue;
 using Storage.Net.KeyValue;
 using System.Net;
 using Storage.Net.Microsoft.Azure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace Storage.Net
 {
@@ -61,7 +62,29 @@ namespace Storage.Net
          string accountName,
          string key)
       {
-         return new AzureUniversalBlobStorageProvider(accountName, key);
+         return AzureUniversalBlobStorageProvider.CreateFromAccountNameAndKey(accountName, key);
+      }
+
+      /// <summary>
+      /// Creates a blob storage implementation based on Microsoft Azure Blob Storage using development storage.
+      /// </summary>
+      /// <param name="factory">Reference to factory</param>
+      /// <returns>Generic blob storage interface</returns>
+      public static IBlobStorage AzureBlobDevelopmentStorage(this IBlobStorageFactory factory)
+      {
+         return AzureUniversalBlobStorageProvider.CreateForLocalEmulator();
+      }
+
+      /// <summary>
+      /// Creates an instance of Microsoft Azure Blob Storage that wraps around native <see cref="CloudBlobClient"/>.
+      /// Avoid using if possible as it's a subject to change in future.
+      /// </summary>
+      public static IBlobStorage AzureBlobStorage(this IBlobStorageFactory factory, CloudBlobClient cloudBlobClient)
+      {
+         if(cloudBlobClient == null)
+            throw new ArgumentNullException(nameof(cloudBlobClient));
+
+         return new AzureUniversalBlobStorageProvider(cloudBlobClient);
       }
 
       /// <summary>
@@ -127,16 +150,6 @@ namespace Storage.Net
       public static IKeyValueStorage AzureTableDevelopmentStorage(this IKeyValueStorageFactory factory)
       {
          return new AzureTableStorageKeyValueStorage();
-      }
-
-      /// <summary>
-      /// Creates a blob storage implementation based on Microsoft Azure Blob Storage using development storage.
-      /// </summary>
-      /// <param name="factory">Reference to factory</param>
-      /// <returns>Generic blob storage interface</returns>
-      public static IBlobStorage AzureBlobDevelopmentStorage(this IBlobStorageFactory factory)
-      {
-         return new AzureUniversalBlobStorageProvider();
       }
 
       /// <summary>
