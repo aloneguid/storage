@@ -298,6 +298,16 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          bool createContainer,
          CancellationToken cancellationToken)
       {
+         return await GetSasUriAsync(id, sasConstraints, null, createContainer, cancellationToken);
+      }
+
+      public async Task<string> GetSasUriAsync(
+         string id,
+         SharedAccessBlobPolicy sasConstraints,
+         SharedAccessBlobHeaders headers,
+         bool createContainer,
+         CancellationToken cancellationToken)
+      {
          GenericValidation.CheckBlobId(id);
 
          (CloudBlobContainer container, string path) = await GetPartsAsync(id, createContainer);
@@ -308,7 +318,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          try
          {
-            return $@"{blob.Uri}{blob.GetSharedAccessSignature(sasConstraints)}";
+            return $@"{blob.Uri}{blob.GetSharedAccessSignature(sasConstraints, headers)}";
          }
          catch (AzureStorageException ex)
          {

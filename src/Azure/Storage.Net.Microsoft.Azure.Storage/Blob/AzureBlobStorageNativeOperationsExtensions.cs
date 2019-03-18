@@ -17,12 +17,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       public static async Task<string> GetReadOnlySasUriAsync(
          this IAzureBlobStorageNativeOperations provider,
          string id,
+         SharedAccessBlobHeaders headers = null,
          int minutesToExpiration = 30,
          CancellationToken cancellationToken = default)
       {
          return await provider.GetSasUriAsync(
             id,
             GetSharedAccessBlobPolicy(minutesToExpiration, SharedAccessBlobPermissions.Read),
+            headers: headers,
             createContainer: false,
             cancellationToken);
       }
@@ -33,12 +35,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       public static async Task<string> GetWriteOnlySasUriAsync(
          this IAzureBlobStorageNativeOperations provider,
          string id,
+         SharedAccessBlobHeaders headers = null,
          int minutesToExpiration = 30,
          CancellationToken cancellationToken = default)
       {
          return await provider.GetSasUriAsync(
             id,
             GetSharedAccessBlobPolicy(minutesToExpiration, SharedAccessBlobPermissions.Write),
+            headers: headers,
             createContainer: true,
             cancellationToken);
       }
@@ -49,12 +53,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       public static async Task<string> GetReadWriteSasUriAsync(
          this IAzureBlobStorageNativeOperations provider,
          string id,
+         SharedAccessBlobHeaders headers = null,
          int minutesToExpiration = 30,
          CancellationToken cancellationToken = default)
       {
          return await provider.GetSasUriAsync(
             id,
             GetSharedAccessBlobPolicy(minutesToExpiration, SharedAccessBlobPermissions.Read | SharedAccessBlobPermissions.Write),
+            headers: headers,
             createContainer: true,
             cancellationToken);
       }

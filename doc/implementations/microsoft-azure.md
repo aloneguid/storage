@@ -110,7 +110,7 @@ To create a receiver:
 
 ```csharp
 IMessageReceiver receiver = StorageFactory.Messages.AzureStorageQueueReceiver("storage_name", "storage_key", "queue_name", "invisibility_timeout");
-``` 
+```
 
 This receiver will be attached to **queue_name** queue. **invisibility_timeout** specifies for how long the message will be invisible to other receivers after it's received from the queue. If you don't confirm the message receive operation, message will appear on the queue again.
 
