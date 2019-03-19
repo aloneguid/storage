@@ -3,17 +3,15 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Table;
-using IAzTableEntity = Microsoft.WindowsAzure.Storage.Table.ITableEntity;
-using AzSE = Microsoft.WindowsAzure.Storage.StorageException;
-using MeSE = Storage.Net.StorageException;
-using Storage.Net.KeyValue;
-using System.Threading.Tasks;
-using NetBox;
 using NetBox.Extensions;
-using NetBox.Data;
+using Storage.Net.KeyValue;
+using AzSE = Microsoft.WindowsAzure.Storage.StorageException;
+using IAzTableEntity = Microsoft.WindowsAzure.Storage.Table.ITableEntity;
+using MeSE = Storage.Net.StorageException;
 
 namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
 {
@@ -43,11 +41,28 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <param name="storageKey"></param>
       public AzureTableStorageKeyValueStorage(string accountName, string storageKey)
       {
-         if (accountName == null) throw new ArgumentNullException(nameof(accountName));
-         if (storageKey == null) throw new ArgumentNullException(nameof(storageKey));
+         if(accountName == null)
+            throw new ArgumentNullException(nameof(accountName));
+         if(storageKey == null)
+            throw new ArgumentNullException(nameof(storageKey));
 
          var account = new CloudStorageAccount(new StorageCredentials(accountName, storageKey), true);
          _client = account.CreateCloudTableClient();
+      }
+
+      /// <summary>
+      /// For use with local development storage.
+      /// </summary>
+      public AzureTableStorageKeyValueStorage()
+      {
+         if(CloudStorageAccount.TryParse(Constants.UseDevelopmentStorageConnectionString, out CloudStorageAccount account))
+         {
+            _client = account.CreateCloudTableClient();
+         }
+         else
+         {
+            throw new InvalidOperationException($"Cannot connect to local development environment when creating key-value storage.");
+         }
       }
 
       /// <summary>
@@ -79,7 +94,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
 
             token = segment.ContinuationToken;
          }
-         while (token != null);
+         while(token != null);
 
          return result;
       }
@@ -91,7 +106,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       public async Task DeleteAsync(string tableName)
       {
          CloudTable table = await GetTableAsync(tableName, false);
-         if (table != null)
+         if(table != null)
          {
             await table.DeleteAsync();
             TableNameToTableTag.TryRemove(tableName, out TableTag tag);
@@ -103,8 +118,10 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// </summary>
       public async Task<IReadOnlyCollection<Value>> GetAsync(string tableName, Key key)
       {
-         if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (key == null) throw new ArgumentNullException(nameof(key));
+         if(tableName == null)
+            throw new ArgumentNullException(nameof(tableName));
+         if(key == null)
+            throw new ArgumentNullException(nameof(key));
 
          return await InternalGetAsync(tableName, key, -1);
       }
@@ -112,7 +129,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       private async Task<IReadOnlyCollection<Value>> InternalGetAsync(string tableName, Key key, int maxRecords)
       {
          CloudTable table = await GetTableAsync(tableName, false);
-         if (table == null)
+         if(table == null)
          {
             return new List<Value>();
          }
@@ -121,7 +138,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
 
          var filters = new List<string>();
 
-         if (key.PartitionKey != null)
+         if(key.PartitionKey != null)
          {
             filters.Add(TableQuery.GenerateFilterCondition(
                PartitionKeyName,
@@ -129,7 +146,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
                EncodeKey(key.PartitionKey)));
          }
 
-         if (key.RowKey != null)
+         if(key.RowKey != null)
          {
             filters.Add(TableQuery.GenerateFilterCondition(
                RowKeyName,
@@ -137,11 +154,11 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
                EncodeKey(key.RowKey)));
          }
 
-         if (filters.Count > 0)
+         if(filters.Count > 0)
          {
             string finalFilter = filters.First();
 
-            for (int i = 1; i < filters.Count; i++)
+            for(int i = 1; i < filters.Count; i++)
             {
                finalFilter = TableQuery.CombineFilters(finalFilter, TableOperators.And, filters[i]);
             }
@@ -149,19 +166,19 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
             query = query.Where(finalFilter);
          }
 
-         if (maxRecords > 0)
+         if(maxRecords > 0)
          {
             query = query.Take(maxRecords);
          }
 
          TableContinuationToken token = null;
-         var entities = new List<DynamicTableEntity> ();
+         var entities = new List<DynamicTableEntity>();
          do
          {
             var queryResults = await table.ExecuteQuerySegmentedAsync(query, token);
             entities.AddRange(queryResults.Results);
             token = queryResults.ContinuationToken;
-         } while (token != null);
+         } while(token != null);
 
          return entities.Select(ToTableRow).ToList();
       }
@@ -171,11 +188,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// </summary>
       public async Task InsertAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
-         if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (rows == null) throw new ArgumentNullException(nameof(rows));
+         if(tableName == null)
+            throw new ArgumentNullException(nameof(tableName));
+         if(rows == null)
+            throw new ArgumentNullException(nameof(rows));
 
          var rowsList = rows.ToList();
-         if (rowsList.Count == 0) return;
+         if(rowsList.Count == 0)
+            return;
          if(!Value.AreDistinct(rowsList))
          {
             throw new MeSE(ErrorCode.DuplicateKey, null);
@@ -191,12 +211,15 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// </summary>
       public async Task InsertOrReplaceAsync(string tableName, IReadOnlyCollection<Value> rows)
       {
-         if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (rows == null) throw new ArgumentNullException(nameof(rows));
+         if(tableName == null)
+            throw new ArgumentNullException(nameof(tableName));
+         if(rows == null)
+            throw new ArgumentNullException(nameof(rows));
 
          var rowsList = rows.ToList();
-         if (rowsList.Count == 0) return;
-         if (!Value.AreDistinct(rowsList))
+         if(rowsList.Count == 0)
+            return;
+         if(!Value.AreDistinct(rowsList))
          {
             throw new MeSE(ErrorCode.DuplicateKey, null);
          }
@@ -231,7 +254,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// </summary>
       public async Task DeleteAsync(string tableName, IReadOnlyCollection<Key> rowIds)
       {
-         if (rowIds == null) return;
+         if(rowIds == null)
+            return;
 
          await BatchedOperationAsync(tableName, true,
             (b, te) => b.Delete(te),
@@ -242,31 +266,34 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          Action<TableBatchOperation, IAzTableEntity> azAction,
          IEnumerable<Value> rows)
       {
-         if (tableName == null) throw new ArgumentNullException("tableName");
-         if (rows == null) return;
+         if(tableName == null)
+            throw new ArgumentNullException("tableName");
+         if(rows == null)
+            return;
 
          CloudTable table = await GetTableAsync(tableName, createTable);
-         if (table == null) return;
+         if(table == null)
+            return;
 
          await Task.WhenAll(rows.GroupBy(e => e.PartitionKey).Select(g => BatchedOperationAsync(table, g, azAction)));
       }
 
       private async Task BatchedOperationAsync(CloudTable table, IGrouping<string, Value> group, Action<TableBatchOperation, IAzTableEntity> azAction)
       {
-         foreach (IEnumerable<Value> chunk in group.Chunk(MaxInsertLimit))
+         foreach(IEnumerable<Value> chunk in group.Chunk(MaxInsertLimit))
          {
-            if (chunk == null)
+            if(chunk == null)
                break;
 
             var chunkLst = new List<Value>(chunk);
             var batch = new TableBatchOperation();
-            foreach (Value row in chunkLst)
+            foreach(Value row in chunkLst)
             {
                azAction(batch, new EntityAdapter(row));
             }
 
             List<TableResult> result = await ExecOrThrowAsync(table, batch);
-            for (int i = 0; i < result.Count && i < chunkLst.Count; i++)
+            for(int i = 0; i < result.Count && i < chunkLst.Count; i++)
             {
                TableResult tr = result[i];
                Value row = chunkLst[i];
@@ -278,20 +305,24 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          Action<TableBatchOperation, IAzTableEntity> azAction,
          IEnumerable<Key> rowIds)
       {
-         if (tableName == null) throw new ArgumentNullException("tableName");
-         if (rowIds == null) return;
+         if(tableName == null)
+            throw new ArgumentNullException("tableName");
+         if(rowIds == null)
+            return;
 
          CloudTable table = await GetTableAsync(tableName, createTable);
-         if (table == null) return;
+         if(table == null)
+            return;
 
-         foreach (IGrouping<string, Key> group in rowIds.GroupBy(e => e.PartitionKey))
+         foreach(IGrouping<string, Key> group in rowIds.GroupBy(e => e.PartitionKey))
          {
-            foreach (IEnumerable<Key> chunk in group.Chunk(MaxInsertLimit))
+            foreach(IEnumerable<Key> chunk in group.Chunk(MaxInsertLimit))
             {
-               if (chunk == null) break;
+               if(chunk == null)
+                  break;
 
                var batch = new TableBatchOperation();
-               foreach (Key row in chunk)
+               foreach(Key row in chunk)
                {
                   azAction(batch, new EntityAdapter(row));
                }
@@ -303,12 +334,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
 
       private async Task<CloudTable> GetTableAsync(string name, bool createIfNotExists)
       {
-         if (name == null) throw new ArgumentNullException(nameof(name));
-         if (!TableNameRgx.IsMatch(name)) throw new ArgumentException(@"invalid table name: " + name, nameof(name));
+         if(name == null)
+            throw new ArgumentNullException(nameof(name));
+         if(!TableNameRgx.IsMatch(name))
+            throw new ArgumentException(@"invalid table name: " + name, nameof(name));
 
          bool cached = TableNameToTableTag.TryGetValue(name, out TableTag tag);
 
-         if (!cached)
+         if(!cached)
          {
             tag = new TableTag
             {
@@ -318,13 +351,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
             TableNameToTableTag[name] = tag;
          }
 
-         if (!tag.Exists && createIfNotExists)
+         if(!tag.Exists && createIfNotExists)
          {
             await tag.Table.CreateAsync();
             tag.Exists = true;
          }
 
-         if (!tag.Exists) return null;
+         if(!tag.Exists)
+            return null;
          return tag.Table;
       }
 
@@ -334,7 +368,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          {
             return (await table.ExecuteBatchAsync(op)).ToList();
          }
-         catch (AzSE ex)
+         catch(AzSE ex)
          {
             if(ex.RequestInformation.HttpStatusCode == 409)
             {
@@ -348,7 +382,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       private static Value ToTableRow(DynamicTableEntity az)
       {
          var result = new Value(az.PartitionKey, az.RowKey);
-         foreach (KeyValuePair<string, EntityProperty> pair in az.Properties)
+         foreach(KeyValuePair<string, EntityProperty> pair in az.Properties)
          {
             switch(pair.Value.PropertyType)
             {
@@ -403,10 +437,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
           * - The number of path segments comprising the blob name cannot exceed 254. A path segment is the string between consecutive delimiter characters (e.g., the forward slash '/') that corresponds to the name of a virtual directory.
           */
 
-         if (string.IsNullOrEmpty(id)) return false;
-         if (id.Length == 0) return false;
-         if (id.Length > 1024) return false;
-         if (id.UrlEncode() != id) return false;
+         if(string.IsNullOrEmpty(id))
+            return false;
+         if(id.Length == 0)
+            return false;
+         if(id.Length > 1024)
+            return false;
+         if(id.UrlEncode() != id)
+            return false;
 
          return true;
       }

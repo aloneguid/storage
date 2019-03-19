@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28531.58
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.421
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{59E9D41F-BCD2-4A64-B62F-515B78986B63}"
 EndProject
@@ -39,7 +39,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Storage.Net.Tests.Integrati
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "General", "General", "{8098BD8F-AC7C-44CD-8F84-A514A5418C8C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Storage.Net.Ftp", "General\Storage.Net.Ftp\Storage.Net.Ftp.csproj", "{8054AA5F-F409-4594-BA40-566650FDA596}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Storage.Net.Ftp", "General\Storage.Net.Ftp\Storage.Net.Ftp.csproj", "{8054AA5F-F409-4594-BA40-566650FDA596}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

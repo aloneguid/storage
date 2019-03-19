@@ -35,6 +35,28 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
       }
 
       /// <summary>
+      /// For use with local development storage.
+      /// Creates an instance of Azure Storage Queue by account details and the queue name
+      /// </summary>
+      /// <param name="queueName">Name of the queue. If queue doesn't exist it will be created</param>
+      public AzureStorageQueuePublisher(string queueName)
+      {
+         if(queueName == null)
+            throw new ArgumentNullException(nameof(queueName));
+
+         if(CloudStorageAccount.TryParse(Constants.UseDevelopmentStorageConnectionString, out CloudStorageAccount account))
+         {
+            CloudQueueClient client = account.CreateCloudQueueClient();
+            _queue = client.GetQueueReference(queueName);
+            _queue.CreateIfNotExistsAsync().Wait();
+         }
+         else
+         {
+            throw new InvalidOperationException($"Cannot connect to local development environment when creating queue publisher.");
+         }
+      }
+
+      /// <summary>
       /// Pushes new messages to storage queue. Due to the fact storage queues don't support batched pushes
       /// this method makes a call per message.
       /// </summary>

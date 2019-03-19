@@ -7,16 +7,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace Storage.Net.Microsoft.Azure.ServiceBus
+namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
 {
    /// <summary>
    /// Implements message receiver on Azure Service Bus Queues
    /// </summary>
-   class AzureServiceBusTopicReceiver : IMessageReceiver
+   class AzureServiceBusQueueReceiver : IMessageReceiver
    {
       //https://github.com/Azure/azure-service-bus/blob/master/samples/DotNet/Microsoft.Azure.ServiceBus/ReceiveSample/readme.md
 
-      private readonly SubscriptionClient _client;
+      private static readonly TimeSpan AutoRenewDuration = TimeSpan.FromMinutes(1);
+
+      private readonly QueueClient _client;
       private readonly bool _peekLock;
       private readonly AzureReceiverOptions _azureRegisterMessageOptions;
       private readonly ConcurrentDictionary<string, Message> _messageIdToBrokeredMessage = new ConcurrentDictionary<string, Message>();
@@ -24,18 +26,33 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       /// <summary>
       /// Creates an instance of Azure Service Bus receiver with connection
       /// </summary>
-      public AzureServiceBusTopicReceiver(string connectionString, string topicName, string subscriptionName, bool peekLock = true)
-         : this(connectionString, topicName, subscriptionName, new AzureReceiverOptions(), peekLock)
+      /// <param name="connectionString">Service Bus connection string</param>
+      /// <param name="queueName">Queue name in Service Bus</param>
+      /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
+      public AzureServiceBusQueueReceiver(string connectionString, string queueName, bool peekLock = true)
+          : this(connectionString, queueName, new AzureReceiverOptions(), peekLock)
       {
       }
 
-      public AzureServiceBusTopicReceiver(string connectionString, string topicName, string subscriptionName, AzureReceiverOptions azureRegisterMessageOptions, bool peekLock = true)
+      /// <summary>
+      /// Creates an instance of Azure Service Bus receiver with connection
+      /// </summary>
+      /// <param name="connectionString">Service Bus connection string</param>
+      /// <param name="queueName">Queue name in Service Bus</param>
+      /// <param name="azureRegisterMessageOptions">The receiver options</param>
+      /// <param name="peekLock">When true listens in PeekLock mode, otherwise ReceiveAndDelete</param>
+      public AzureServiceBusQueueReceiver(string connectionString, string queueName, AzureReceiverOptions azureRegisterMessageOptions, bool peekLock = true)
       {
-         _client = new SubscriptionClient(connectionString, topicName, subscriptionName, peekLock ? ReceiveMode.PeekLock : ReceiveMode.ReceiveAndDelete);
+         _client = new QueueClient(connectionString, queueName, peekLock ? ReceiveMode.PeekLock : ReceiveMode.ReceiveAndDelete);
          _azureRegisterMessageOptions = azureRegisterMessageOptions;
          _peekLock = peekLock;
+         _messageHandlerOptions = messageHandlerOptions;
       }
 
+      /// <summary>
+      /// See interface
+      /// </summary>
+      /// <returns></returns>
       public Task<int> GetMessageCountAsync()
       {
          throw new NotSupportedException();
@@ -65,8 +82,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       /// </summary>
       public async Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken)
       {
-         if (!_peekLock)
-            return;
+         if (!_peekLock) return;
 
          await Task.WhenAll(messages.Select(m => ConfirmAsync(m)));
       }
@@ -122,7 +138,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
       }
 
       /// <summary>
-      /// Empty transaction
+      /// Transactions are not supported, returns empty transation
       /// </summary>
       public Task<ITransaction> OpenTransactionAsync()
       {

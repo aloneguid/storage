@@ -42,6 +42,11 @@ namespace Storage.Net.Tests.Integration.Messaging
         public AzureEventHubMessageQeueueTest() : base("azure-eventhub") { }
     }
 
+    public class DirectoryFilesMessagingTest : MessagingTest
+    {
+        public DirectoryFilesMessagingTest() : base("directory") { }
+    }
+
     /*public class InMemoryMessageQeueueTest : MessagingTest
     {
         public InMemoryMessageQeueueTest() : base("inmemory") { }
@@ -91,15 +96,16 @@ namespace Storage.Net.Tests.Integration.Messaging
                     break;
                 case "azure-storage-queue-large":
                     IBlobStorage offloadStorage = StorageFactory.Blobs.AzureBlobStorage(_settings.AzureStorageName, _settings.AzureStorageKey);
+                    string largeQueueName = _settings.AzureStorageQueueName + "lg";
                     _publisher = StorageFactory.Messages.AzureStorageQueuePublisher(
                        _settings.AzureStorageName,
                        _settings.AzureStorageKey,
-                       _settings.AzureStorageQueueName)
+                       largeQueueName)
                        .HandleLargeContent(offloadStorage, 2);
                     _receiver = StorageFactory.Messages.AzureStorageQueueReceiver(
                        _settings.AzureStorageName,
                        _settings.AzureStorageKey,
-                       _settings.AzureStorageQueueName,
+                       largeQueueName,
                        TimeSpan.FromMinutes(1),
                        TimeSpan.FromMilliseconds(500))
                        .HandleLargeContent(offloadStorage);
@@ -140,6 +146,11 @@ namespace Storage.Net.Tests.Integration.Messaging
                     string inMemoryTag = RandomGenerator.RandomString;
                     _receiver = StorageFactory.Messages.InMemoryReceiver(inMemoryTag);
                     _publisher = StorageFactory.Messages.InMemoryPublisher(inMemoryTag);
+                    break;
+                case "directory":
+                    string path = TestDir.FullName;
+                    _publisher = StorageFactory.Messages.DirectoryFilesPublisher(path);
+                    _receiver = StorageFactory.Messages.DirectoryFilesReceiver(path);
                     break;
 #if DEBUG
                 case "amazon-sqs":

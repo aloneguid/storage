@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
@@ -22,13 +21,37 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
       public CloudBlobClient NativeBlobClient => _client;
 
-      public AzureUniversalBlobStorageProvider(string accountName, string key)
+      public AzureUniversalBlobStorageProvider(CloudBlobClient cloudBlobClient)
       {
+         _client = cloudBlobClient ?? throw new ArgumentNullException(nameof(cloudBlobClient));
+      }
+
+      public static AzureUniversalBlobStorageProvider CreateFromAccountNameAndKey(string accountName, string key)
+      {
+         if(accountName == null)
+            throw new ArgumentNullException(nameof(accountName));
+
+         if(key == null)
+            throw new ArgumentNullException(nameof(key));
+
          var account = new CloudStorageAccount(
             new StorageCredentials(accountName, key),
             true);
 
-         _client = account.CreateCloudBlobClient();
+         return new AzureUniversalBlobStorageProvider(account.CreateCloudBlobClient());
+      }
+
+      public static AzureUniversalBlobStorageProvider CreateForLocalEmulator()
+      {
+         if(CloudStorageAccount.TryParse(Constants.UseDevelopmentStorageConnectionString, out CloudStorageAccount account))
+         {
+            return new AzureUniversalBlobStorageProvider(account.CreateCloudBlobClient());
+         }
+         else
+         {
+            throw new InvalidOperationException($"Cannot connect to local development environment when creating blob storage provider.");
+         }
+
       }
 
       public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
@@ -48,7 +71,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
       public void Dispose()
       {
-         
+
       }
 
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
@@ -127,7 +150,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          var result = new List<BlobId>();
          var containers = new List<CloudBlobContainer>();
 
-         if(StoragePath.IsRootPath(options.FolderPath))
+         if (StoragePath.IsRootPath(options.FolderPath))
          {
             // list all of the containers
             containers.AddRange(await GetCloudBlobContainersAsync(cancellationToken));
@@ -135,7 +158,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
             //represent containers as folders in the result
             result.AddRange(containers.Select(c => new BlobId(c.Name, BlobItemKind.Folder)));
 
-            if(!options.Recurse) return result;
+            if (!options.Recurse) return result;
          }
          else
          {
@@ -151,7 +174,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          await Task.WhenAll(containers.Select(c => ListAsync(c, result, options, cancellationToken)));
 
-         if(options.MaxResults != null)
+         if (options.MaxResults != null)
          {
             result = result.Take(options.MaxResults.Value).ToList();
          }
@@ -269,6 +292,44 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          }
       }
 
+      public async Task<string> GetSasUriAsync(
+         string id,
+         SharedAccessBlobPolicy sasConstraints,
+         bool createContainer,
+         CancellationToken cancellationToken)
+      {
+         return await GetSasUriAsync(id, sasConstraints, null, createContainer, cancellationToken);
+      }
+
+      public async Task<string> GetSasUriAsync(
+         string id,
+         SharedAccessBlobPolicy sasConstraints,
+         SharedAccessBlobHeaders headers,
+         bool createContainer,
+         CancellationToken cancellationToken)
+      {
+         GenericValidation.CheckBlobId(id);
+
+         (CloudBlobContainer container, string path) = await GetPartsAsync(id, createContainer);
+
+         if (container == null) return null;
+
+         CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
+
+         try
+         {
+            return $@"{blob.Uri}{blob.GetSharedAccessSignature(sasConstraints, headers)}";
+         }
+         catch (AzureStorageException ex)
+         {
+            if (AzureStorageValidation.IsDoesntExist(ex)) return null;
+
+            if (!AzureStorageValidation.TryHandleStorageException(ex)) throw;
+         }
+
+         throw new Exception("must not be here");
+      }
+
       #region [ Path forking ]
 
       private async Task<(CloudBlobContainer, string)> GetPartsAsync(string path, bool createContainer = true)
@@ -294,9 +355,9 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          if (!_containerNameToContainer.TryGetValue(containerName, out CloudBlobContainer container))
          {
             container = _client.GetContainerReference(containerName);
-            if(!(await container.ExistsAsync()))
+            if (!(await container.ExistsAsync()))
             {
-               if(createContainer)
+               if (createContainer)
                {
                   await container.CreateIfNotExistsAsync();
                }

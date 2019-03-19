@@ -10,6 +10,7 @@ using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using System.Threading.Tasks;
 using System.Threading;
+using Storage.Net.Amazon.Aws.Blob;
 using Storage.Net.Streaming;
 
 namespace Storage.Net.Aws.Blob
@@ -17,12 +18,17 @@ namespace Storage.Net.Aws.Blob
    /// <summary>
    /// Amazon S3 storage adapter for blobs
    /// </summary>
-   class AwsS3BlobStorageProvider : IBlobStorage
+   class AwsS3BlobStorageProvider : IBlobStorage, IAwsS3BlobStorageNativeOperations
    {
       private readonly string _bucketName;
       private readonly AmazonS3Client _client;
       private readonly TransferUtility _fileTransferUtility;
       private bool _initialised;
+
+      /// <summary>
+      /// Returns reference to the native AWS S3 blob client.
+      /// </summary>
+      public IAmazonS3 NativeBlobClient => _client;
 
       //https://github.com/awslabs/aws-sdk-net-samples/blob/master/ConsoleSamples/AmazonS3Sample/AmazonS3Sample/S3Sample.cs
 
@@ -51,8 +57,8 @@ namespace Storage.Net.Aws.Blob
       /// </summary>
       public AwsS3BlobStorageProvider(string accessKeyId, string secretAccessKey, string bucketName, AmazonS3Config clientConfig)
       {
-         if(accessKeyId == null) throw new ArgumentNullException(nameof(accessKeyId));
-         if(secretAccessKey == null) throw new ArgumentNullException(nameof(secretAccessKey));
+         if (accessKeyId == null) throw new ArgumentNullException(nameof(accessKeyId));
+         if (secretAccessKey == null) throw new ArgumentNullException(nameof(secretAccessKey));
          _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
 
          _client = new AmazonS3Client(new BasicAWSCredentials(accessKeyId, secretAccessKey), clientConfig);
@@ -200,17 +206,17 @@ namespace Storage.Net.Aws.Blob
       private async Task<BlobMeta> GetMetaAsync(string id)
       {
          GenericValidation.CheckBlobId(id);
-   
+
          try
          {
             id = StoragePath.Normalize(id, false);
             using (GetObjectResponse obj = await GetObjectAsync(id))
             {
                //ETag contains actual MD5 hash, not sure why!
-   
-               return (obj != null) 
+
+               return (obj != null)
                   ? new BlobMeta(obj.ContentLength, obj.ETag.Trim('\"'), obj.LastModified.ToUniversalTime())
-                  : null;  
+                  : null;
             }
          }
          catch (StorageException ex) when (ex.ErrorCode == ErrorCode.NotFound)
@@ -241,7 +247,7 @@ namespace Storage.Net.Aws.Blob
 
       private static bool TryHandleException(AmazonS3Exception ex)
       {
-         if(IsDoesntExist(ex))
+         if (IsDoesntExist(ex))
          {
             throw new StorageException(ErrorCode.NotFound, ex);
          }
@@ -261,6 +267,39 @@ namespace Storage.Net.Aws.Blob
       public Task<ITransaction> OpenTransactionAsync()
       {
          return Task.FromResult(EmptyTransaction.Instance);
+      }
+
+      /// <summary>
+      /// Get presigned url for upload object to Blob Storage.
+      /// </summary>
+      public async Task<string> GetUploadUrlAsync(string id, string mimeType, int expiresInSeconds = 86000)
+      {
+         return await GetPresignedUrlAsync(id, mimeType, expiresInSeconds, HttpVerb.PUT);
+      }
+
+      /// <summary>
+      /// Get presigned url for download object from Blob Storage.
+      /// </summary>
+      public async Task<string> GetDownloadUrlAsync(string id, string mimeType, int expiresInSeconds = 86000)
+      {
+         return await GetPresignedUrlAsync(id, mimeType, expiresInSeconds, HttpVerb.GET);
+      }
+
+      /// <summary>
+      /// Get presigned url for requested operation with Blob Storage.
+      /// </summary>
+      public async Task<string> GetPresignedUrlAsync(string id, string mimeType, int expiresInSeconds, HttpVerb verb)
+      {
+         IAmazonS3 client = await GetClientAsync();
+
+         return client.GetPreSignedURL(new GetPreSignedUrlRequest()
+         {
+            BucketName = _bucketName,
+            ContentType = mimeType,
+            Expires = DateTime.UtcNow.AddSeconds(expiresInSeconds),
+            Key = StoragePath.Normalize(id, false),
+            Verb = verb,
+         });
       }
    }
 }
