@@ -257,34 +257,5 @@ namespace Storage.Net.Blob
       }
 
       #endregion
-
-      #region [ Object ]
-
-      /// <summary>
-      /// Reads blob content and converts to a specific type T
-      /// </summary>
-      /// <typeparam name="T">Type of the blob object</typeparam>
-      /// <param name="provider"></param>
-      /// <param name="id">Blob id</param>
-      /// <param name="cancellationToken"></param>
-      /// <returns></returns>
-      public static async Task<T> ReadObjectAsync<T>(
-         this IBlobStorage provider,
-         string id, CancellationToken cancellationToken = default)
-      {
-         Stream src = await provider.OpenReadAsync(id, cancellationToken);
-         if (src == null) return default;
-
-         var ms = new MemoryStream();
-         using (src)
-         {
-            await src.CopyToAsync(ms);
-         }
-
-         string blob = Encoding.UTF8.GetString(ms.ToArray());
-
-         return JsonConvert.DeserializeObject<T>(blob);
-      }
-      #endregion
    }
 }
