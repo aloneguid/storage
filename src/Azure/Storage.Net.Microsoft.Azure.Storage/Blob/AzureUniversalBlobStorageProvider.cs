@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Resources;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
@@ -14,7 +15,7 @@ using AzureStorageException = Microsoft.WindowsAzure.Storage.StorageException;
 
 namespace Storage.Net.Microsoft.Azure.Storage.Blob
 {
-   class AzureUniversalBlobStorageProvider : IBlobStorage, IAzureBlobStorageNativeOperations
+   internal class AzureUniversalBlobStorageProvider : IBlobStorage, IAzureBlobStorageNativeOperations
    {
       private readonly CloudBlobClient _client;
       private readonly ConcurrentDictionary<string, CloudBlobContainer> _containerNameToContainer = new ConcurrentDictionary<string, CloudBlobContainer>();
@@ -78,12 +79,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       {
          var result = new List<bool>();
 
-         foreach (string id in ids)
+         foreach(string id in ids)
          {
             GenericValidation.CheckBlobId(id);
 
             (CloudBlobContainer container, string path) = await GetPartsAsync(id, false);
-            if (container == null)
+            if(container == null)
             {
                result.Add(false);
             }
@@ -101,7 +102,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       public async Task<IEnumerable<BlobMeta>> GetMetaAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          var result = new List<BlobMeta>();
-         foreach (string id in ids)
+         foreach(string id in ids)
          {
             GenericValidation.CheckBlobId(id);
          }
@@ -112,10 +113,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       private async Task<BlobMeta> GetMetaAsync(string id, CancellationToken cancellationToken)
       {
          (CloudBlobContainer container, string path) = await GetPartsAsync(id, false);
-         if (container == null) return null;
+         if(container == null)
+            return null;
 
          CloudBlob blob = container.GetBlobReference(StoragePath.Normalize(path, false));
-         if (!(await blob.ExistsAsync())) return null;
+         if(!(await blob.ExistsAsync()))
+            return null;
 
          await blob.FetchAttributesAsync();
 
@@ -145,12 +148,13 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
       public async Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken = default)
       {
-         if (options == null) options = new ListOptions();
+         if(options == null)
+            options = new ListOptions();
 
          var result = new List<BlobId>();
          var containers = new List<CloudBlobContainer>();
 
-         if (StoragePath.IsRootPath(options.FolderPath))
+         if(StoragePath.IsRootPath(options.FolderPath))
          {
             // list all of the containers
             containers.AddRange(await GetCloudBlobContainersAsync(cancellationToken));
@@ -158,12 +162,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
             //represent containers as folders in the result
             result.AddRange(containers.Select(c => new BlobId(c.Name, BlobItemKind.Folder)));
 
-            if (!options.Recurse) return result;
+            if(!options.Recurse)
+               return result;
          }
          else
          {
             (CloudBlobContainer container, string path) = await GetPartsAsync(options.FolderPath, false);
-            if (container == null) return new List<BlobId>();
+            if(container == null)
+               return new List<BlobId>();
             options = options.Clone();
             options.FolderPath = path; //scan from subpath now
             containers.Add(container);
@@ -174,7 +180,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          await Task.WhenAll(containers.Select(c => ListAsync(c, result, options, cancellationToken)));
 
-         if (options.MaxResults != null)
+         if(options.MaxResults != null)
          {
             result = result.Take(options.MaxResults.Value).ToList();
          }
@@ -189,7 +195,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       {
          var browser = new AzureBlobDirectoryBrowser(container, options.MaxDegreeOfParalellism);
          IReadOnlyCollection<BlobId> containerBlobs = await browser.ListFolderAsync(options, cancellationToken);
-         if (containerBlobs.Count > 0)
+         if(containerBlobs.Count > 0)
          {
             result.AddRange(containerBlobs);
          }
@@ -213,7 +219,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          (CloudBlobContainer container, string path) = await GetPartsAsync(id, false);
 
-         if (container == null) return null;
+         if(container == null)
+            return null;
 
          CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
 
@@ -221,11 +228,13 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          {
             return await blob.OpenReadAsync();
          }
-         catch (AzureStorageException ex)
+         catch(AzureStorageException ex)
          {
-            if (AzureStorageValidation.IsDoesntExist(ex)) return null;
+            if(AzureStorageValidation.IsDoesntExist(ex))
+               return null;
 
-            if (!AzureStorageValidation.TryHandleStorageException(ex)) throw;
+            if(!AzureStorageValidation.TryHandleStorageException(ex))
+               throw;
          }
 
          throw new Exception("must not be here");
@@ -237,11 +246,13 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          (CloudBlobContainer container, string path) = await GetPartsAsync(id, false);
 
-         if (container == null) return null;
+         if(container == null)
+            return null;
 
          CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
 
-         if (!(await blob.ExistsAsync())) return null;
+         if(!(await blob.ExistsAsync()))
+            return null;
 
          return new AzureBlockBlobRandomAccessStream(blob);
       }
@@ -255,7 +266,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       {
          (CloudBlobContainer container, string path) = await GetPartsAsync(id);
 
-         if (append)
+         if(append)
          {
             CloudAppendBlob cab = container.GetAppendBlobReference(path);
 
@@ -273,22 +284,28 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       public async Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)
       {
          GenericValidation.CheckSourceStream(sourceStream);
-
-         (CloudBlobContainer container, string path) = await GetPartsAsync(id);
-
-         if (append)
+         try
          {
-            CloudAppendBlob cab = container.GetAppendBlobReference(StoragePath.Normalize(path, false));
-            if (!(await cab.ExistsAsync())) await cab.CreateOrReplaceAsync();
+            (CloudBlobContainer container, string path) = await GetPartsAsync(id);
+            if(append)
+            {
+               CloudAppendBlob cab = container.GetAppendBlobReference(StoragePath.Normalize(path, false));
+               if(!(await cab.ExistsAsync()))
+                  await cab.CreateOrReplaceAsync();
 
-            await cab.AppendFromStreamAsync(sourceStream);
+               await cab.AppendFromStreamAsync(sourceStream);
 
+            }
+            else
+            {
+               CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
+
+               await blob.UploadFromStreamAsync(sourceStream);
+            }
          }
-         else
+         catch(ArgumentException ex)
          {
-            CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
-
-            await blob.UploadFromStreamAsync(sourceStream);
+            throw new ArgumentException($"{nameof(id)} does not contain a valid path", ex);
          }
       }
 
@@ -312,7 +329,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          (CloudBlobContainer container, string path) = await GetPartsAsync(id, createContainer);
 
-         if (container == null) return null;
+         if(container == null)
+            return null;
 
          CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
 
@@ -320,11 +338,13 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          {
             return $@"{blob.Uri}{blob.GetSharedAccessSignature(sasConstraints, headers)}";
          }
-         catch (AzureStorageException ex)
+         catch(AzureStorageException ex)
          {
-            if (AzureStorageValidation.IsDoesntExist(ex)) return null;
+            if(AzureStorageValidation.IsDoesntExist(ex))
+               return null;
 
-            if (!AzureStorageValidation.TryHandleStorageException(ex)) throw;
+            if(!AzureStorageValidation.TryHandleStorageException(ex))
+               throw;
          }
 
          throw new Exception("must not be here");
@@ -337,14 +357,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          GenericValidation.CheckBlobId(path);
 
          path = StoragePath.Normalize(path);
-         if (path == null) throw new ArgumentNullException(nameof(path));
+         if(path == null)
+            throw new ArgumentNullException(nameof(path));
 
          int idx = path.IndexOf(StoragePath.PathSeparator);
          string containerName, relativePath;
-         if (idx == -1)
+         if(idx == -1)
          {
-            containerName = path;
-            relativePath = string.Empty;
+            throw new ArgumentException($"{nameof(path)} cannot be empty");
          }
          else
          {
@@ -352,12 +372,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
             relativePath = path.Substring(idx + 1);
          }
 
-         if (!_containerNameToContainer.TryGetValue(containerName, out CloudBlobContainer container))
+         if(!_containerNameToContainer.TryGetValue(containerName, out CloudBlobContainer container))
          {
             container = _client.GetContainerReference(containerName);
-            if (!(await container.ExistsAsync()))
+            if(!(await container.ExistsAsync()))
             {
-               if (createContainer)
+               if(createContainer)
                {
                   await container.CreateIfNotExistsAsync();
                }
@@ -376,7 +396,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       private string GetRelativePath(string path)
       {
          int idx = path.IndexOf(StoragePath.PathSeparator);
-         if (idx == -1) throw new ArgumentException("blob path must contain container name", nameof(path));
+         if(idx == -1)
+            throw new ArgumentException("blob path must contain container name", nameof(path));
 
          return path.Substring(idx);
       }
