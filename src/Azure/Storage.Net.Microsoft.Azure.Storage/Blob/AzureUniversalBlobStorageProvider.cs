@@ -292,7 +292,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
                await blob.UploadFromStreamAsync(sourceStream);
             }
          }
-         catch(ArgumentException ex)
+         catch(InvalidBlobPathException ex)
          {
             throw new ArgumentException($"{nameof(id)} does not contain a valid path", ex);
          }
@@ -349,7 +349,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          string containerName, relativePath;
          if (idx == -1)
          {
-            throw new ArgumentException($"{nameof(path)} cannot be empty");
+            throw new InvalidBlobPathException($"{nameof(path)} cannot be empty");
          }
          else
          {
