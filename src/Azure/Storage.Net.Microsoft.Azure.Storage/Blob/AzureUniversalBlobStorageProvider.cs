@@ -273,22 +273,28 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       public async Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)
       {
          GenericValidation.CheckSourceStream(sourceStream);
-
-         (CloudBlobContainer container, string path) = await GetPartsAsync(id);
-
-         if (append)
+         try
          {
-            CloudAppendBlob cab = container.GetAppendBlobReference(StoragePath.Normalize(path, false));
-            if (!(await cab.ExistsAsync())) await cab.CreateOrReplaceAsync();
+            (CloudBlobContainer container, string path) = await GetPartsAsync(id);
 
-            await cab.AppendFromStreamAsync(sourceStream);
+            if (append)
+            {
+               CloudAppendBlob cab = container.GetAppendBlobReference(StoragePath.Normalize(path, false));
+               if (!await cab.ExistsAsync()) await cab.CreateOrReplaceAsync();
 
+               await cab.AppendFromStreamAsync(sourceStream);
+
+            }
+            else
+            {
+               CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
+
+               await blob.UploadFromStreamAsync(sourceStream);
+            }
          }
-         else
+         catch(ArgumentException ex)
          {
-            CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
-
-            await blob.UploadFromStreamAsync(sourceStream);
+            throw new ArgumentException($"{nameof(id)} does not contain a valid path", ex);
          }
       }
 
@@ -343,8 +349,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          string containerName, relativePath;
          if (idx == -1)
          {
-            containerName = path;
-            relativePath = string.Empty;
+            throw new ArgumentException($"{nameof(path)} cannot be empty");
          }
          else
          {
