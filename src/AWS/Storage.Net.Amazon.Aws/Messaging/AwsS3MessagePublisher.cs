@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
+using Amazon.Runtime;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Storage.Net.Messaging;
@@ -15,14 +16,17 @@ namespace Storage.Net.Amazon.Aws.Messaging
    {
       private readonly AmazonSQSClient _client;
       private readonly string _queueName;
+      private readonly string _queueUrl;
 
       /// <summary>
       /// 
       /// </summary>
+      /// <param name="accessKeyId"></param>
+      /// <param name="secretAccessKey"></param>
       /// <param name="serviceUrl">Serivce URL, for instance http://sqs.us-west-2.amazonaws.com"</param>
       /// <param name="queueName"></param>
       /// <param name="regionEndpoint">Optional regional endpoint</param>
-      public AwsS3MessagePublisher(string serviceUrl, string queueName, RegionEndpoint regionEndpoint)
+      public AwsS3MessagePublisher(string accessKeyId, string secretAccessKey, string serviceUrl, string queueName, RegionEndpoint regionEndpoint)
       {
          var config = new AmazonSQSConfig
          {
@@ -30,15 +34,16 @@ namespace Storage.Net.Amazon.Aws.Messaging
             RegionEndpoint = regionEndpoint ?? RegionEndpoint.USEast1
          };
 
-         _client = new AmazonSQSClient(config);
+         _client = new AmazonSQSClient(new BasicAWSCredentials(accessKeyId, secretAccessKey), config);
          _queueName = queueName;
+         _queueUrl = new Uri(new Uri(serviceUrl), queueName).ToString();   //convert safely to string
       }
 
       public async Task PutMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
          var sqs = messages.Select(ToSQSMessage).ToList();
 
-         SendMessageBatchResponse r = await _client.SendMessageBatchAsync(_queueName, sqs, cancellationToken);
+         SendMessageBatchResponse r = await _client.SendMessageBatchAsync(_queueUrl, sqs, cancellationToken);
       }
 
       private static SendMessageBatchRequestEntry ToSQSMessage(QueueMessage message)
