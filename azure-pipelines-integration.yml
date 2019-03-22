@@ -28,10 +28,10 @@ steps:
   displayName: build
   inputs:
     projects: test/Storage.Net.Tests.Integration
-    arguments: '-c debug'
+    arguments: '-c release'
 - task: DotNetCoreCLI@2
   displayName: 'run integration tests'
   inputs:
     command: test
     projects: test/Storage.Net.Tests.Integration
-    arguments: '-c debug -v d'
+    arguments: '-c release -v d'
