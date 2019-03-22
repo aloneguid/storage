@@ -1,3 +1,5 @@
+do not edit this, to be deleted
+
 # Microsoft Service Fabric
 
 Microsoft Service Fabric implementations reside in a separate package hosted on [NuGet](https://www.nuget.org/packages/Storage.Net.Microsoft.ServiceFabric/). Follow the link for installation instructions. The package implements blobs and queues.

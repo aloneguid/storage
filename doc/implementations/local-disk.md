@@ -1,3 +1,5 @@
+do not edit this, to be deleted
+
 # Local Disk
 
 Local disk implementation is baked into the Storage.Net library itself as local I/O is a part of framework core.

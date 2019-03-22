@@ -20,6 +20,11 @@ namespace Storage.Net.Tests.Integration.KeyValue
       public AzureTableTest() : base("azure") { }
    }
 
+   public class AzureTableEmulatorTest : KeyValueStorageTest
+   {
+      public AzureTableEmulatorTest() : base("azure-emulator") { }
+   }
+
    public abstract class KeyValueStorageTest : AbstractTestFixture
    {
       private readonly string _name;
@@ -45,6 +50,10 @@ namespace Storage.Net.Tests.Integration.KeyValue
             _tables = StorageFactory.KeyValue.AzureTableStorage(
                _settings.AzureStorageName,
                _settings.AzureStorageKey);
+         }
+         else if(_name == "azure-emulator")
+         {
+            _tables = StorageFactory.KeyValue.AzureTableDevelopmentStorage();
          }
 
          _tableName = "TableStorageTest" + Guid.NewGuid().ToString().Replace("-", "");
@@ -98,7 +107,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
          {
             ["col1"] = "value1"
          };
-         await _tables.InsertAsync(_tableName, new[] {row1});
+         await _tables.InsertAsync(_tableName, new[] { row1 });
 
          var names = (await _tables.ListTableNamesAsync()).ToList();
          Assert.Equal(count + 1, names.Count);
@@ -117,8 +126,8 @@ namespace Storage.Net.Tests.Integration.KeyValue
          {
             ["col1"] = "value2"
          };
-         await _tables.InsertAsync(_tableName, new[] {row1, row2});
-         await _tables.DeleteAsync(_tableName, new[] {new Key("part1", "2")});
+         await _tables.InsertAsync(_tableName, new[] { row1, row2 });
+         await _tables.DeleteAsync(_tableName, new[] { new Key("part1", "2") });
          IReadOnlyCollection<Value> rows = await _tables.GetAsync(_tableName, new Key("part1", null));
 
          Assert.Single(rows);
@@ -173,7 +182,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
             ["col2"] = "val2",
             ["col3"] = "val3"
          };
-         await _tables.InsertAsync(_tableName, new[] {row1, row2});
+         await _tables.InsertAsync(_tableName, new[] { row1, row2 });
 
          Value row11 = await _tables.GetSingleAsync(_tableName, new Key("pk", "rk1"));
          Value row12 = await _tables.GetSingleAsync(_tableName, new Key("pk", "rk2"));
@@ -515,7 +524,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
       public async Task Get_RowsDontExist_EmptyCollection()
       {
          await _tables.InsertAsync(_tableName, new[] { new Value("pk", "rk1") });
-         await _tables.DeleteAsync(_tableName, new[] { new Key("pk", "rk1")});
+         await _tables.DeleteAsync(_tableName, new[] { new Key("pk", "rk1") });
 
          IReadOnlyCollection<Value> rows = await _tables.GetAsync(_tableName, new Key("pk", null));
          Assert.NotNull(rows);

@@ -1,3 +1,5 @@
+do not edit this, to be deleted
+
 # In-memory
 
 In-memory implementations is extremely useful if you decide you would like to use messaging pattern in your application, however you are not sure yet which external messaging tech to use, haven't decided yet, or it's simply not worth it as the amount of messages is not enough at this stage to worry about external messaging systems. 

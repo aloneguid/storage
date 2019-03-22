@@ -1,3 +1,5 @@
+do not edit this, to be deleted
+
 # Microsoft Azure Event Hub
 
 Microsoft Azure implementations reside in a separate package [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.EventHub.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.EventHub)

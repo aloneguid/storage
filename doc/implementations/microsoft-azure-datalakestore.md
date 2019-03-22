@@ -1,3 +1,5 @@
+do not edit this, to be deleted
+
 # Microsoft Azure Data Lake Store
 
 Microsoft Azure implementations reside in a separate package hosted on [NuGet](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.DataLake.Store/). Follow the link for installation instructions.
