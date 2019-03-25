@@ -1,6 +1,6 @@
-# Key-Value Providers
+# Blob Storage Providers
 
-This page lists key-value storage providers available in Storage.Net
+This page lists blob storage providers available in Storage.Net
 
 ## Index
 
