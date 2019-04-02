@@ -121,7 +121,29 @@ Note that exception handler in Service Bus is for *informational purposes only*,
 
 ### Amazon Simple Queue
 
-In order to use Amazon Simple Queue you need to reference
+In order to use [Amazon Simple Queue](https://aws.amazon.com/sqs/) you need to reference
 [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Amazon.Aws.svg)](https://www.nuget.org/packages/Storage.Net.Amazon.Aws/) first. The provider wraps around the standard AWS SDK.
 
+To construct a publisher use the following:
+
+```csharp
+IMessagePublisher queuePublisher = StorageFactory.Messages.AmazonSQSMessagePublisher(
+  accessKeyId,
+  secretAccessKey,
+  serviceUrl,
+  queueName,
+  regionEndpoint);
+
+IMessagePublisher topicPublisher = StorageFactory.Messages.AmazonSQSMessageReceiver(
+  accessKeyId,
+  secretAccessKey,
+  serviceUrl,
+  queueName,
+  regionEndpoint);
+```
+
+- **accessKeyId** and **secretAccessKey*) are credentials to access the queue.
+- **serviceUrl** indicates the service URL, for instance `https://sqs.us-east-1.amazonaws.com`
+- **queueName** is the name of the queue
+- **retionEndpoint** is optional and defaults to `USEast1`
 
