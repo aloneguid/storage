@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,14 +31,35 @@ namespace Storage.Net.Amazon.Aws.Messaging
 
       public override async Task<int> GetMessageCountAsync()
       {
-         GetQueueAttributesResponse attrs = await _client.GetQueueAttributesAsync(_queueUrl, new List<string> { "All" });
+         GetQueueAttributesResponse attrs = await _client.GetQueueAttributesAsync(_queueUrl, new List<string> { "All" }).ConfigureAwait(false);
 
          return attrs.ApproximateNumberOfMessages;
       }
 
+      public override async Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
+      {
+         var request = new DeleteMessageBatchRequest(_queueUrl,
+            messages.Select(m => new DeleteMessageBatchRequestEntry(m.Id, m.Properties[Converter.ReceiptHandlePropertyName])).ToList());
+
+         await _client.DeleteMessageBatchAsync(request, cancellationToken).ConfigureAwait(false);
+      }
+
       protected override async Task<IReadOnlyCollection<QueueMessage>> ReceiveMessagesAsync(int maxBatchSize, CancellationToken cancellationToken)
       {
-         throw new NotImplementedException();
+         var request = new ReceiveMessageRequest(_queueUrl)
+         {
+            MessageAttributeNames = new List<string> { ".*" },
+            MaxNumberOfMessages = Math.Min(10, maxBatchSize)
+         };
+
+         ReceiveMessageResponse messages = await _client.ReceiveMessageAsync(request, cancellationToken).ConfigureAwait(false);
+
+         return messages.Messages.Select(Converter.ToQueueMessage).ToList();
+      }
+
+      public override Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default)
+      {
+         throw new NotSupportedException();
       }
    }
 }

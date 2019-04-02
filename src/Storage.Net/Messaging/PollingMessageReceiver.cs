@@ -25,26 +25,17 @@ namespace Storage.Net.Messaging
       /// <summary>
       /// See interface
       /// </summary>
-      public virtual Task<int> GetMessageCountAsync()
-      {
-         throw new NotSupportedException();
-      }
+      public abstract Task<int> GetMessageCountAsync();
 
       /// <summary>
       /// See interface
       /// </summary>
-      public virtual Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
-      {
-         throw new NotSupportedException();
-      }
+      public abstract Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default);
 
       /// <summary>
       /// See interface
       /// </summary>
-      public virtual Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default)
-      {
-         throw new NotSupportedException();
-      }
+      public abstract Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default);
 
       /// <summary>
       /// See interface
@@ -75,18 +66,18 @@ namespace Storage.Net.Messaging
 
       private async Task PollTasksAsync(Func<IReadOnlyCollection<QueueMessage>, Task> callback, int maxBatchSize, CancellationToken cancellationToken)
       {
-         IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesAsync(maxBatchSize, cancellationToken);
+         IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
          while (messages != null && messages.Count > 0)
          {
             await callback(messages);
 
-            messages = await ReceiveMessagesAsync(maxBatchSize, cancellationToken);
+            messages = await ReceiveMessagesAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
          }
 
          await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), cancellationToken).ContinueWith(async (t) =>
          {
-            await PollTasksAsync(callback, maxBatchSize, cancellationToken);
-         });
+            await PollTasksAsync(callback, maxBatchSize, cancellationToken).ConfigureAwait(false);
+         }).ConfigureAwait(false);
       }
 
       /// <summary>

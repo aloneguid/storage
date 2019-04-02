@@ -51,5 +51,7 @@ namespace Storage.Net.Messaging
       }
 
       public override Task<int> GetMessageCountAsync() => Task.FromResult(_queue.Count);
+
+      public override Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default) => throw new NotSupportedException();
    }
 }

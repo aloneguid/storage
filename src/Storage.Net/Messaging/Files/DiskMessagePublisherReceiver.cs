@@ -72,5 +72,9 @@ namespace Storage.Net.Messaging.Files
          //generate sortable file name, so that we can get the oldest item or newest item easily
          return now.ToString("yyyy-MM-dd-hh-mm-ss-ffff") + FileExtension;
       }
+
+      public override Task<int> GetMessageCountAsync() => throw new NotSupportedException();
+      public override Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+      public override Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default) => throw new NotSupportedException();
    }
 }

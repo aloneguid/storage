@@ -41,18 +41,14 @@ namespace Storage.Net.Amazon.Aws.Messaging
 
       public async Task PutMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
-         var sqs = messages.Select(ToSQSMessage).ToList();
+         if(messages == null)
+            return;
 
-         SendMessageBatchResponse r = await _client.SendMessageBatchAsync(_queueUrl, sqs, cancellationToken);
-      }
+         var request = new SendMessageBatchRequest(
+            _queueUrl,
+            messages.Select(Converter.ToSQSMessage).ToList());
 
-      private static SendMessageBatchRequestEntry ToSQSMessage(QueueMessage message)
-      {
-         var r = new SendMessageBatchRequestEntry(Guid.NewGuid().ToString(), message.StringContent);
-
-         //todo: message attributes
-
-         return r;
+         SendMessageBatchResponse r = await _client.SendMessageBatchAsync(request, cancellationToken);
       }
 
       public void Dispose()
