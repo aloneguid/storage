@@ -6,6 +6,10 @@ trigger:
   branches:
     include:
       - master
+  paths:
+    exclude:
+      - README.md
+      - /doc/**/*
 
 pr:
   branches:
