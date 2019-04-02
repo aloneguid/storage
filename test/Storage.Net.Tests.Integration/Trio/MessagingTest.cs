@@ -154,7 +154,12 @@ namespace Storage.Net.Tests.Integration.Messaging
                break;
 #if DEBUG
             case "amazon-sqs":
-               _receiver = null;
+               _receiver = StorageFactory.Messages.AmazonSQSMessageReceiver(
+                  _settings.AwsAccessKeyId,
+                  _settings.AwsSecretAccessKey,
+                   "https://sqs.us-east-1.amazonaws.com",
+                   "integration",
+                   RegionEndpoint.USEast1);
                _publisher = StorageFactory.Messages.AmazonSQSMessagePublisher(
                   _settings.AwsAccessKeyId,
                   _settings.AwsSecretAccessKey,
