@@ -7,6 +7,7 @@ This page lists messaging providers available in Storage.Net
 - [In-Memory](#inmemory)
 - [Local Disk](#local-disk)
 - [Azure Service Bus](#azure-service-bus)
+- [Amazon Simple Queue](#amazon-simple-queue)
 
 ### In-Memory
 
@@ -117,3 +118,10 @@ IMessageReceiver topicReceiver = StorageFactory.Messages.AzureServiceBusTopicRec
 ```
 
 Note that exception handler in Service Bus is for *informational purposes only*, it doesn't actually handle exceptions, and in case of errors the SDK [retries them automatically](https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.servicebus.messagehandleroptions.exceptionreceivedhandler?view=azure-dotnet#Microsoft_Azure_ServiceBus_MessageHandlerOptions_ExceptionReceivedHandler).
+
+### Amazon Simple Queue
+
+In order to use Amazon Simple Queue you need to reference
+[![NuGet](https://img.shields.io/nuget/v/Storage.Net.Amazon.Aws.svg)](https://www.nuget.org/packages/Storage.Net.Amazon.Aws/) first. The provider wraps around the standard AWS SDK.
+
+

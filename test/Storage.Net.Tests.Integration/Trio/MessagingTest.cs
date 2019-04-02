@@ -152,7 +152,6 @@ namespace Storage.Net.Tests.Integration.Messaging
                _publisher = StorageFactory.Messages.DirectoryFilesPublisher(path);
                _receiver = StorageFactory.Messages.DirectoryFilesReceiver(path);
                break;
-#if DEBUG
             case "amazon-sqs":
                _receiver = StorageFactory.Messages.AmazonSQSMessageReceiver(
                   _settings.AwsAccessKeyId,
@@ -167,8 +166,6 @@ namespace Storage.Net.Tests.Integration.Messaging
                    "integration",
                    RegionEndpoint.USEast1);
                break;
-#endif
-
          }
       }
 

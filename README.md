@@ -4,11 +4,15 @@
 
 ![Slide](doc/slide.png)
 
+## About
+
 Storage.NET is a field-tested .NET library that helps to achieve [polycloud techniques](https://www.thoughtworks.com/radar/techniques/polycloud). 
 
 It provides generic interface for popular cloud storage providers like Amazon S3, Azure Service Bus, Azure Event Hub, Azure Storage, Azure Data Lake Store thus abstracting Messaging, Blob (object store for unsturctured data) and Table (NoSQL key-value store) services.
 
 It also implements in-memory and on-disk versions of all the abstractions for faster local machine development. Connection strings are supported too!
+
+![Comic Why](doc/comic-why.png)
 
 ## Index
 

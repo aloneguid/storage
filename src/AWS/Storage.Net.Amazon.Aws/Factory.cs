@@ -67,7 +67,6 @@ namespace Storage.Net
          return new AwsS3BlobStorageProvider(accessKeyId, secretAccessKey, bucketName, clientConfig);
       }
 
-#if DEBUG
       /// <summary>
       /// Creates Amazon Simple Queue Service publisher
       /// </summary>
@@ -107,6 +106,5 @@ namespace Storage.Net
       {
          return new AwsS3MessageReceiver(accessKeyId, secretAccessKey, serviceUrl, queueName, regionEndpoint);
       }
-#endif
    }
 }
