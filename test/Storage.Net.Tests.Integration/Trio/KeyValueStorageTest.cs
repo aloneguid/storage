@@ -20,13 +20,12 @@ namespace Storage.Net.Tests.Integration.KeyValue
       public AzureTableTest() : base("azure") { }
    }
 
-   //only run in DEBUG mode (CI runs in release) as there is no storage emulator on build server
-#if DEBUG
+   //there is no storage emulator on build server
+   /*
    public class AzureTableEmulatorTest : KeyValueStorageTest
    {
       public AzureTableEmulatorTest() : base("azure-emulator") { }
-   }
-#endif
+   }*/
 
    public abstract class KeyValueStorageTest : AbstractTestFixture
    {
