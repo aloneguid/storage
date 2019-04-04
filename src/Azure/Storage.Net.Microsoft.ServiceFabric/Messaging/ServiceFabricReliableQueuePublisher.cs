@@ -12,7 +12,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
 {
    class ServiceFabricReliableQueuePublisher : IMessagePublisher
    {
-      private IReliableStateManager _stateManager;
+      private readonly IReliableStateManager _stateManager;
       private readonly string _queueName;
       private readonly TimeSpan _timeout;
 

@@ -5,10 +5,10 @@
    /// </summary>
    public static class StorageFactory
    {
-      private static IKeyValueStorageFactory _tables = new InternalTablesFactory();
-      private static IBlobStorageFactory _blobs = new InternalBlobsFactory();
-      private static IMessagingFactory _messages = new InternalMessagingFactory();
-      private static IModulesFactory _moduleInit = new InternalModuleInitFactory();
+      private static readonly IKeyValueStorageFactory _tables = new InternalTablesFactory();
+      private static readonly IBlobStorageFactory _blobs = new InternalBlobsFactory();
+      private static readonly IMessagingFactory _messages = new InternalMessagingFactory();
+      private static readonly IModulesFactory _moduleInit = new InternalModuleInitFactory();
 
       /// <summary>
       /// Access to creating tables

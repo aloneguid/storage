@@ -13,7 +13,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
    /// </summary>
    public class AzureEventHubPublisher : IMessagePublisher
    {
-      private EventHubClient _client;
+      private readonly EventHubClient _client;
 
       /// <summary>
       /// Creates an instance of event hub publisher by full connection string

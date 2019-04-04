@@ -7,7 +7,7 @@ namespace Storage.Net.Microsoft.ServiceFabric
 {
    class ServiceFabricTransaction : ITransaction
    {
-      private SFTransaction _transaction;
+      private readonly SFTransaction _transaction;
       private bool _commited;
       private readonly Action<bool> _transactionClosed;
       private readonly bool _ignoreCommits;

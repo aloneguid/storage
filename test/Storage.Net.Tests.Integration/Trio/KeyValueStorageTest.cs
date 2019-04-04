@@ -30,9 +30,9 @@ namespace Storage.Net.Tests.Integration.KeyValue
    public abstract class KeyValueStorageTest : AbstractTestFixture
    {
       private readonly string _name;
-      private IKeyValueStorage _tables;
-      private string _tableName;
-      private ITestSettings _settings;
+      private readonly IKeyValueStorage _tables;
+      private readonly string _tableName;
+      private readonly ITestSettings _settings;
 
       protected KeyValueStorageTest(string name)
       {

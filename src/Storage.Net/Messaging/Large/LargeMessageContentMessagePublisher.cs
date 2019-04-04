@@ -13,7 +13,7 @@ namespace Storage.Net.Messaging.Large
       private readonly IBlobStorage _offloadStorage;
       private readonly long _minSizeLarge;
       private readonly bool _keepPublisherOpen;
-      private Func<QueueMessage, string> _blobPathGenerator;
+      private readonly Func<QueueMessage, string> _blobPathGenerator;
 
       public LargeMessageContentMessagePublisher(
          IMessagePublisher parentPublisher,

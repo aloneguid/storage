@@ -11,7 +11,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
 {
    abstract class AbstractServiceFabricReliableQueueReceiver : IMessageReceiver
    {
-      private IReliableStateManager _stateManager;
+      private readonly IReliableStateManager _stateManager;
       private readonly string _queueName;
       private readonly TimeSpan _scanInterval;
       private bool _disposed;

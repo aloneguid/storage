@@ -7,7 +7,7 @@ namespace Storage.Net
    /// </summary>
    public class EmptyTransaction : ITransaction
    {
-      private static EmptyTransaction _instance = new EmptyTransaction();
+      private static readonly EmptyTransaction _instance = new EmptyTransaction();
 
       /// <summary>
       /// Returns empty transaction instance

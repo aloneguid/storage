@@ -62,8 +62,8 @@ namespace Storage.Net.Tests.Integration.Blobs
     {
         private readonly string _type;
         private readonly string _blobPrefix;
-        private IBlobStorage _storage;
-        private ITestSettings _settings;
+        private readonly IBlobStorage _storage;
+        private readonly ITestSettings _settings;
 
         public BlobStorageTest(string type, string blobPrefix = null)
         {

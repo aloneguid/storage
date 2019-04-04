@@ -21,8 +21,8 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
 {
    class AzureKeyVaultBlobStorageProvider : IBlobStorage
    {
-      private KeyVaultClient _vaultClient;
-      private ClientCredential _credential;
+      private readonly KeyVaultClient _vaultClient;
+      private readonly ClientCredential _credential;
       private readonly string _vaultUri;
       private static readonly Regex secretNameRegex = new Regex("^[0-9a-zA-Z-]+$");
 
@@ -30,7 +30,7 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
       {
          _credential = new ClientCredential(azureAadClientId, azureAadClientSecret);
 
-         _vaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(GetAccessToken), GetHttpClient());
+         _vaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(GetAccessTokenAsync), GetHttpClient());
 
          _vaultUri = vaultUri.ToString().Trim('/');
       }
@@ -189,7 +189,7 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
       /// <param name="resource"> Resource </param>
       /// <param name="scope"> scope </param>
       /// <returns> token </returns>
-      public async Task<string> GetAccessToken(string authority, string resource, string scope)
+      public async Task<string> GetAccessTokenAsync(string authority, string resource, string scope)
       {
          var context = new AuthenticationContext(authority, TokenCache.DefaultShared);
 

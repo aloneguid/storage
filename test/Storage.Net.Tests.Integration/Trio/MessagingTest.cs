@@ -63,13 +63,13 @@ namespace Storage.Net.Tests.Integration.Messaging
    {
       private readonly ILog _log = L.G<MessagingTest>();
       private readonly string _name;
-      private IMessagePublisher _publisher;
-      private IMessageReceiver _receiver;
+      private readonly IMessagePublisher _publisher;
+      private readonly IMessageReceiver _receiver;
       private readonly List<QueueMessage> _receivedMessages = new List<QueueMessage>();
-      private ITestSettings _settings;
-      private CancellationTokenSource _cts = new CancellationTokenSource();
+      private readonly ITestSettings _settings;
+      private readonly CancellationTokenSource _cts = new CancellationTokenSource();
       private static readonly TimeSpan MaxWaitTime = TimeSpan.FromMinutes(1);
-      private string _tag = Guid.NewGuid().ToString();
+      private readonly string _tag = Guid.NewGuid().ToString();
 
       protected MessagingTest(string name)
       {

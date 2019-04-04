@@ -18,7 +18,7 @@ namespace Storage.Net.Tests
    public class DocumentationScenarios
    {
 
-      private ITestSettings _settings;
+      private readonly ITestSettings _settings;
 
       public DocumentationScenarios()
       {

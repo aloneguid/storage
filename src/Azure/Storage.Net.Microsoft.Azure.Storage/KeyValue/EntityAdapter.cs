@@ -12,7 +12,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
    {
       private readonly Value _row;
 
-      private static Dictionary<Type, Func<object, EntityProperty>> TypeToEntityPropertyFunc = new Dictionary<Type, Func<object, EntityProperty>>
+      private static readonly Dictionary<Type, Func<object, EntityProperty>> _typeToEntityPropertyFunc = new Dictionary<Type, Func<object, EntityProperty>>
       {
          [typeof(string)] = o => EntityProperty.GeneratePropertyForString((string)o),
          [typeof(byte[])] = o => EntityProperty.GeneratePropertyForByteArray((byte[])o),
@@ -67,7 +67,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
             EntityProperty ep;
             Type t = cell.Value.GetType();
 
-            if (!TypeToEntityPropertyFunc.TryGetValue(t, out Func<object, EntityProperty> factoryMethod))
+            if (!_typeToEntityPropertyFunc.TryGetValue(t, out Func<object, EntityProperty> factoryMethod))
             {
                ep = EntityProperty.GeneratePropertyForString(cell.Value.ToString());
             }

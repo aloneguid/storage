@@ -22,7 +22,7 @@ namespace Storage.Net
       /// <summary>
       /// Character used to split paths 
       /// </summary>
-      public static string PathStrSeparator = new string(PathSeparator, 1);
+      public static readonly string PathStrSeparator = new string(PathSeparator, 1);
 
       /// <summary>
       /// Returns '/'
