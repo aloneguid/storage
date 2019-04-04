@@ -232,7 +232,7 @@ namespace Storage.Net.Blob.Files
       /// </summary>
       public Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
       {
-         if (ids == null) return null;
+         if (ids == null) return Task.FromResult(true);
 
          foreach (string id in ids)
          {
@@ -271,7 +271,7 @@ namespace Storage.Net.Blob.Files
       /// </summary>
       public Task<IEnumerable<BlobMeta>> GetMetaAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
       {
-         if (ids == null) return null;
+         if (ids == null) return Task.FromResult<IEnumerable<BlobMeta>>(null);
 
          GenericValidation.CheckBlobId(ids);
 
