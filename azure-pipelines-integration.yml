@@ -52,3 +52,4 @@ steps:
     command: custom
     custom: sonarscanner
     arguments: 'end /d:sonar.login="$(Sonar.Login)"'
+    condition: succeededOrFailed()
