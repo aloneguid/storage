@@ -287,7 +287,7 @@ namespace Storage.Net.Tests.Integration.Messaging
 
          QueueMessage received = await WaitMessage(_tag);
 
-         Assert.NotNull(received);
+         Assert.True(received != null, "no message received with tag " + _tag);
          Assert.Equal(content, received.StringContent);
          Assert.Equal("v1", received.Properties["one"]);
       }
