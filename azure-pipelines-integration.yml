@@ -44,11 +44,10 @@ steps:
   inputs:
     command: test
     projects: test/Storage.Net.Tests.Integration
-    arguments: '-c debug'
     continueOnError: true
 
 - task: DotNetCoreCLI@2
-  displayName: 'end analysis'
+  displayName: 'end SQ analysis'
   inputs:
     command: custom
     custom: sonarscanner
