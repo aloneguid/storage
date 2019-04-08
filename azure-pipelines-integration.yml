@@ -46,19 +46,11 @@ steps:
     projects: src/storage.sln
 
 - task: DotNetCoreCLI@2
-  displayName: 'Unit Test (with coverlet)'
+  displayName: 'Integration and Unit Test (with coverlet)'
   inputs:
     command: test
-    projects: test/Storage.Net.Tests
+    projects: ./src/storage.sln
     arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*%2c[*Test*]*" /p:CoverletOutput=./coverage.xml'
-    continueOnError: true
-
-- task: DotNetCoreCLI@2
-  displayName: 'Integration Test (with coverlet)'
-  inputs:
-    command: test
-    projects: test/Storage.Net.Tests.Integration
-    arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*%2c[*Test*]*" /p:MergeWith=./coverage.xml'
     continueOnError: true
 
 - task: DotNetCoreCLI@2
