@@ -1,6 +1,6 @@
 # Storage.Net
 ### One Interface To Rule Them All
-[![NuGet](https://img.shields.io/nuget/v/Storage.Net.svg)](https://www.nuget.org/packages/Storage.Net/) [![](https://img.shields.io/azure-devops/build/aloneguid/7a9c6ed6-1a57-47cf-941f-f4b09440591b/40.svg)](https://aloneguid.visualstudio.com/Storage.Net/_build?definitionId=40) [![](https://img.shields.io/azure-devops/tests/aloneguid/Storage.Net/41.svg?label=integration%20tests)](https://aloneguid.visualstudio.com/Storage.Net/_build?definitionId=41)
+[![NuGet](https://img.shields.io/nuget/v/Storage.Net.svg)](https://www.nuget.org/packages/Storage.Net/) [![](https://img.shields.io/azure-devops/build/aloneguid/7a9c6ed6-1a57-47cf-941f-f4b09440591b/40/master.svg)](https://aloneguid.visualstudio.com/Storage.Net/_build?definitionId=40) [![](https://img.shields.io/azure-devops/tests/aloneguid/Storage.Net/41/master.svg?label=integration%20tests)](https://aloneguid.visualstudio.com/Storage.Net/_build?definitionId=41)
 
 ![Slide](doc/slide.png)
 
