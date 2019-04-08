@@ -61,10 +61,3 @@ steps:
   displayName: 'publish nugets'
   inputs:
     ArtifactName: nuget
-
-- task: NuGetCommand@2
-  displayName: 'publish to internal nuget'
-  inputs:
-    command: push
-    publishVstsFeed: 'cfd59a88-58da-4627-822a-45686ae62690'
-    allowPackageConflicts: true
