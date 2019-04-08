@@ -45,6 +45,7 @@ steps:
     command: test
     projects: test/Storage.Net.Tests.Integration
     arguments: '-c debug'
+    continueOnError: true
 
 - task: DotNetCoreCLI@2
   displayName: 'end analysis'
@@ -52,4 +53,3 @@ steps:
     command: custom
     custom: sonarscanner
     arguments: 'end /d:sonar.login="$(Sonar.Login)"'
-    condition: succeededOrFailed()

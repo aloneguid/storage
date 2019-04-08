@@ -14,7 +14,7 @@ using AzureStorageException = Microsoft.WindowsAzure.Storage.StorageException;
 
 namespace Storage.Net.Microsoft.Azure.Storage.Blob
 {
-   class AzureUniversalBlobStorageProvider : IBlobStorage, IAzureBlobStorageNativeOperations
+   class AzureUniversalBlobStorageProvider : IAzureBlobStorageNativeOperations
    {
       private readonly CloudBlobClient _client;
       private readonly ConcurrentDictionary<string, CloudBlobContainer> _containerNameToContainer = new ConcurrentDictionary<string, CloudBlobContainer>();
@@ -371,14 +371,6 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          }
 
          return (container, relativePath);
-      }
-
-      private string GetRelativePath(string path)
-      {
-         int idx = path.IndexOf(StoragePath.PathSeparator);
-         if (idx == -1) throw new ArgumentException("blob path must contain container name", nameof(path));
-
-         return path.Substring(idx);
       }
 
       #endregion
