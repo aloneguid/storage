@@ -40,11 +40,16 @@ steps:
     arguments: 'begin /k:"aloneguid_storage" /o:"aloneguid-github" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="$(Sonar.Login)"'
 
 - task: DotNetCoreCLI@2
+  displayName: build
+  inputs:
+    projects: test/Storage.Net.Tests.Integration
+
+- task: DotNetCoreCLI@2
   displayName: 'Integration Test (with coverlet)'
   inputs:
     command: test
     projects: test/Storage.Net.Tests.Integration
-    arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*"'
+    arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*%2c[*Test*]*"'
     continueOnError: true
 
 - task: DotNetCoreCLI@2

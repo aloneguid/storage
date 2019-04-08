@@ -2,9 +2,9 @@
 <CoverageSession>
   <Summary numSequencePoints="2732" visitedSequencePoints="451" numBranchPoints="1183" visitedBranchPoints="104" sequenceCoverage="16.5" branchCoverage="8.8" maxCyclomaticComplexity="817" minCyclomaticComplexity="34" visitedClasses="32" numClasses="133" visitedMethods="95" numMethods="442" />
   <Modules>
-    <Module hash="8AD5E8F8-738B-4852-ABFE-9ECB3578371A">
+    <Module hash="269E7A43-747E-4DB8-93C5-15CFCA1F33DA">
       <ModulePath>Storage.Net.dll</ModulePath>
-      <ModuleTime>2019-04-08T06:43:43</ModuleTime>
+      <ModuleTime>2019-04-08T06:52:39</ModuleTime>
       <ModuleName>Storage.Net</ModuleName>
       <Files>
         <File uid="1" fullPath="C:\dev\storage\src\Storage.Net\EmptyTransaction.cs" />
@@ -5584,9 +5584,9 @@
         </Class>
       </Classes>
     </Module>
-    <Module hash="70ACB34D-9663-42D5-8918-4330E9338BD1">
+    <Module hash="49A5AAEE-1579-4311-8A0E-A790F6F25F6F">
       <ModulePath>Storage.Net.Microsoft.Azure.Storage.dll</ModulePath>
-      <ModuleTime>2019-04-08T06:43:43</ModuleTime>
+      <ModuleTime>2019-04-08T06:52:39</ModuleTime>
       <ModuleName>Storage.Net.Microsoft.Azure.Storage</ModuleName>
       <Files>
         <File uid="30" fullPath="C:\dev\storage\src\JsonExtensions.cs" />
@@ -9010,9 +9010,9 @@
         </Class>
       </Classes>
     </Module>
-    <Module hash="1C8CCC6B-0C86-4349-B728-31E552788F42">
+    <Module hash="C95622D5-42A3-463C-AF6B-EA3C0C22BD53">
       <ModulePath>Storage.Net.Tests.dll</ModulePath>
-      <ModuleTime>2019-04-08T06:43:43</ModuleTime>
+      <ModuleTime>2019-04-08T06:52:39</ModuleTime>
       <ModuleName>Storage.Net.Tests</ModuleName>
       <Files>
         <File uid="46" fullPath="C:\dev\storage\test\Storage.Net.Tests\obj\Debug\netcoreapp2.1\Storage.Net.Tests.Program.cs" />
