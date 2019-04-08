@@ -33,8 +33,22 @@ steps:
     checkLatest: true
 
 - task: DotNetCoreCLI@2
+  displayName: 'begin SQ analysis'
+  inputs:
+    command: custom
+    custom: sonarscanner
+    arguments: 'begin /k:"aloneguid_storage" /o:"aloneguid-github" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="$(Sonar.Login)"'
+
+- task: DotNetCoreCLI@2
   displayName: 'run integration tests'
   inputs:
     command: test
     projects: test/Storage.Net.Tests.Integration
     arguments: '-c debug'
+
+- task: DotNetCoreCLI@2
+  displayName: 'end analysis'
+  inputs:
+    command: custom
+    custom: sonarscanner
+    arguments: 'end /d:sonar.login="$(Sonar.Login)"'
