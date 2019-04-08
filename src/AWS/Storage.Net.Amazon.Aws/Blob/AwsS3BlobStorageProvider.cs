@@ -115,7 +115,7 @@ namespace Storage.Net.Aws.Blob
             .ToList();
       }
 
-      public async Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)
+      public async Task WriteAsync(string id, Stream sourceStream, bool append = false, CancellationToken cancellationToken = default)
       {
          if (append) throw new NotSupportedException();
 
@@ -131,7 +131,7 @@ namespace Storage.Net.Aws.Blob
       /// <summary>
       /// S3 doesnt support this natively and will cache everything in MemoryStream until disposed.
       /// </summary>
-      public Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
+      public Task<Stream> OpenWriteAsync(string id, bool append = false, CancellationToken cancellationToken = default)
       {
          if (append) throw new NotSupportedException();
          GenericValidation.CheckBlobId(id);
@@ -148,7 +148,7 @@ namespace Storage.Net.Aws.Blob
          return Task.FromResult<Stream>(callbackStream);
       }
 
-      public async Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken)
+      public async Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobId(id);
 
@@ -159,12 +159,12 @@ namespace Storage.Net.Aws.Blob
          return new FixedStream(response.ResponseStream, length: response.ContentLength);
       }
 
-      public Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          return Task.WhenAll(ids.Select(id => DeleteAsync(id, cancellationToken)));
       }
 
-      private async Task DeleteAsync(string id, CancellationToken cancellationToken)
+      private async Task DeleteAsync(string id, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobId(id);
 
@@ -173,7 +173,7 @@ namespace Storage.Net.Aws.Blob
          await client.DeleteObjectAsync(_bucketName, id, cancellationToken);
       }
 
-      public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          return await Task.WhenAll(ids.Select(ExistsAsync));
       }
@@ -198,7 +198,7 @@ namespace Storage.Net.Aws.Blob
          return true;
       }
 
-      public async Task<IEnumerable<BlobMeta>> GetMetaAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public async Task<IEnumerable<BlobMeta>> GetMetaAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          return await Task.WhenAll(ids.Select(GetMetaAsync));
       }
