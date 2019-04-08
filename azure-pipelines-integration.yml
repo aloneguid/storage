@@ -44,7 +44,7 @@ steps:
   inputs:
     command: test
     projects: test/Storage.Net.Tests.Integration
-    arguments: /p:CollectCoverage=true /p:CoverletOutputFormat=opencover 
+    arguments: /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*"
     continueOnError: true
 
 - task: DotNetCoreCLI@2
