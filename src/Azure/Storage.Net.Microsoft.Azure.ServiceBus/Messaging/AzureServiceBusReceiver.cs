@@ -15,16 +15,16 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
    abstract class AzureServiceBusReceiver : IMessageReceiver
    {
       protected readonly ConcurrentDictionary<string, Message> _messageIdToBrokeredMessage = new ConcurrentDictionary<string, Message>();
-      protected readonly IReceiverClient receiverClient;
-      protected readonly MessageHandlerOptions messageHandlerOptions;
+      protected readonly IReceiverClient _receiverClient;
+      protected readonly MessageHandlerOptions _messageHandlerOptions;
       protected readonly bool _peekLock;
 
       public AzureServiceBusReceiver(IReceiverClient receiverClient, bool peekLock, MessageHandlerOptions messageHandlerOptions)
       {
-         this.receiverClient = receiverClient ?? throw new ArgumentNullException(nameof(receiverClient));
+         _receiverClient = receiverClient ?? throw new ArgumentNullException(nameof(receiverClient));
          _peekLock = peekLock;
 
-         this.messageHandlerOptions = messageHandlerOptions ??
+         _messageHandlerOptions = messageHandlerOptions ??
             new MessageHandlerOptions(DefaultExceptionReceiverHandler)
             {
                AutoComplete = false,
@@ -35,6 +35,12 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
 
       private static Task DefaultExceptionReceiverHandler(ExceptionReceivedEventArgs args)
       {
+         if(args?.Exception is OperationCanceledException)
+         {
+            // operation cancelled, ignore
+         }
+
+         //extra handling code
          return Task.FromResult(true);
       }
 
@@ -52,7 +58,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          if(!_messageIdToBrokeredMessage.TryRemove(message.Id, out Message bm))
             return;
 
-         await receiverClient.CompleteAsync(bm.SystemProperties.LockToken).ConfigureAwait(false);
+         await _receiverClient.CompleteAsync(bm.SystemProperties.LockToken).ConfigureAwait(false);
       }
 
       public Task<int> GetMessageCountAsync() => throw new NotSupportedException();
@@ -66,7 +72,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          if(!_messageIdToBrokeredMessage.TryRemove(message.Id, out Message bm))
             return;
 
-         await receiverClient.DeadLetterAsync(bm.MessageId).ConfigureAwait(false);
+         await _receiverClient.DeadLetterAsync(bm.MessageId).ConfigureAwait(false);
       }
 
       public Task<ITransaction> OpenTransactionAsync()
@@ -79,9 +85,9 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          if(onMessageAsync == null)
             throw new ArgumentNullException(nameof(onMessageAsync));
 
-         receiverClient.PrefetchCount = maxBatchSize;
+         _receiverClient.PrefetchCount = maxBatchSize;
 
-         receiverClient.RegisterMessageHandler(
+         _receiverClient.RegisterMessageHandler(
             async (message, token) =>
             {
                QueueMessage qm = Converter.ToQueueMessage(message);
@@ -89,14 +95,14 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
                   _messageIdToBrokeredMessage[qm.Id] = message;
                await onMessageAsync(new[] { qm });
             },
-            messageHandlerOptions);
+            _messageHandlerOptions);
 
          return Task.FromResult(true);
       }
 
       public void Dispose()
       {
-         receiverClient.CloseAsync();
+         _receiverClient.CloseAsync();
       }
 
    }

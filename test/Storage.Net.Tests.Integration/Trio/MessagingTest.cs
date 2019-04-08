@@ -317,7 +317,7 @@ namespace Storage.Net.Tests.Integration.Messaging
 
          await _publisher.PutMessagesAsync(messages);
 
-         await WaitMessage(null, TimeSpan.FromSeconds(5), 10);
+         await WaitMessage(null, null, 10);
 
          Assert.True(_receivedMessages.Count >= 10, _receivedMessages.Count.ToString());
       }
