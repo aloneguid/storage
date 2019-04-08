@@ -218,11 +218,10 @@ namespace Storage.Net.Tests.Integration.Messaging
 
             if(candidate != null && _receivedMessages.Count >= minCount)
             {
-               //_receivedMessages.Clear();
                return candidate;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromMilliseconds(100));
          }
 
          return null;
