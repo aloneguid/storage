@@ -168,7 +168,7 @@ namespace Storage.Net.Ftp
       {
          FtpClient client = await GetClientAsync();
 
-         await client.UploadAsync(sourceStream, id, FtpExists.Overwrite, true, cancellationToken, null);
+         await client.UploadAsync(sourceStream, id, FtpExists.Overwrite, true, null, cancellationToken);
       }
 
       public void Dispose()

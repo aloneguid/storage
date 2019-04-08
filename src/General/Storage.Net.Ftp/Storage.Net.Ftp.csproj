@@ -8,7 +8,7 @@
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="FluentFTP" Version="21.0.0" />
+      <PackageReference Include="FluentFTP" Version="23.1.0" />
    </ItemGroup>
 
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">

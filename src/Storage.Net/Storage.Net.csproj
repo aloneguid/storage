@@ -43,7 +43,7 @@
     <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NetBox" Version="2.1.1" />
+    <PackageReference Include="NetBox" Version="2.1.8" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

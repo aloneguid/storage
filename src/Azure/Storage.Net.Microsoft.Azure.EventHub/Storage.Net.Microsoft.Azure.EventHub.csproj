@@ -29,7 +29,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.EventHubs" Version="2.1.0" />
     <PackageReference Include="Microsoft.Azure.EventHubs.Processor" Version="2.1.0" />
-    <PackageReference Include="NetBox" Version="2.1.1" />
+    <PackageReference Include="NetBox" Version="2.1.8" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />

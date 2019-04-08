@@ -35,9 +35,9 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
    <ItemGroup>
-      <PackageReference Include="AWSSDK.Core" Version="3.3.31.12" />
-      <PackageReference Include="AWSSDK.S3" Version="3.3.31.20" />
-      <PackageReference Include="AWSSDK.SQS" Version="3.3.3.59" />
+      <PackageReference Include="AWSSDK.Core" Version="3.3.100.5" />
+      <PackageReference Include="AWSSDK.S3" Version="3.3.101.3" />
+      <PackageReference Include="AWSSDK.SQS" Version="3.3.100.5" />
    </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
