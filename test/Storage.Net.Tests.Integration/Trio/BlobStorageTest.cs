@@ -21,7 +21,7 @@ namespace Storage.Net.Tests.Integration.Blobs
         public AzureBlobStorageProviderTest() : base("azure", "testcontainer/") { }
     }
 
-    public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
+    /*public class AzureDataLakeBlobStorageProviderTest : BlobStorageTest
     {
         public AzureDataLakeBlobStorageProviderTest() : base("azure-datalakestore") { }
     }
@@ -54,7 +54,7 @@ namespace Storage.Net.Tests.Integration.Blobs
     public class FtpBlobStorageProviderTest : BlobStorageTest
     {
         public FtpBlobStorageProviderTest() : base("ftp") { }
-    }
+    }*/
 
     #endregion
 
