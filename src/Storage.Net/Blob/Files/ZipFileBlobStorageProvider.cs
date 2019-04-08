@@ -119,7 +119,7 @@ namespace Storage.Net.Blob.Files
          return Task.FromResult(EmptyTransaction.Instance);
       }
 
-      public async Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)
+      public async Task WriteAsync(string id, Stream sourceStream, bool append = false, CancellationToken cancellationToken = default)
       {
          id = StoragePath.Normalize(id, false);
          ZipArchive archive = GetArchive(true);
@@ -132,7 +132,7 @@ namespace Storage.Net.Blob.Files
          }
       }
 
-      public Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          ZipArchive archive = GetArchive(true);
 
@@ -149,7 +149,7 @@ namespace Storage.Net.Blob.Files
             }
             catch(NotSupportedException)
             {
-
+               //ignore this
             }
          }
 

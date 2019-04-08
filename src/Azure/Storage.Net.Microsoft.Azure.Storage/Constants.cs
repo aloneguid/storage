@@ -1,6 +1,6 @@
 ﻿namespace Storage.Net.Microsoft.Azure.Storage
 {
-   internal class Constants
+   static class Constants
    {
       public const string UseDevelopmentStorageConnectionString = @"UseDevelopmentStorage=true";
 

@@ -57,8 +57,7 @@ namespace Storage.Net.ConnectionString
 
          TInstance instance = Factories
             .Select(f => createAction(f, pcs))
-            .Where(b => b != null)
-            .FirstOrDefault();
+            .FirstOrDefault(b => b != null);
 
          if (instance == null)
          {

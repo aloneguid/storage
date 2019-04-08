@@ -228,7 +228,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
             if (!AzureStorageValidation.TryHandleStorageException(ex)) throw;
          }
 
-         throw new Exception("must not be here");
+         throw new InvalidOperationException("must not be here");
       }
 
       public async Task<Stream> OpenRandomAccessReadAsync(string id, CancellationToken cancellationToken = default)
@@ -327,7 +327,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
             if (!AzureStorageValidation.TryHandleStorageException(ex)) throw;
          }
 
-         throw new Exception("must not be here");
+         throw new InvalidOperationException("must not be here");
       }
 
       #region [ Path forking ]

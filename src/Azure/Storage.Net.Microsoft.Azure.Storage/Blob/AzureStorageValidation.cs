@@ -23,9 +23,9 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
           4. Container names must be from 3 through 63 characters long.
          */
 
-         //1. todo
+         //1. not sure
 
-         //2. todo
+         //2. not sure
 
          //3. check that all characters are lowercase
          for (int i = 0; i < containerName.Length; i++)
