@@ -9,6 +9,7 @@ using Amazon.Runtime;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 using Storage.Net.Messaging;
+using NetBox.Extensions;
 
 namespace Storage.Net.Amazon.Aws.Messaging
 {
@@ -17,6 +18,7 @@ namespace Storage.Net.Amazon.Aws.Messaging
       private readonly AmazonSQSClient _client;
       private readonly string _queueName;
       private readonly string _queueUrl;
+      private const int MaxEntriesPerRequest = 10; //SQS limit
 
       /// <summary>
       /// 
@@ -44,11 +46,15 @@ namespace Storage.Net.Amazon.Aws.Messaging
          if(messages == null)
             return;
 
-         var request = new SendMessageBatchRequest(
-            _queueUrl,
-            messages.Select(Converter.ToSQSMessage).ToList());
+         // SQS request size is limited
+         foreach(IEnumerable<QueueMessage> chunk in messages.Chunk(MaxEntriesPerRequest))
+         {
+            var request = new SendMessageBatchRequest(
+               _queueUrl,
+               chunk.Select(Converter.ToSQSMessage).ToList());
 
-         SendMessageBatchResponse r = await _client.SendMessageBatchAsync(request, cancellationToken);
+            SendMessageBatchResponse r = await _client.SendMessageBatchAsync(request, cancellationToken);
+         }
       }
 
       public void Dispose()

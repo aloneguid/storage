@@ -242,6 +242,12 @@ namespace Storage.Net.Tests.Integration.Messaging
       }
 
       [Fact]
+      public async Task SendMessages_LargeAmount_Succeeds()
+      {
+         await _publisher.PutMessagesAsync(Enumerable.Range(0, 100).Select(i => QueueMessage.FromText("message #" + i)).ToList());
+      }
+
+      [Fact]
       public async Task SendMessages_Null_DoesntFail()
       {
          await _publisher.PutMessagesAsync(null);
@@ -320,10 +326,9 @@ namespace Storage.Net.Tests.Integration.Messaging
       [Fact]
       public async Task MessageCount_IsGreaterThanZero()
       {
-         await _publisher.PutMessageAsync(QueueMessage.FromText("test for count"));
+         //put quite a few messages
 
-         //wait for a second or so
-         await Task.Delay(TimeSpan.FromSeconds(10));
+         await _publisher.PutMessagesAsync(Enumerable.Range(0, 100).Select(i => QueueMessage.FromText("message #" + i)).ToList());
 
          try
          {
