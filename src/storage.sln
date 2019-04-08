@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{D1BF1B
 		..\azure-pipelines.yml = ..\azure-pipelines.yml
 		..\build.ini = ..\build.ini
 		JsonExtensions.cs = JsonExtensions.cs
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Storage.Net", "Storage.Net\Storage.Net.csproj", "{E025A581-C3EC-42F9-A473-5F2544E28E30}"
