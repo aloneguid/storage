@@ -39,7 +39,7 @@ namespace Storage.Net.Ftp
          return _client;
       }
 
-      public async Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default(CancellationToken))
+      public async Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
       {
          FtpClient client = await GetClientAsync();
 

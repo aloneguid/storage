@@ -279,7 +279,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          if (append)
          {
             CloudAppendBlob cab = container.GetAppendBlobReference(StoragePath.Normalize(path, false));
-            if (!(await cab.ExistsAsync())) await cab.CreateOrReplaceAsync();
+            if (!await cab.ExistsAsync()) await cab.CreateOrReplaceAsync();
 
             await cab.AppendFromStreamAsync(sourceStream);
 

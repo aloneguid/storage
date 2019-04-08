@@ -69,7 +69,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
          AdlsClient client = await GetAdlsClient();
 
          var browser = new DirectoryBrowser(client, ListBatchSize);
-         return await browser.Browse(options, cancellationToken);
+         return await browser.BrowseAsync(options, cancellationToken);
       }
 
       public async Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)

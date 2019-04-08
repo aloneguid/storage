@@ -222,7 +222,7 @@ namespace Storage.Net.Blob
       /// <param name="cancellationToken"></param>
       public static async Task WriteFileAsync(
          this IBlobStorage provider,
-         string id, string filePath, CancellationToken cancellationToken = default(CancellationToken))
+         string id, string filePath, CancellationToken cancellationToken = default)
       {
          using (Stream src = File.OpenRead(filePath))
          {

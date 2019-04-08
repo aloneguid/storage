@@ -21,17 +21,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
          _listBatchSize = listBatchSize;
       }
 
-      public async Task<IReadOnlyCollection<BlobId>> Browse(ListOptions options, CancellationToken token)
+      public async Task<IReadOnlyCollection<BlobId>> BrowseAsync(ListOptions options, CancellationToken token)
       {
          string path = StoragePath.Normalize(options.FolderPath);
          var result = new List<BlobId>();
 
-         await Browse(path, options, result, token);
+         await BrowseAsync(path, options, result, token);
 
          return result;
       }
 
-      private async Task Browse(string path, ListOptions options, ICollection<BlobId> container, CancellationToken token)
+      private async Task BrowseAsync(string path, ListOptions options, ICollection<BlobId> container, CancellationToken token)
       {
          List<BlobId> batch;
 
@@ -65,7 +65,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
             if(folders.Count > 0)
             {
                await Task.WhenAll(
-                  folders.Select(bid => Browse(
+                  folders.Select(bid => BrowseAsync(
                      StoragePath.Combine(path, bid.Id),
                      options,
                      container,
@@ -104,7 +104,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
       }
 
       internal async Task<List<DirectoryEntry>> EnumerateDirectoryAsync(string path,
-         int maxEntries, string listAfter, string listBefore, UserGroupRepresentation userIdFormat = UserGroupRepresentation.ObjectID, CancellationToken cancelToken = default(CancellationToken))
+         int maxEntries, string listAfter, string listBefore, UserGroupRepresentation userIdFormat = UserGroupRepresentation.ObjectID, CancellationToken cancelToken = default)
       {
          //ADLS requires a root prefix
          path = StoragePath.Normalize(path, true);
