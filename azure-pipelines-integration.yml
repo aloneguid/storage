@@ -58,4 +58,4 @@ steps:
   inputs:
     command: custom
     custom: sonarscanner
-    arguments: 'end /d:sonar.login="$(Sonar.Login)" /d:sonar.cs.opencover.reportsPaths=./coverage.xml'
+    arguments: 'end /d:sonar.login="$(Sonar.Login)" /d:sonar.cs.opencover.reportsPaths="./coverage.xml"'
