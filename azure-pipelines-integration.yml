@@ -39,8 +39,9 @@ steps:
     custom: sonarscanner
     arguments: 'begin /k:"aloneguid_storage" /o:"aloneguid-github" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="$(Sonar.Login)"'
 
+#SQ requires building the whole solution, specifically from .sln file, otherwise everything fails miserably
 - task: DotNetCoreCLI@2
-  displayName: build
+  displayName: 'Build Solution'
   inputs:
     projects: src/storage.sln
 
@@ -49,7 +50,7 @@ steps:
   inputs:
     command: test
     projects: test/Storage.Net.Tests.Integration
-    arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*%2c[*Test*]*"'
+    arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*%2c[*Test*]*" /p:CoverletOutput=./coverage.json'
     continueOnError: true
 
 - task: DotNetCoreCLI@2
@@ -57,4 +58,4 @@ steps:
   inputs:
     command: custom
     custom: sonarscanner
-    arguments: 'end /d:sonar.login="$(Sonar.Login)"'
+    arguments: 'end /d:sonar.login="$(Sonar.Login)" /d:sonar.cs.opencover.reportsPaths=./coverage.json'
