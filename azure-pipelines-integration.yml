@@ -27,28 +27,28 @@ steps:
     preferBundledVersion: false
 
 - task: petersendev.dotnet-global-tool-installer.DotnetGlobalToolInstaller.DotnetGlobalToolInstaller@0
-  displayName: 'install sonar scanner'
+  displayName: 'Install SQ Scanner'
   inputs:
     name: 'dotnet-sonarscanner'
     checkLatest: true
 
 - task: DotNetCoreCLI@2
-  displayName: 'begin SQ analysis'
+  displayName: 'Begin SQ analysis'
   inputs:
     command: custom
     custom: sonarscanner
     arguments: 'begin /k:"aloneguid_storage" /o:"aloneguid-github" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.login="$(Sonar.Login)"'
 
 - task: DotNetCoreCLI@2
-  displayName: 'run integration tests'
+  displayName: 'Integration Test (with coverlet)'
   inputs:
     command: test
     projects: test/Storage.Net.Tests.Integration
-    arguments: /p:CollectCoverage=true
+    arguments: /p:CollectCoverage=true /p:CoverletOutputFormat=opencover 
     continueOnError: true
 
 - task: DotNetCoreCLI@2
-  displayName: 'end SQ analysis'
+  displayName: 'End SQ analysis'
   inputs:
     command: custom
     custom: sonarscanner
