@@ -322,6 +322,9 @@ namespace Storage.Net.Tests.Integration.Messaging
       {
          await _publisher.PutMessageAsync(QueueMessage.FromText("test for count"));
 
+         //wait for a second or so
+         await Task.Delay(TimeSpan.FromSeconds(5));
+
          try
          {
             int count = await _receiver.GetMessageCountAsync();
