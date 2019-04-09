@@ -66,18 +66,25 @@ namespace Storage.Net.Messaging
 
       private async Task PollTasksAsync(Func<IReadOnlyCollection<QueueMessage>, Task> callback, int maxBatchSize, CancellationToken cancellationToken)
       {
-         IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
-         while (messages != null && messages.Count > 0)
+         try
          {
-            await callback(messages);
+            IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
+            while(messages != null && messages.Count > 0)
+            {
+               await callback(messages);
 
-            messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
+               messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), cancellationToken).ContinueWith(async (t) =>
+            {
+               await PollTasksAsync(callback, maxBatchSize, cancellationToken).ConfigureAwait(false);
+            }).ConfigureAwait(false);
          }
-
-         await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), cancellationToken).ContinueWith(async (t) =>
+         catch(Exception ex)
          {
-            await PollTasksAsync(callback, maxBatchSize, cancellationToken).ConfigureAwait(false);
-         }).ConfigureAwait(false);
+            Console.WriteLine(ex.ToString());
+         }
       }
 
       private async Task<IReadOnlyCollection<QueueMessage>> ReceiveMessagesSafeAsync(int maxBatchSize, CancellationToken cancellationToken)

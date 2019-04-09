@@ -67,13 +67,21 @@ namespace Storage.Net.Tests.Integration.Messaging
                ? qm.Properties["tag"]
                : null;
 
+            Debug.WriteLine("received tag: " + tag);
             Console.WriteLine("received tag: " + tag);
 
             _receivedMessages.TryAdd(tag ?? Guid.NewGuid().ToString(), qm);
             _lastReceivedMessage = qm;
          }
 
-         await Receiver.ConfirmMessagesAsync(messages);
+         try
+         {
+            await Receiver.ConfirmMessagesAsync(messages);
+         }
+         catch(NotSupportedException)
+         {
+            //some provides may not support this
+         }
       }
 
       public QueueMessage GetTaggedMessage(string tag)

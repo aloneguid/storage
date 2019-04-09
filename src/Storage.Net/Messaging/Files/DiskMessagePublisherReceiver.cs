@@ -52,14 +52,13 @@ namespace Storage.Net.Messaging.Files
       protected override Task<IReadOnlyCollection<QueueMessage>> ReceiveMessagesAsync(int maxBatchSize, CancellationToken cancellationToken)
       {
          //get all files (not efficient, but we hope there won't be many)
-         FileInfo[] files = new DirectoryInfo(_root).GetFiles("*" + FileExtension, SearchOption.TopDirectoryOnly);
+         IReadOnlyCollection<FileInfo> files = GetMessageFiles();
 
          //sort files so that oldest appear first, take max and return
          return Task.FromResult<IReadOnlyCollection<QueueMessage>>(files
             .OrderBy(f => f.Name)
             .Take(maxBatchSize)
-            .Select(f => File.ReadAllBytes(f.FullName))
-            .Select(QueueMessage.FromByteArray)
+            .Select(ToQueueMessage)
             .ToList());
       }
 
@@ -73,8 +72,40 @@ namespace Storage.Net.Messaging.Files
          return now.ToString("yyyy-MM-dd-hh-mm-ss-ffff") + FileExtension;
       }
 
-      public override Task<int> GetMessageCountAsync() => throw new NotSupportedException();
-      public override Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+      private static QueueMessage ToQueueMessage(FileInfo fi)
+      {
+         byte[] content = File.ReadAllBytes(fi.FullName);
+
+         return new QueueMessage(content)
+         {
+            Id = Path.GetFileNameWithoutExtension(fi.Name)
+         };
+      }
+
+      private IReadOnlyCollection<FileInfo> GetMessageFiles()
+      {
+         return new DirectoryInfo(_root).GetFiles("*" + FileExtension, SearchOption.TopDirectoryOnly);
+      }
+
+      public override Task<int> GetMessageCountAsync()
+      {
+         IReadOnlyCollection<FileInfo> files = GetMessageFiles();
+
+         return Task.FromResult(files.Count);
+      }
+
+      public override Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
+      {
+         foreach(QueueMessage qm in messages)
+         {
+            string fullPath = Path.Combine(_root, qm.Id + FileExtension);
+            if(File.Exists(fullPath))
+               File.Delete(fullPath);
+         }
+
+         return Task.FromResult(true);
+      }
+
       public override Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default) => throw new NotSupportedException();
    }
 }
