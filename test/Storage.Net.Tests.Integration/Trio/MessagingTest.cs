@@ -65,9 +65,11 @@ namespace Storage.Net.Tests.Integration.Messaging
          {
             string tag = qm.Properties.ContainsKey("tag")
                ? qm.Properties["tag"]
-               : Guid.NewGuid().ToString();
+               : null;
 
-            _receivedMessages.TryAdd(tag, qm);
+            Console.WriteLine("received tag: " + tag);
+
+            _receivedMessages.TryAdd(tag ?? Guid.NewGuid().ToString(), qm);
             _lastReceivedMessage = qm;
          }
 
@@ -139,7 +141,7 @@ namespace Storage.Net.Tests.Integration.Messaging
                return candidate;
             }
 
-            await Task.Delay(TimeSpan.FromMilliseconds(100));
+            await Task.Delay(TimeSpan.FromSeconds(1));
          }
 
          return null;
@@ -162,12 +164,6 @@ namespace Storage.Net.Tests.Integration.Messaging
       public async Task SendMessages_LargeAmount_Succeeds()
       {
          await _fixture.Publisher.PutMessagesAsync(Enumerable.Range(0, 100).Select(i => QueueMessage.FromText("message #" + i)).ToList());
-      }
-
-      [Fact]
-      public async Task SendMessages_LargeAmount_Succeeds()
-      {
-         await _publisher.PutMessagesAsync(Enumerable.Range(0, 100).Select(i => QueueMessage.FromText("message #" + i)).ToList());
       }
 
       [Fact]
