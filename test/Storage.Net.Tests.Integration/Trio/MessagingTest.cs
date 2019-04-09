@@ -165,6 +165,12 @@ namespace Storage.Net.Tests.Integration.Messaging
       }
 
       [Fact]
+      public async Task SendMessages_LargeAmount_Succeeds()
+      {
+         await _publisher.PutMessagesAsync(Enumerable.Range(0, 100).Select(i => QueueMessage.FromText("message #" + i)).ToList());
+      }
+
+      [Fact]
       public async Task SendMessages_Null_DoesntFail()
       {
          await _fixture.Publisher.PutMessagesAsync(null);
