@@ -71,8 +71,6 @@ namespace Storage.Net.Tests.Integration.Messaging
             _lastReceivedMessage = qm;
          }
 
-         Trace.WriteLine($"total received: {_receivedMessages.Count}");
-
          await Receiver.ConfirmMessagesAsync(messages);
       }
 
