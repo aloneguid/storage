@@ -81,6 +81,11 @@ namespace Storage.Net.Messaging
                await PollTasksAsync(callback, maxBatchSize, cancellationToken).ConfigureAwait(false);
             }).ConfigureAwait(false);
          }
+         catch(TaskCanceledException)
+         {
+            //terminate polling as there is nothing to do when task is cancelled
+            return;
+         }
          catch(Exception ex)
          {
             Console.WriteLine(ex.ToString());
@@ -94,6 +99,10 @@ namespace Storage.Net.Messaging
             IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
 
             return messages;
+         }
+         catch(TaskCanceledException)
+         {
+            throw;   //bubble it up
          }
          catch(Exception ex)
          {
