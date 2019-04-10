@@ -88,7 +88,7 @@ namespace Storage.Net.Tests.Integration.Messaging
 
             if(candidate != null)
             {
-               Log("found tagged candidate! {0}", tag);
+               Log("found tagged candidate " + tag);
             }
 
             if(candidate != null && GetMessageCount() >= minCount)
