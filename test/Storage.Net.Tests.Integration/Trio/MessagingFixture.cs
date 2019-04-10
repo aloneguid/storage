@@ -14,7 +14,7 @@ namespace Storage.Net.Tests.Integration.Messaging
    public abstract class MessagingFixture : IDisposable
    {
       private const string TagPropertyName = "tag";
-      private static readonly TimeSpan MaxWaitTime = TimeSpan.FromMinutes(1);
+      private static readonly TimeSpan MaxWaitTime = TimeSpan.FromMinutes(5);
       private static readonly ITestSettings _settings;
       public readonly IMessagePublisher Publisher;
       public readonly IMessageReceiver Receiver;
@@ -100,8 +100,9 @@ namespace Storage.Net.Tests.Integration.Messaging
 
       private void Log(string format, params object[] parameters)
       {
-         Debug.WriteLine(string.Format("DBG: " + format, parameters));
-         Console.WriteLine("CON: " + format, parameters);
+         string date = DateTime.UtcNow.ToString();
+         Debug.WriteLine(string.Format(date + " DBG: " + format, parameters));
+         Console.WriteLine(date + " CON: " + format, parameters);
       }
 
       private async Task ReceiverPumpAsync(IReadOnlyCollection<QueueMessage> messages)
