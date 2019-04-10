@@ -17,12 +17,11 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
       protected readonly ConcurrentDictionary<string, Message> _messageIdToBrokeredMessage = new ConcurrentDictionary<string, Message>();
       protected readonly IReceiverClient _receiverClient;
       protected readonly MessageHandlerOptions _messageHandlerOptions;
-      protected readonly bool _peekLock;
+      protected readonly bool _autoComplete;
 
-      public AzureServiceBusReceiver(IReceiverClient receiverClient, bool peekLock, MessageHandlerOptions messageHandlerOptions)
+      public AzureServiceBusReceiver(IReceiverClient receiverClient, MessageHandlerOptions messageHandlerOptions)
       {
          _receiverClient = receiverClient ?? throw new ArgumentNullException(nameof(receiverClient));
-         _peekLock = peekLock;
 
          _messageHandlerOptions = messageHandlerOptions ??
             new MessageHandlerOptions(DefaultExceptionReceiverHandler)
@@ -31,6 +30,8 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
                MaxAutoRenewDuration = TimeSpan.FromMinutes(1),
                MaxConcurrentCalls = 1
             };
+
+         _autoComplete = _messageHandlerOptions.AutoComplete;
       }
 
       private static Task DefaultExceptionReceiverHandler(ExceptionReceivedEventArgs args)
@@ -46,7 +47,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
 
       public async Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
-         if(!_peekLock)
+         if(_autoComplete)
             return;
 
          await Task.WhenAll(messages.Select(m => ConfirmAsync(m))).ConfigureAwait(false);
@@ -66,7 +67,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
 
       public async Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default)
       {
-         if(!_peekLock)
+         if(_autoComplete)
             return;
 
          if(!_messageIdToBrokeredMessage.TryRemove(message.Id, out Message bm))
@@ -91,7 +92,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
             async (message, token) =>
             {
                QueueMessage qm = Converter.ToQueueMessage(message);
-               if(_peekLock)
+               if(!_autoComplete)
                   _messageIdToBrokeredMessage[qm.Id] = message;
                await onMessageAsync(new[] { qm });
             },
