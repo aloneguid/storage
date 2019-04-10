@@ -72,12 +72,10 @@ namespace Storage.Net.Tests.Integration.Messaging
             {
                Debug.WriteLine("received tag: " + tag);
                Console.WriteLine("received tag: " + tag);
+
+               _receivedMessages.TryAdd(tag, qm);
             }
 
-            if(!_receivedMessages.TryAdd(tag ?? Guid.NewGuid().ToString(), qm))
-            {
-               throw new InvalidOperationException("could not add tag");
-            }
             _lastReceivedMessage = qm;
             Interlocked.Increment(ref _receivedCount);
          }
@@ -141,6 +139,7 @@ namespace Storage.Net.Tests.Integration.Messaging
          string tag = Guid.NewGuid().ToString();
          message.Properties["tag"] = tag;
          Console.WriteLine("submitting tag {0}", tag);
+         Debug.WriteLine("submitting tag {0}", tag);
 
          await _fixture.Publisher.PutMessagesAsync(new[] { message });
 
