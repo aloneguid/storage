@@ -133,8 +133,6 @@ namespace Storage.Net.Ftp
                continue;
             }
 
-            //FtpHash hash = await _client.GetHashAsync(cpath);
-
             var meta = new BlobMeta(foundItem.Size, null, foundItem.Modified);
             results.Add(meta);
          }
