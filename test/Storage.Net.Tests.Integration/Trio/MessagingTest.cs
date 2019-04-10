@@ -138,8 +138,8 @@ namespace Storage.Net.Tests.Integration.Messaging
       {
          string tag = Guid.NewGuid().ToString();
          message.Properties["tag"] = tag;
-         Console.WriteLine("submitting tag {0}", tag);
-         Debug.WriteLine("submitting tag {0}", tag);
+         Console.WriteLine("submitting tag " + tag);
+         Debug.WriteLine("submitting tag " + tag);
 
          await _fixture.Publisher.PutMessagesAsync(new[] { message });
 
