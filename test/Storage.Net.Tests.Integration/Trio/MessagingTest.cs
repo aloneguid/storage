@@ -21,6 +21,7 @@ namespace Storage.Net.Tests.Integration.Messaging
       public readonly IMessageReceiver Receiver;
       private readonly ConcurrentDictionary<string, QueueMessage> _receivedMessages = new ConcurrentDictionary<string, QueueMessage>();
       private QueueMessage _lastReceivedMessage;
+      private int _receivedCount;
 
       private bool _pumpStarted = false;
       private readonly CancellationTokenSource _cts = new CancellationTokenSource();
@@ -72,6 +73,7 @@ namespace Storage.Net.Tests.Integration.Messaging
 
             _receivedMessages.TryAdd(tag ?? Guid.NewGuid().ToString(), qm);
             _lastReceivedMessage = qm;
+            Interlocked.Increment(ref _receivedCount);
          }
 
          try
@@ -95,7 +97,7 @@ namespace Storage.Net.Tests.Integration.Messaging
          return result;
       }
 
-      public int GetMessageCount() => _receivedMessages.Count;
+      public int GetMessageCount() => _receivedCount;
 
       public void Dispose()
       {
@@ -131,7 +133,10 @@ namespace Storage.Net.Tests.Integration.Messaging
 
       private async Task PutMessageAsync(QueueMessage message, string tag)
       {
-         message.Properties["tag"] = tag;
+         if(tag != null)
+         {
+            message.Properties["tag"] = tag;
+         }
 
          await _fixture.Publisher.PutMessagesAsync(new[] { message });
       }
@@ -149,7 +154,7 @@ namespace Storage.Net.Tests.Integration.Messaging
                return candidate;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
          }
 
          return null;
