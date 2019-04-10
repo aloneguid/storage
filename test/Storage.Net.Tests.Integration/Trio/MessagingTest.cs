@@ -113,11 +113,12 @@ namespace Storage.Net.Tests.Integration.Messaging
             .Select(i => new QueueMessage(nameof(MessagePump_AddFewMessages_CanReceiveOneAndPumpClearsThemAll) + "#" + i))
             .ToArray();
 
+         int prevCount = _fixture.GetMessageCount();
          await _fixture.Publisher.PutMessagesAsync(messages);
+         await Task.Delay(TimeSpan.FromSeconds(10));
+         int nowCount = _fixture.GetMessageCount();
 
-         await _fixture.WaitMessageAsync(null, 10);
-
-         Assert.True(_fixture.GetMessageCount() >= 10, _fixture.GetMessageCount().ToString());
+         Assert.True(nowCount - prevCount >= 10, $"was: {prevCount}, now: {nowCount}, needs at least 10");
       }
 
       [Fact]

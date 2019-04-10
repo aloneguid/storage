@@ -78,7 +78,7 @@ namespace Storage.Net.Tests.Integration.Messaging
          return tag;
       }
 
-      public async Task<QueueMessage> WaitMessageAsync(string tag, int minCount = 1)
+      public async Task<QueueMessage> WaitMessageAsync(string tag)
       {
          DateTime start = DateTime.UtcNow;
 
@@ -89,14 +89,11 @@ namespace Storage.Net.Tests.Integration.Messaging
             if(candidate != null)
             {
                Log("found tagged candidate " + tag);
-            }
-
-            if(candidate != null && GetMessageCount() >= minCount)
-            {
                return candidate;
+
             }
 
-            await Task.Delay(TimeSpan.FromMilliseconds(300)).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
          }
 
          return null;
@@ -118,9 +115,9 @@ namespace Storage.Net.Tests.Integration.Messaging
 
             if(tag != null)
             {
-               Log("received tag: {0}", tag);
+               Log("received tag: [{0}]", tag);
 
-               _receivedMessages.TryAdd(tag, qm);
+               _receivedMessages.AddOrUpdate(tag, qm, (t, m) => m);
             }
 
             _lastReceivedMessage = qm;
