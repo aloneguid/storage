@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using WSE = Microsoft.WindowsAzure.Storage.StorageException;
 
 namespace Storage.Net.Microsoft.Azure.Storage.Messaging
 {
@@ -179,7 +180,17 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
          if(count > 32)
             count = 32;
 
-         IEnumerable<CloudQueueMessage> batch = await _queue.GetMessagesAsync(count, _messageVisibilityTimeout, null, null, cancellationToken);
+         IEnumerable<CloudQueueMessage> batch;
+
+         try
+         {
+            batch = await _queue.GetMessagesAsync(count, _messageVisibilityTimeout, null, null, cancellationToken);
+         }
+         catch(WSE ex) when (ex.InnerException is TaskCanceledException)
+         {
+            throw ex.InnerException;
+         }
+
          if(batch == null)
             return null;
          List<QueueMessage> result = batch.Select(Converter.ToQueueMessage).ToList();
