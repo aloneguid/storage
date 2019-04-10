@@ -68,8 +68,11 @@ namespace Storage.Net.Tests.Integration.Messaging
                ? qm.Properties["tag"]
                : null;
 
-            Debug.WriteLine("received tag: " + tag);
-            Console.WriteLine("received tag: " + tag);
+            if(tag != null)
+            {
+               Debug.WriteLine("received tag: " + tag);
+               Console.WriteLine("received tag: " + tag);
+            }
 
             if(!_receivedMessages.TryAdd(tag ?? Guid.NewGuid().ToString(), qm))
             {
@@ -137,6 +140,7 @@ namespace Storage.Net.Tests.Integration.Messaging
       {
          string tag = Guid.NewGuid().ToString();
          message.Properties["tag"] = tag;
+         Console.WriteLine("submitting tag {0}", tag);
 
          await _fixture.Publisher.PutMessagesAsync(new[] { message });
 
