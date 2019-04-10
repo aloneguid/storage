@@ -71,7 +71,10 @@ namespace Storage.Net.Tests.Integration.Messaging
             Debug.WriteLine("received tag: " + tag);
             Console.WriteLine("received tag: " + tag);
 
-            _receivedMessages.TryAdd(tag ?? Guid.NewGuid().ToString(), qm);
+            if(!_receivedMessages.TryAdd(tag ?? Guid.NewGuid().ToString(), qm))
+            {
+               throw new InvalidOperationException("could not add tag");
+            }
             _lastReceivedMessage = qm;
             Interlocked.Increment(ref _receivedCount);
          }
@@ -113,7 +116,6 @@ namespace Storage.Net.Tests.Integration.Messaging
 
    public abstract class MessagingTest : IAsyncLifetime
    {
-      private readonly string _tag = Guid.NewGuid().ToString();
       private static readonly TimeSpan MaxWaitTime = TimeSpan.FromMinutes(1);
 
 
@@ -131,14 +133,14 @@ namespace Storage.Net.Tests.Integration.Messaging
 
       public Task DisposeAsync() => Task.CompletedTask;
 
-      private async Task PutMessageAsync(QueueMessage message, string tag)
+      private async Task<string> PutMessageAsync(QueueMessage message)
       {
-         if(tag != null)
-         {
-            message.Properties["tag"] = tag;
-         }
+         string tag = Guid.NewGuid().ToString();
+         message.Properties["tag"] = tag;
 
          await _fixture.Publisher.PutMessagesAsync(new[] { message });
+
+         return tag;
       }
 
       private async Task<QueueMessage> WaitMessage(string tag, TimeSpan? maxWaitTime = null, int minCount = 1)
@@ -205,11 +207,11 @@ namespace Storage.Net.Tests.Integration.Messaging
       {
          string content = RandomGenerator.RandomString;
 
-         await PutMessageAsync(new QueueMessage(content), _tag);
+         string tag = await PutMessageAsync(new QueueMessage(content));
 
-         QueueMessage received = await WaitMessage(_tag);
+         QueueMessage received = await WaitMessage(tag);
 
-         Assert.True(received != null, $"no messages received with tag {_tag}, {_fixture.GetMessageCount()} received in total");
+         Assert.True(received != null, $"no messages received with tag {tag}, {_fixture.GetMessageCount()} received in total");
          Assert.Equal(content, received.StringContent);
       }
 
@@ -221,11 +223,11 @@ namespace Storage.Net.Tests.Integration.Messaging
          var msg = new QueueMessage(content);
          msg.Properties["one"] = "v1";
 
-         await PutMessageAsync(msg, _tag);
+         string tag = await PutMessageAsync(msg);
 
-         QueueMessage received = await WaitMessage(_tag);
+         QueueMessage received = await WaitMessage(tag);
 
-         Assert.True(received != null, "no message received with tag " + _tag);
+         Assert.True(received != null, "no message received with tag " + tag);
          Assert.Equal(content, received.StringContent);
          Assert.Equal("v1", received.Properties["one"]);
       }
@@ -235,9 +237,9 @@ namespace Storage.Net.Tests.Integration.Messaging
       {
          string content = RandomGenerator.RandomString;
          var msg = new QueueMessage(content);
-         await PutMessageAsync(msg, _tag);
+         string tag = await PutMessageAsync(msg);
 
-         QueueMessage rmsg = await WaitMessage(_tag);
+         QueueMessage rmsg = await WaitMessage(tag);
          Assert.NotNull(rmsg);
       }
 
