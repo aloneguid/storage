@@ -10,7 +10,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
       //https://github.com/Azure/azure-service-bus/blob/master/samples/DotNet/Microsoft.Azure.ServiceBus/ReceiveSample/readme.md
 
       public AzureServiceBusTopicReceiver(string connectionString, string topicName, string subscriptionName, bool peekLock = true, MessageHandlerOptions handlerOptions = null)
-         : base(CreateClient(connectionString, topicName, subscriptionName, peekLock), peekLock, handlerOptions)
+         : base(CreateClient(connectionString, topicName, subscriptionName, peekLock), handlerOptions)
       {
       }
 

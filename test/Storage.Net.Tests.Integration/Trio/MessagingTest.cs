@@ -115,7 +115,7 @@ namespace Storage.Net.Tests.Integration.Messaging
 
          await _fixture.Publisher.PutMessagesAsync(messages);
 
-         await _fixture.WaitMessageAsync(null, null, 10);
+         await _fixture.WaitMessageAsync(null, 10);
 
          Assert.True(_fixture.GetMessageCount() >= 10, _fixture.GetMessageCount().ToString());
       }

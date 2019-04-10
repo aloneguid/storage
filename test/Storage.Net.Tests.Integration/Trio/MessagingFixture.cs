@@ -78,13 +78,18 @@ namespace Storage.Net.Tests.Integration.Messaging
          return tag;
       }
 
-      public async Task<QueueMessage> WaitMessageAsync(string tag, TimeSpan? maxWaitTime = null, int minCount = 1)
+      public async Task<QueueMessage> WaitMessageAsync(string tag, int minCount = 1)
       {
          DateTime start = DateTime.UtcNow;
 
-         while((DateTime.UtcNow - start) < (maxWaitTime ?? MaxWaitTime))
+         while((DateTime.UtcNow - start) < MaxWaitTime)
          {
             QueueMessage candidate = GetTaggedMessage(tag);
+
+            if(candidate != null)
+            {
+               Log("found tagged candidate! {0}", tag);
+            }
 
             if(candidate != null && GetMessageCount() >= minCount)
             {
