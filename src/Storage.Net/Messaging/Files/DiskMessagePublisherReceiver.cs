@@ -76,10 +76,9 @@ namespace Storage.Net.Messaging.Files
       {
          byte[] content = File.ReadAllBytes(fi.FullName);
 
-         return new QueueMessage(content)
-         {
-            Id = Path.GetFileNameWithoutExtension(fi.Name)
-         };
+         var result = QueueMessage.FromByteArray(content);
+         result.Id = Path.GetFileNameWithoutExtension(fi.Name);
+         return result;
       }
 
       private IReadOnlyCollection<FileInfo> GetMessageFiles()

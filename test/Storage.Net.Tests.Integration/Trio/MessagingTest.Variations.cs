@@ -151,9 +151,9 @@ namespace Storage.Net.Tests.Integration.Messaging
    }
 
    /// <summary>
-   /// Local Disk Directory (this is not ready, it doesn't support message properties)
+   /// Local Disk Directory
    /// </summary>
-   /*public class LocalDirectoryFixture : MessagingFixture
+   public class LocalDirectoryFixture : MessagingFixture
    {
       protected override IMessagePublisher CreatePublisher(ITestSettings settings) => StorageFactory.Messages.DirectoryFilesPublisher(_testDir);
 
@@ -165,7 +165,7 @@ namespace Storage.Net.Tests.Integration.Messaging
       public LocalDirectoryTest(LocalDirectoryFixture fixture) : base(fixture)
       {
       }
-   }*/
+   }
 
    /// <summary>
    /// Amazon Simple Queue
