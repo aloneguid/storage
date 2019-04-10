@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using NetBox.Extensions;
+using Storage.Net.Messaging.Polling;
 
 namespace Storage.Net.Messaging
 {
@@ -11,15 +12,14 @@ namespace Storage.Net.Messaging
    /// </summary>
    public abstract class PollingMessageReceiver : IMessageReceiver
    {
-      private readonly int _pollIntervalSeconds;
+      private readonly IPollingPolicy _pollingPolicy;
 
       /// <summary>
       /// 
       /// </summary>
-      /// <param name="pollIntervalSeconds">Poll interval, defaults to one second</param>
-      protected PollingMessageReceiver(int pollIntervalSeconds = 1)
+      protected PollingMessageReceiver()
       {
-         _pollIntervalSeconds = pollIntervalSeconds;
+         _pollingPolicy = new ExponentialBackoffPollingPolicy(TimeSpan.FromMilliseconds(100), TimeSpan.FromMinutes(15));
       }
 
       /// <summary>
@@ -76,9 +76,11 @@ namespace Storage.Net.Messaging
                await callback(messages);
 
                messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
+
+               _pollingPolicy.Reset();
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(_pollIntervalSeconds), cancellationToken).ContinueWith(async (t) =>
+            await Task.Delay(_pollingPolicy.GetNextDelay(), cancellationToken).ContinueWith(async (t) =>
             {
                await PollTasksAsync(callback, maxBatchSize, cancellationToken).ConfigureAwait(false);
             }).ConfigureAwait(false);
