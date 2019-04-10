@@ -91,7 +91,7 @@ namespace Storage.Net.Tests.Integration.Messaging
                return candidate;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+            await Task.Delay(TimeSpan.FromMilliseconds(300)).ConfigureAwait(false);
          }
 
          return null;
