@@ -40,9 +40,9 @@ steps:
     projects: ./src/storage.sln
     arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*%2c[*Test*]*" /p:CoverletOutput=$(Build.StagingDirectory)/coverage.xml'
 
-- powershell: 'cat $(Build.StagingDirectory)/coverage.xml'
-  errorActionPreference: silentlyContinue
-  displayName: 'cat coverage.xml'
+#- powershell: 'cat $(Build.StagingDirectory)/coverage.xml'
+#  errorActionPreference: silentlyContinue
+#  displayName: 'cat coverage.xml'
 
 - task: DotNetCoreCLI@2
   displayName: 'Begin SQ analysis'
