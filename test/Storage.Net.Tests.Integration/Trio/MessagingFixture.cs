@@ -25,6 +25,7 @@ namespace Storage.Net.Tests.Integration.Messaging
       private bool _pumpStarted = false;
       private readonly CancellationTokenSource _cts = new CancellationTokenSource();
       protected readonly string _testDir;
+      private readonly string _fixtureName;
 
       static MessagingFixture()
       {
@@ -36,6 +37,8 @@ namespace Storage.Net.Tests.Integration.Messaging
 
       public MessagingFixture()
       {
+         _fixtureName = GetType().Name;
+
          string buildDir = new FileInfo(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath).Directory.FullName;
          _testDir = Path.Combine(buildDir, "TEST-" + Guid.NewGuid());
          Directory.CreateDirectory(_testDir);
@@ -103,8 +106,10 @@ namespace Storage.Net.Tests.Integration.Messaging
       private void Log(string format, params object[] parameters)
       {
          string date = DateTime.UtcNow.ToString();
-         Debug.WriteLine(string.Format(date + " DBG: " + format, parameters));
-         Console.WriteLine(date + " CON: " + format, parameters);
+         string line = $"{date} [{_fixtureName}]: {string.Format(format, parameters)}";
+
+         Debug.WriteLine(line);
+         Console.WriteLine(line);
       }
 
       private async Task ReceiverPumpAsync(IReadOnlyCollection<QueueMessage> messages)
@@ -153,6 +158,8 @@ namespace Storage.Net.Tests.Integration.Messaging
 
       public void Dispose()
       {
+         Log("disposing");
+
          _cts.Cancel();
 
          if(Publisher != null)
