@@ -47,7 +47,7 @@ namespace Storage.Net.Tests.Integration.Messaging
          return StorageFactory.Messages.AzureStorageQueuePublisher(
             settings.AzureStorageName,
             settings.AzureStorageKey,
-            settings.AzureStorageQueueName)
+            largeQueueName)
             .HandleLargeContent(offloadStorage, 2);
       }
 
@@ -59,7 +59,7 @@ namespace Storage.Net.Tests.Integration.Messaging
          return StorageFactory.Messages.AzureStorageQueueReceiver(
             settings.AzureStorageName,
             settings.AzureStorageKey,
-            settings.AzureStorageQueueName,
+            largeQueueName,
             TimeSpan.FromMinutes(1),
             TimeSpan.FromMilliseconds(500))
             .HandleLargeContent(offloadStorage);
