@@ -81,7 +81,10 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          return Task.FromResult(EmptyTransaction.Instance);
       }
 
-      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
+      public Task StartMessagePumpAsync(
+         Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync,
+         int maxBatchSize = 1,
+         CancellationToken cancellationToken = default)
       {
          if(onMessageAsync == null)
             throw new ArgumentNullException(nameof(onMessageAsync));

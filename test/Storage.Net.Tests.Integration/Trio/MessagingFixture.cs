@@ -62,8 +62,13 @@ namespace Storage.Net.Tests.Integration.Messaging
          await Receiver.StartMessagePumpAsync(ReceiverPumpAsync, cancellationToken: _cts.Token, maxBatchSize: 500).ConfigureAwait(false);
       }
 
-      public async Task<string> PutMessageAsync(QueueMessage message)
+      public async Task<string> PutMessageAsync(QueueMessage message = null)
       {
+         if(message == null)
+         {
+            message = new QueueMessage(Guid.NewGuid().ToString());
+         }
+
          string tag = Guid.NewGuid().ToString();
          message.Properties[TagPropertyName] = tag;
 

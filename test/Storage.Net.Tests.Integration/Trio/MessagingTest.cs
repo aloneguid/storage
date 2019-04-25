@@ -139,5 +139,16 @@ namespace Storage.Net.Tests.Integration.Messaging
             //not all providers support this
          }
       }
+
+      //this is really non-trivial to implement everywhere
+      /*[Fact]
+      public async Task DequeueCount_Is_GreaterThanZero()
+      {
+         string tag = await _fixture.PutMessageAsync();
+
+         QueueMessage msg =await _fixture.WaitMessageAsync(tag);
+
+         Assert.True(msg.DequeueCount > 0, $"dequeue count is {msg.DequeueCount}");
+      }*/
    }
 }

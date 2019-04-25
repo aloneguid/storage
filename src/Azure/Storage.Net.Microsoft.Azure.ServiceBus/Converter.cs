@@ -28,6 +28,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
          string id = message.MessageId ?? message.SystemProperties.SequenceNumber.ToString();
 
          var result = new QueueMessage(id, message.Body);
+         result.DequeueCount = message.SystemProperties.DeliveryCount;
          if(message.UserProperties != null && message.UserProperties.Count > 0)
          {
             foreach(KeyValuePair<string, object> pair in message.UserProperties)

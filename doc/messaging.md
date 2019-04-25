@@ -119,6 +119,8 @@ IMessageReceiver topicReceiver = StorageFactory.Messages.AzureServiceBusTopicRec
 
 Note that exception handler in Service Bus is for *informational purposes only*, it doesn't actually handle exceptions, and in case of errors the SDK [retries them automatically](https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.servicebus.messagehandleroptions.exceptionreceivedhandler?view=azure-dotnet#Microsoft_Azure_ServiceBus_MessageHandlerOptions_ExceptionReceivedHandler).
 
+
+
 ### Amazon Simple Queue
 
 In order to use [Amazon Simple Queue](https://aws.amazon.com/sqs/) you need to reference
