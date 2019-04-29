@@ -55,23 +55,14 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// Gets the IDs of event hub partitions
       /// </summary>
       /// <returns></returns>
-      public async Task<IEnumerable<string>> GetPartitionIds()
+      public async Task<IEnumerable<string>> GetPartitionIdsAsync()
       {
          EventHubRuntimeInformation info = await _hubClient.GetRuntimeInformationAsync();
 
          return info.PartitionIds;
       }
 
-      private async Task CheckReady()
-      {
-         if (_isReady) return;
-
-         await CreateReceivers();
-
-         _isReady = true;
-      }
-
-      private async Task<IEnumerable<PartitionReceiver>> CreateReceivers()
+      private async Task<IEnumerable<PartitionReceiver>> CreateReceiversAsync()
       {
          var receivers = new List<PartitionReceiver>();
 
@@ -124,15 +115,15 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// </summary>
       public async Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize, CancellationToken cancellationToken)
       {
-         IEnumerable<PartitionReceiver> receivers = await CreateReceivers();
+         IEnumerable<PartitionReceiver> receivers = await CreateReceiversAsync();
 
          foreach(PartitionReceiver receiver in receivers)
          {
-            Task pump = ReceiverPump(receiver, onMessageAsync, maxBatchSize, cancellationToken);
+            Task pump = ReceiverPumpAsync(receiver, onMessageAsync, maxBatchSize, cancellationToken);
          }
       }
 
-      private async Task ReceiverPump(PartitionReceiver receiver, Func<IReadOnlyCollection<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
+      private async Task ReceiverPumpAsync(PartitionReceiver receiver, Func<IReadOnlyCollection<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
       {
          while (true)
          {
