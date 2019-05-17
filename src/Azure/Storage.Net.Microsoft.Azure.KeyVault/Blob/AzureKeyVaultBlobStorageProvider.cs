@@ -124,21 +124,21 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
          return value.ToMemoryStream();
       }
 
-      public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobId(ids);
 
          await Task.WhenAll(ids.Select(id => _vaultClient.DeleteSecretAsync(_vaultUri, id)));
       }
 
-      public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobId(ids);
 
          return await Task.WhenAll(ids.Select(id => ExistsAsync(id, cancellationToken)));
       }
 
-      private async Task<bool> ExistsAsync(string id, CancellationToken cancellationToken)
+      private async Task<bool> ExistsAsync(string id)
       {
          SecretBundle secret;
 
@@ -154,7 +154,7 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
          return secret != null;
       }
 
-      public async Task<IEnumerable<BlobMeta>> GetMetaAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      public async Task<IEnumerable<BlobMeta>> GetMetaAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobId(ids);
 
@@ -206,17 +206,14 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blob
       private HttpClient GetHttpClient()
       {
          return new HttpClient();
-         //return (HttpClientFactory.Create(new InjectHostHeaderHttpMessageHandler()));
       }
 
-      private static bool TryHandleException(KeyVaultErrorException ex)
+      private static void TryHandleException(KeyVaultErrorException ex)
       {
          if(IsNotFound(ex))
          {
             throw new StorageException(ErrorCode.NotFound, ex);
          }
-
-         return false;
       }
 
       private static bool IsNotFound(KeyVaultErrorException ex)

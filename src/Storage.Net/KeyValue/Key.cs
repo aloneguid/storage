@@ -5,7 +5,7 @@ namespace Storage.Net.KeyValue
    /// <summary>
    /// ID structure of the <see cref="Value"/>
    /// </summary>
-   public class Key : IEquatable<Key>
+   public sealed class Key : IEquatable<Key>
    {
       /// <summary>
       /// Constructs an instance of <see cref="Key"/>

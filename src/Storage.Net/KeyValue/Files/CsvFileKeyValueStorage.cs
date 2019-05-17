@@ -112,12 +112,12 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task InsertAsync(string tableName, IReadOnlyCollection<Value> rows)
+      public Task InsertAsync(string tableName, IReadOnlyCollection<Value> values)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (rows == null) throw new ArgumentNullException(nameof(rows));
+         if (values == null) throw new ArgumentNullException(nameof(values));
 
-         OperateRows(tableName, rows, (p, g) => Insert(p, g, true, true));
+         OperateRows(tableName, values, (p, g) => Insert(p, g, true, true));
 
          return Task.FromResult(true);
       }
@@ -125,19 +125,19 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface
       /// </summary>
-      public Task InsertOrReplaceAsync(string tableName, IReadOnlyCollection<Value> rows)
+      public Task InsertOrReplaceAsync(string tableName, IReadOnlyCollection<Value> values)
       {
          if (tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if (rows == null) throw new ArgumentNullException(nameof(rows));
+         if (values == null) throw new ArgumentNullException(nameof(values));
 
-         OperateRows(tableName, rows, (p, g) => Insert(p, g, true, false));
+         OperateRows(tableName, values, (p, g) => Insert(p, g, true, false));
          return Task.FromResult(true);
       }
 
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task UpdateAsync(string tableName, IReadOnlyCollection<Value> rows)
+      public Task UpdateAsync(string tableName, IReadOnlyCollection<Value> values)
       {
          throw new NotImplementedException();
       }
@@ -145,12 +145,12 @@ namespace Storage.Net.KeyValue.Files
       /// <summary>
       /// See interface documentation
       /// </summary>
-      public Task MergeAsync(string tableName, IReadOnlyCollection<Value> rows)
+      public Task MergeAsync(string tableName, IReadOnlyCollection<Value> values)
       {
          if(tableName == null) throw new ArgumentNullException(nameof(tableName));
-         if(rows == null) return Task.FromResult(true);
+         if(values == null) return Task.FromResult(true);
 
-         foreach(IGrouping<string, Value> group in rows.GroupBy(r => r.PartitionKey))
+         foreach(IGrouping<string, Value> group in values.GroupBy(r => r.PartitionKey))
          {
             string partitionKey = group.Key;
 

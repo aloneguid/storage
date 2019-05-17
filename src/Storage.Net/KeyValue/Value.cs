@@ -8,7 +8,7 @@ namespace Storage.Net.KeyValue
    /// <summary>
    /// Represents a table row in table data structure.
    /// </summary>
-   public class Value : IDictionary<string, object>, IEquatable<Value>
+   public sealed class Value : IDictionary<string, object>, IEquatable<Value>
    {
       private readonly Dictionary<string, object> _keyToValue = new Dictionary<string, object>(); 
 

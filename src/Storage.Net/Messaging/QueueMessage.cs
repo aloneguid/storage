@@ -142,7 +142,7 @@ namespace Storage.Net.Messaging
                //Content
                if (Content == null)
                {
-                  b.Write((int)0);
+                  b.Write(0);
                }
                else
                {
@@ -153,7 +153,7 @@ namespace Storage.Net.Messaging
                //properties
                if(_properties == null)
                {
-                  b.Write((int)0);
+                  b.Write(0);
                }
                else
                {

@@ -60,8 +60,6 @@ namespace Storage.Net.Tests.Integration.KeyValue
 
       public override void Dispose()
       {
-         //_tables.DeleteAsync(_tableName).Wait();
-
          _tables.Dispose();
 
          Cleanup();
@@ -78,16 +76,16 @@ namespace Storage.Net.Tests.Integration.KeyValue
       [Fact]
       public async Task DeleteTable_CreateAndDelete_BackToPreviousState()
       {
-         int tableNo1 = (await _tables.ListTableNamesAsync()).Count();
+         int tableNo1 = (await _tables.ListTableNamesAsync()).Count;
 
          await _tables.InsertAsync(_tableName, new[] { new Value("pk", "rk") });
 
-         int tableNo2 = (await _tables.ListTableNamesAsync()).Count();
+         int tableNo2 = (await _tables.ListTableNamesAsync()).Count;
          Assert.Equal(tableNo1 + 1, tableNo2);
 
          await _tables.DeleteAsync(_tableName);
 
-         int tableNo3 = (await _tables.ListTableNamesAsync()).Count();
+         int tableNo3 = (await _tables.ListTableNamesAsync()).Count;
          Assert.Equal(tableNo3, tableNo1);
       }
 
@@ -100,7 +98,7 @@ namespace Storage.Net.Tests.Integration.KeyValue
       [Fact]
       public async Task ListTables_NoTablesWriteARow_OneTable()
       {
-         int count = (await _tables.ListTableNamesAsync()).Count();
+         int count = (await _tables.ListTableNamesAsync()).Count;
 
          var row1 = new Value("part1", "k1")
          {

@@ -42,20 +42,23 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
       protected abstract Task<int> GetMessageCountAsync(IReliableState reliableState, ServiceFabricTransaction transaction);
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-      public async Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
+      public async Task StartMessagePumpAsync(
+         Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync,
+         int maxBatchSize = 1,
+         CancellationToken cancellationToken = default)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
       {
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-         Task.Run(() => ReceiveMessagesAsync(onMessage, maxBatchSize, cancellationToken));
+         Task.Run(() => ReceiveMessagesAsync(onMessageAsync, maxBatchSize, cancellationToken));
 #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
       }
 
-      public Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> message, CancellationToken cancellationToken)
+      public Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
          return Task.FromResult(true);
       }
 
-      public Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken)
+      public Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default)
       {
          return Task.FromResult(true);
       }

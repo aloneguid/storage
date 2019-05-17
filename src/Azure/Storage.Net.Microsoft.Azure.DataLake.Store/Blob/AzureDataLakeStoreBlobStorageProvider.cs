@@ -136,7 +136,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Blob
          catch (AdlsException ex) when (ex.HttpStatus == HttpStatusCode.NotFound)
          {
             return null;
-            //throw new StorageException(ErrorCode.NotFound, ex);
          }
       }
 

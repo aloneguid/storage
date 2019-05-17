@@ -15,7 +15,10 @@ namespace Storage.Net.Tests.Integration.Messaging
    {
       private const string TagPropertyName = "tag";
       private static readonly TimeSpan MaxWaitTime = TimeSpan.FromMinutes(5);
-      private static readonly ITestSettings _settings;
+      private static readonly ITestSettings _settings = new ConfigurationBuilder<ITestSettings>()
+            .UseIniFile("c:\\tmp\\integration-tests.ini")
+            .UseEnvironmentVariables()
+            .Build();
       public readonly IMessagePublisher Publisher;
       public readonly IMessageReceiver Receiver;
       private readonly ConcurrentDictionary<string, QueueMessage> _receivedMessages = new ConcurrentDictionary<string, QueueMessage>();
@@ -27,15 +30,7 @@ namespace Storage.Net.Tests.Integration.Messaging
       protected readonly string _testDir;
       private readonly string _fixtureName;
 
-      static MessagingFixture()
-      {
-         _settings = new ConfigurationBuilder<ITestSettings>()
-            .UseIniFile("c:\\tmp\\integration-tests.ini")
-            .UseEnvironmentVariables()
-            .Build();
-      }
-
-      public MessagingFixture()
+      protected MessagingFixture()
       {
          _fixtureName = GetType().Name;
 

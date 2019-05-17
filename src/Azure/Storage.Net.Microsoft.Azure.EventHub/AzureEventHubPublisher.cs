@@ -73,7 +73,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <summary>
       /// See interface
       /// </summary>
-      public async Task PutMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken)
+      public async Task PutMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
          if (messages == null) return;
 

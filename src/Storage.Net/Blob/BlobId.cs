@@ -7,7 +7,7 @@ namespace Storage.Net.Blob
    /// <summary>
    /// Blob item description
    /// </summary>
-   public class BlobId : IEquatable<BlobId>
+   public sealed class BlobId : IEquatable<BlobId>
    {
       /// <summary>
       /// Gets the kind of item

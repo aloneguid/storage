@@ -28,7 +28,6 @@ namespace Storage.Net
       {
          foreach(ErrorCode code in Enum.GetValues(typeof(ErrorCode)))
          {
-            //string message = Exceptions.ResourceManager.GetString($"ErrorCode_{code}");
             string message = $"request failed with code '{code}'";
             ErrorCodeToMessage[code] = message;
          }

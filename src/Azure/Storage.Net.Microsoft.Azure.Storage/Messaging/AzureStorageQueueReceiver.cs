@@ -174,17 +174,17 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
       /// <summary>
       /// Calls .GetMessages on storage queue
       /// </summary>
-      protected override async Task<IReadOnlyCollection<QueueMessage>> ReceiveMessagesAsync(int count, CancellationToken cancellationToken)
+      protected override async Task<IReadOnlyCollection<QueueMessage>> ReceiveMessagesAsync(int maxBatchSize, CancellationToken cancellationToken)
       {
          //storage queue can get up to 32 messages
-         if(count > 32)
-            count = 32;
+         if(maxBatchSize > 32)
+            maxBatchSize = 32;
 
          IEnumerable<CloudQueueMessage> batch;
 
          try
          {
-            batch = await _queue.GetMessagesAsync(count, _messageVisibilityTimeout, null, null, cancellationToken);
+            batch = await _queue.GetMessagesAsync(maxBatchSize, _messageVisibilityTimeout, null, null, cancellationToken);
          }
          catch(WSE ex) when (ex.InnerException is TaskCanceledException)
          {

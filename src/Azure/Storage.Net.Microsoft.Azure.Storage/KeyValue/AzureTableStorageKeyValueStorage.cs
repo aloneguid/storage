@@ -186,14 +186,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task InsertAsync(string tableName, IReadOnlyCollection<Value> rows)
+      public async Task InsertAsync(string tableName, IReadOnlyCollection<Value> values)
       {
          if(tableName == null)
             throw new ArgumentNullException(nameof(tableName));
-         if(rows == null)
-            throw new ArgumentNullException(nameof(rows));
+         if(values == null)
+            throw new ArgumentNullException(nameof(values));
 
-         var rowsList = rows.ToList();
+         var rowsList = values.ToList();
          if(rowsList.Count == 0)
             return;
          if(!Value.AreDistinct(rowsList))
@@ -209,14 +209,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// See interface
       /// </summary>
-      public async Task InsertOrReplaceAsync(string tableName, IReadOnlyCollection<Value> rows)
+      public async Task InsertOrReplaceAsync(string tableName, IReadOnlyCollection<Value> values)
       {
          if(tableName == null)
             throw new ArgumentNullException(nameof(tableName));
-         if(rows == null)
-            throw new ArgumentNullException(nameof(rows));
+         if(values == null)
+            throw new ArgumentNullException(nameof(values));
 
-         var rowsList = rows.ToList();
+         var rowsList = values.ToList();
          if(rowsList.Count == 0)
             return;
          if(!Value.AreDistinct(rowsList))
@@ -232,21 +232,21 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task UpdateAsync(string tableName, IReadOnlyCollection<Value> rows)
+      public async Task UpdateAsync(string tableName, IReadOnlyCollection<Value> values)
       {
          await BatchedOperationAsync(tableName, false,
             (b, te) => b.Replace(te),
-            rows);
+            values);
       }
 
       /// <summary>
       /// As per interface
       /// </summary>
-      public async Task MergeAsync(string tableName, IReadOnlyCollection<Value> rows)
+      public async Task MergeAsync(string tableName, IReadOnlyCollection<Value> values)
       {
          await BatchedOperationAsync(tableName, true,
             (b, te) => b.InsertOrMerge(te),
-            rows);
+            values);
       }
 
       /// <summary>

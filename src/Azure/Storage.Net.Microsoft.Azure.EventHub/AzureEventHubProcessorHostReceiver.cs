@@ -35,7 +35,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
 
       public void Dispose()
       {
-
+         //nothing to dispose
       }
 
       public Task<int> GetMessageCountAsync()

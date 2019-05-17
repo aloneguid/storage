@@ -59,20 +59,20 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
 
          if (append)
          {
-            await AppendAsync(id, sourceStream, cancellationToken);
+            await AppendAsync(id, sourceStream);
          }
          else
          {
-            await WriteAsync(id, sourceStream, cancellationToken);
+            await WriteAsync(id, sourceStream);
          }
       }
 
-      public Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
+      public Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken = default)
       {
          throw new NotImplementedException();
       }
 
-      private async Task WriteAsync(string id, Stream sourceStream, CancellationToken cancellationToken)
+      private async Task WriteAsync(string id, Stream sourceStream)
       {
          id = ToId(id);
 
@@ -97,7 +97,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
          }
       }
 
-      private async Task AppendAsync(string id, Stream sourceStream, CancellationToken cancellationToken)
+      private async Task AppendAsync(string id, Stream sourceStream)
       {
          id = ToId(id);
 
@@ -243,11 +243,8 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blob
 
       private void CloseTransaction(bool b)
       {
-         if(_currentTransaction != null)
-         {
-            //dispose on transaction is already called!
-            _currentTransaction = null;
-         }
+         //dispose on transaction is already called!
+         _currentTransaction = null;
       }
 
       private string ToId(string id)

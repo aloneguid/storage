@@ -20,7 +20,6 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       private readonly string _consumerGroupName;
       private readonly EventHubStateAdapter _state;
       private static readonly TimeSpan _waitTime = TimeSpan.FromSeconds(1);
-      private bool _isReady;
 
       /// <summary>
       /// Creates an instance of EventHub receiver
@@ -95,7 +94,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <summary>
       /// See interface
       /// </summary>
-      public Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> message, CancellationToken cancellationToken)
+      public Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
          //nothing to confirm
          return Task.FromResult(true);
@@ -104,7 +103,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <summary>
       /// See interface
       /// </summary>
-      public Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken)
+      public Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default)
       {
          //no dead letter queue in EH
          return Task.FromResult(true);
@@ -113,7 +112,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <summary>
       /// See interface
       /// </summary>
-      public async Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize, CancellationToken cancellationToken)
+      public async Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
       {
          IEnumerable<PartitionReceiver> receivers = await CreateReceiversAsync();
 
@@ -188,6 +187,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// </summary>
       public void Dispose()
       {
+         //nothing to dispose
       }
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously

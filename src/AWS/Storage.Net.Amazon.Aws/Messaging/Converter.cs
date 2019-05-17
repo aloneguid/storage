@@ -37,9 +37,6 @@ namespace Storage.Net.Amazon.Aws.Messaging
          var r = new QueueMessage(sqsMessage.Body);
          r.Id = sqsMessage.MessageId;
 
-         //int.TryParse(sqsMessage.Attributes["ApproximateReceiveCount"], out int receiveCount);
-         //r.DequeueCount = receiveCount;
-
          foreach(KeyValuePair<string, MessageAttributeValue> attr in sqsMessage.MessageAttributes)
          {
             r.Properties[attr.Key] = attr.Value.StringValue;

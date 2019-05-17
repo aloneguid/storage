@@ -82,8 +82,6 @@ namespace Storage.Net.Blob.Files
 
       private BlobId ToBlobItem(string fullPath, BlobItemKind kind, bool includeMeta)
       {
-         string id = Path.GetFileName(fullPath);
-
          fullPath = fullPath.Substring(_directory.FullName.Length);
          fullPath = fullPath.Replace(Path.DirectorySeparatorChar, StoragePath.PathSeparator);
          fullPath = fullPath.Trim(StoragePath.PathSeparator);

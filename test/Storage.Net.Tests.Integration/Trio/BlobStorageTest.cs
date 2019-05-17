@@ -65,7 +65,7 @@ namespace Storage.Net.Tests.Integration.Blobs
         private readonly IBlobStorage _storage;
         private readonly ITestSettings _settings;
 
-        public BlobStorageTest(string type, string blobPrefix = null)
+        protected BlobStorageTest(string type, string blobPrefix = null)
         {
             StorageFactory.Modules.UseAzureStorage();
 
@@ -148,7 +148,7 @@ namespace Storage.Net.Tests.Integration.Blobs
         [Fact]
         public async Task List_All_DoesntCrash()
         {
-            List<BlobId> allBlobNames = (await _storage.ListAsync(new ListOptions { Recurse = true })).ToList();
+         await _storage.ListAsync(new ListOptions { Recurse = true });
         }
 
         [Fact]
@@ -193,7 +193,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 
             Assert.True(items.Count > 0);
 
-            BlobId tid = items.Where(i => i.FullPath == id).FirstOrDefault();
+            BlobId tid = items.FirstOrDefault(i => i.FullPath == id);
             Assert.NotNull(tid);
         }
 
@@ -210,7 +210,7 @@ namespace Storage.Net.Tests.Integration.Blobs
                 await _storage.WriteTextAsync(id2, RandomGenerator.RandomString);
                 await _storage.WriteTextAsync(id3, RandomGenerator.RandomString);
 
-                IEnumerable<BlobId> items = await _storage.ListAsync(new ListOptions { Recurse = true });
+                await _storage.ListAsync(new ListOptions { Recurse = true });
             }
             catch (NotSupportedException)
             {
@@ -251,8 +251,8 @@ namespace Storage.Net.Tests.Integration.Blobs
             await _storage.WriteTextAsync(id1, RandomGenerator.RandomString);
             await _storage.WriteTextAsync(id2, RandomGenerator.RandomString);
 
-            int countAll = (await _storage.ListFilesAsync(new ListOptions { FolderPath = _blobPrefix, FilePrefix = prefix })).Count();
-            int countOne = (await _storage.ListAsync(new ListOptions { FolderPath = _blobPrefix, FilePrefix = prefix, MaxResults = 1 })).Count();
+            int countAll = (await _storage.ListFilesAsync(new ListOptions { FolderPath = _blobPrefix, FilePrefix = prefix })).Count;
+            int countOne = (await _storage.ListAsync(new ListOptions { FolderPath = _blobPrefix, FilePrefix = prefix, MaxResults = 1 })).Count;
 
             Assert.Equal(2, countAll);
             Assert.Equal(1, countOne);
