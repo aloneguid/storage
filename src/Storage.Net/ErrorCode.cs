@@ -18,6 +18,11 @@
       /// <summary>
       /// Operation failed because a key already exists
       /// </summary>
-      DuplicateKey
+      DuplicateKey,
+
+      /// <summary>
+      /// A conflict
+      /// </summary>
+      Conflict
    }
 }

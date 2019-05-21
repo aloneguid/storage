@@ -292,6 +292,9 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          }
       }
 
+
+      #region [ Native Operations ] 
+
       public async Task<string> GetSasUriAsync(
          string id,
          SharedAccessBlobPolicy sasConstraints,
@@ -303,7 +306,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
 
          (CloudBlobContainer container, string path) = await GetPartsAsync(id, createContainer);
 
-         if (container == null) return null;
+         if(container == null)
+            return null;
 
          CloudBlockBlob blob = container.GetBlockBlobReference(StoragePath.Normalize(path, false));
 
@@ -311,17 +315,18 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          {
             return $@"{blob.Uri}{blob.GetSharedAccessSignature(sasConstraints, headers)}";
          }
-         catch (AzureStorageException ex)
+         catch(AzureStorageException ex)
          {
-            if (AzureStorageValidation.IsDoesntExist(ex)) return null;
+            if(AzureStorageValidation.IsDoesntExist(ex))
+               return null;
 
-            if (!AzureStorageValidation.TryHandleStorageException(ex)) throw;
+            if(!AzureStorageValidation.TryHandleStorageException(ex))
+               throw;
          }
 
          throw new InvalidOperationException("must not be here");
       }
 
-      #region [ Native Operations ] 
 
       /// <summary>
       /// Returns Uri to Azure Blob with read-only Shared Access Token.
@@ -387,6 +392,48 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
             SharedAccessExpiryTime = now.AddMinutes(minutesToExpiration),
             Permissions = permissions,
          };
+      }
+
+      public async Task<BlobLease> AcquireBlobLeaseAsync(
+         string id,
+         TimeSpan maxLeaseTime,
+         bool waitForRelease = false,
+         CancellationToken cancellationToken = default)
+      {
+         (CloudBlobContainer container, string path) = await GetPartsAsync(id);
+
+         CloudBlockBlob leaseBlob = container.GetBlockBlobReference(path);
+
+         //if blob doesn't exist, just create an empty one
+         if(!(await leaseBlob.ExistsAsync()))
+         {
+            await WriteAsync(id, new MemoryStream(), false, cancellationToken);
+         }
+
+         string leaseId = null;
+
+         while(!cancellationToken.IsCancellationRequested)
+         {
+            try
+            {
+               leaseId = await leaseBlob.AcquireLeaseAsync(maxLeaseTime);
+
+               break;
+            }
+            catch(AzureStorageException asx) when(asx.RequestInformation.HttpStatusCode == 409)
+            {
+               if(!waitForRelease)
+               {
+                  throw new StorageException(ErrorCode.Conflict, asx);
+               }
+               else
+               {
+                  await Task.Delay(TimeSpan.FromSeconds(1));
+               }
+            }
+         }
+
+         return new BlobLease(leaseBlob, leaseId);
       }
 
       #endregion

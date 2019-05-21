@@ -30,5 +30,38 @@ namespace Storage.Net.Tests.Integration.Azure
          string content = await new WebClient().DownloadStringTaskAsync(new Uri(uri));
          Assert.Equal("test", content);
       }
+
+      [Fact]
+      public async Task CanAcquireAndReleaseLeaseAsync()
+      {
+         string id = $"test/{nameof(CanAcquireAndReleaseLeaseAsync)}.lck";
+
+         using(BlobLease lease = await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20)))
+         {
+            
+         }
+      }
+
+      [Fact]
+      public async Task FailsOnAcquiredLock()
+      {
+         string id = $"test/{nameof(FailsOnAcquiredLock)}.lck";
+
+         using(BlobLease lease1 = await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20)))
+         {
+            await Assert.ThrowsAsync<StorageException>(() => _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20)));
+         }
+      }
+
+      [Fact]
+      public async Task WaitsToReleaseAcquiredLock()
+      {
+         string id = $"test/{nameof(WaitsToReleaseAcquiredLock)}.lck";
+
+         using(BlobLease lease1 = await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20)))
+         {
+            await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20), true);
+         }
+      }
    }
 }

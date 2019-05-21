@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -51,5 +52,15 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
          SharedAccessBlobHeaders headers = null,
          int minutesToExpiration = 30,
          CancellationToken cancellationToken = default);
+
+      /// <summary>
+      /// Acquires a lease
+      /// </summary>
+      /// <param name="id"></param>
+      /// <param name="maxLeaseTime"></param>
+      /// <param name="waitForRelease">When true, the call will wait for the lock to be released</param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      Task<BlobLease> AcquireBlobLeaseAsync(string id, TimeSpan maxLeaseTime, bool waitForRelease = false, CancellationToken cancellationToken = default);
    }
 }
