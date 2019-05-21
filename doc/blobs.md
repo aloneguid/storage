@@ -123,6 +123,33 @@ This storage is working with `block blobs` only. We are planning to add `append 
 This package treats the first part of the path as **container name**. This allows you to have access to all the containers at once. For instance, path `root/file.txt` creates file `file.txt` in the root of container called `root`. `root/folder1/file.txt` creates file `file.txt` in folder `folder1` under container `root` and so on.
 
 
+#### Native Operations
+
+You can access some native, blob storage specific operations by casting (unsafe) `IBlobStorage` to `IAzureBlobStorage`.
+
+##### SAS Tokens
+
+Please see the interface details or contribute to the docs ;)
+
+##### Blob Lease (aka Lock)
+
+There is a helper utility method to acquire a block blob lease, which is useful for virtual transactions support. For instance:
+
+
+```csharp
+using(BlobLease lease = await _blobs.AcquireBlobLeaseAsync(id, timeSpan))
+{
+   // your code
+}
+```
+
+Where the first parameter is blob id and the second is lease duration. The `BlobLease` returned implements `IDisposable` pattern so that on exit the lease is returned. Note that if blob doesn't exist, current implementation will create a zero-size file and then acquire a least, just for your convenience. The blob is not deleted automatically though.
+
+`AcquireBlobLeaseAsync` also has an option to wait for the lease to be returned (third optional argument) which when set to true causes this library to try to acquire a lease every second until it's released, and re-lease it.
+
+
+
+
 
 
 
