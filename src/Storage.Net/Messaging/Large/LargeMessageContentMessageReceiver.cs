@@ -74,5 +74,8 @@ namespace Storage.Net.Messaging.Large
          //now that messages are augmented pass them to parent
          await onParentMessagesAsync(messages);
       }
+
+      public Task KeepAliveAsync(QueueMessage message, CancellationToken cancellationToken = default) =>
+         _parentReceiver.KeepAliveAsync(message, cancellationToken);
    }
 }

@@ -196,5 +196,10 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       {
          return EmptyTransaction.Instance;
       }
+
+      /// <summary>
+      /// Event Hubs don't have a concept of keeping alive, ignored.
+      /// </summary>
+      public Task KeepAliveAsync(QueueMessage message, CancellationToken cancellationToken = default) => Task.CompletedTask;
    }
 }

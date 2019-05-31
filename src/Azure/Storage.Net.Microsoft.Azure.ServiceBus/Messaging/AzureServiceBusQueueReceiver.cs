@@ -17,13 +17,18 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
    {
       //https://github.com/Azure/azure-service-bus/blob/master/samples/DotNet/Microsoft.Azure.ServiceBus/ReceiveSample/readme.md
       public AzureServiceBusQueueReceiver(string connectionString, string queueName, bool peekLock = true, MessageHandlerOptions handlerOptions = null)
-         : base(CreateClient(connectionString, queueName, peekLock),  handlerOptions)
+         : base(
+              CreateClient(connectionString, queueName, peekLock),
+              CreateMessageReceiver(connectionString, queueName, peekLock),
+              handlerOptions)
       {
       }
 
       private static QueueClient CreateClient(string connectionString, string queueName, bool peekLock)
       {
-         return new QueueClient(connectionString, queueName, peekLock ? ReceiveMode.PeekLock : ReceiveMode.ReceiveAndDelete);
+         ReceiveMode mode = peekLock ? ReceiveMode.PeekLock : ReceiveMode.ReceiveAndDelete;
+
+         return new QueueClient(connectionString, queueName, mode);
       }
    }
 }

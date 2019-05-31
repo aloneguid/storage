@@ -120,5 +120,6 @@ namespace Storage.Net.Messaging
       /// See interface
       /// </summary>
       protected abstract Task<IReadOnlyCollection<QueueMessage>> ReceiveMessagesAsync(int maxBatchSize, CancellationToken cancellationToken);
+      public Task KeepAliveAsync(QueueMessage message, CancellationToken cancellationToken = default) => throw new NotSupportedException();
    }
 }
