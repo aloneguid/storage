@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using AzureStorageException = Microsoft.WindowsAzure.Storage.StorageException;
@@ -11,12 +12,30 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
    public class BlobLease : IDisposable
    {
       private readonly CloudBlockBlob _blob;
-      private readonly string _leaseId;
 
       internal BlobLease(CloudBlockBlob blob, string leaseId)
       {
          _blob = blob;
-         _leaseId = leaseId;
+         LeaseId = leaseId;
+      }
+
+      /// <summary>
+      /// Original Lease ID
+      /// </summary>
+      public string LeaseId { get; }
+
+      /// <summary>
+      /// Original blob that is leased
+      /// </summary>
+      public CloudBlockBlob LeasedBlob => _blob;
+
+      /// <summary>
+      /// Renews active lease
+      /// </summary>
+      /// <returns></returns>
+      public async Task RenewLeaseAsync()
+      {
+         await _blob.RenewLeaseAsync(AccessCondition.GenerateLeaseCondition(LeaseId));
       }
 
       /// <summary>
@@ -26,7 +45,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blob
       {
          try
          {
-            _blob.ReleaseLeaseAsync(AccessCondition.GenerateLeaseCondition(_leaseId)).Wait();
+            _blob.ReleaseLeaseAsync(AccessCondition.GenerateLeaseCondition(LeaseId)).Wait();
          }
          catch(AggregateException egex)
             when(
