@@ -17,6 +17,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
    {
       protected readonly ConcurrentDictionary<string, Message> _messageIdToBrokeredMessage = new ConcurrentDictionary<string, Message>();
       protected readonly IReceiverClient _receiverClient;
+      //message received is only used for "advanced" operations not available in IReceiverClient. If you can not use it please do.
       private readonly ISBMessageReceiver _messageReceiver;
       protected readonly MessageHandlerOptions _messageHandlerOptions;
       protected readonly bool _autoComplete;
@@ -36,12 +37,16 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
                 * So if you set this to 24 hours e.g. Timespan.FromHours(24) and your processing was to take 12 hours, it would be renewed. However, if you set
                 * this to 12 hours using Timespan.FromHours(12) and your code ran for 24, when you went to complete the message it would give a lockLost exception
                 * (as I was getting above over shorter intervals!).
+                * 
+                * in fact, Microsoft's implementation runs a background task that periodically renews the message lock until it expires.
                 */
-               MaxAutoRenewDuration = TimeSpan.FromMinutes(1), //should be in fact called "max processing time"
-               MaxConcurrentCalls = 1
+               MaxAutoRenewDuration = TimeSpan.FromMinutes(10), //should be in fact called "max processing time"
+               MaxConcurrentCalls = 2
             };
 
          _autoComplete = _messageHandlerOptions.AutoComplete;
+
+         //note: we can't use management SDK as it requires high priviledged SP in Azure
       }
 
       private static Task DefaultExceptionReceiverHandler(ExceptionReceivedEventArgs args)
@@ -86,7 +91,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          await _receiverClient.DeadLetterAsync(bm.MessageId).ConfigureAwait(false);
       }
 
-      public async Task KeepAliveAsync(QueueMessage message, CancellationToken cancellationToken = default)
+      public async Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default)
       {
          if(_autoComplete)
             return;
@@ -94,7 +99,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          if(!_messageIdToBrokeredMessage.TryGetValue(message.Id, out Message bm))
             return;
 
-         await _messageReceiver.RenewLockAsync(bm);
+         await _messageReceiver.RenewLockAsync(bm).ConfigureAwait(false);
       }
 
       public Task<ITransaction> OpenTransactionAsync()
@@ -119,7 +124,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
 
                if(!_autoComplete)
                   _messageIdToBrokeredMessage[qm.Id] = message;
-               await onMessageAsync(new[] { qm });
+               await onMessageAsync(new[] { qm }).ConfigureAwait(false);
             },
             _messageHandlerOptions);
 

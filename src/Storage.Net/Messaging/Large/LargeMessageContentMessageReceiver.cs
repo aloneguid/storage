@@ -75,7 +75,7 @@ namespace Storage.Net.Messaging.Large
          await onParentMessagesAsync(messages);
       }
 
-      public Task KeepAliveAsync(QueueMessage message, CancellationToken cancellationToken = default) =>
-         _parentReceiver.KeepAliveAsync(message, cancellationToken);
+      public Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default) =>
+         _parentReceiver.KeepAliveAsync(message, timeToLive, cancellationToken);
    }
 }

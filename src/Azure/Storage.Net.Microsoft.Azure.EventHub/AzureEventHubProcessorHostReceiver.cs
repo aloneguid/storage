@@ -43,7 +43,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          throw new NotSupportedException();
       }
 
-      public Task KeepAliveAsync(QueueMessage message, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
       public Task<ITransaction> OpenTransactionAsync() => Task.FromResult(EmptyTransaction.Instance);
 
       public Task StartMessagePumpAsync(

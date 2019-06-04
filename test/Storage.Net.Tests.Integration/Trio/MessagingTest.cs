@@ -96,6 +96,22 @@ namespace Storage.Net.Tests.Integration.Messaging
       }
 
       [Fact]
+      public async Task KeepAlive_Call_DoesntCrash()
+      {
+         string tag = await _fixture.PutMessageAsync();
+         QueueMessage received = await _fixture.WaitMessageAsync(tag);
+
+         try
+         {
+            await _fixture.Receiver.KeepAliveAsync(received);
+         }
+         catch(NotSupportedException)
+         {
+            //not all the providers support this, so ignore this exception
+         }
+      }
+
+      [Fact]
       public async Task CleanQueue_SendMessage_ReceiveAndConfirm()
       {
          string content = RandomGenerator.RandomString;
