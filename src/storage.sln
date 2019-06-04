@@ -8,7 +8,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{D1BF1BDC-D99C-4C85-AF21-34AC49F49319}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		..\azure-pipelines-integration.yml = ..\azure-pipelines-integration.yml
 		..\azure-pipelines.yml = ..\azure-pipelines.yml
 		..\build.ini = ..\build.ini
 		JsonExtensions.cs = JsonExtensions.cs
