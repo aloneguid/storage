@@ -93,7 +93,7 @@ stages:
       displayName: 'Integration and Unit Test (with coverlet)'
       continueOnError: true
       inputs:
-      command: test
+        command: test
         projects: ./src/storage.sln
         arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*%2c[*Test*]*" /p:CoverletOutput=$(Build.StagingDirectory)/coverage.xml'
 
