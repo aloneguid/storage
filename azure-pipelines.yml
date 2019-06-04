@@ -79,5 +79,5 @@ stages:
       runOnce:
         deploy:
           steps:
-          - powershell: 'Get-ChildItem -Recurse'
-            condition: "eq(variables['Build.SourceBranch'], 'refs/heads/master')"
+          - powershell: 'Get-ChildItem $(System.DefaultWorkingDirectory) -Recurse'
+            #condition: "eq(variables['Build.SourceBranch'], 'refs/heads/master')"
