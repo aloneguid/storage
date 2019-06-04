@@ -112,3 +112,15 @@ stages:
       displayName: 'SonarQube: Run Code Analysis'
     - task: SonarSource.sonarcloud.38b27399-a642-40af-bb7d-9971f69712e8.SonarCloudPublish@1
       displayName: 'SonarQube: Publish Quality Gate Result'
+
+- stage: Deploy
+  jobs:
+  - deployment: NugetOrg
+    pool:
+      vmImage: 'windows-2019'
+    environment: live
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - powershell: 'Get-ChildItem -Recurse'
