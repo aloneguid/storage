@@ -124,3 +124,4 @@ stages:
         deploy:
           steps:
           - powershell: 'Get-ChildItem -Recurse'
+            condition: "eq(variables['Build.SourceBranch'], 'refs/heads/master')"
