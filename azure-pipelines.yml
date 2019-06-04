@@ -97,10 +97,6 @@ stages:
         projects: ./src/storage.sln
         arguments: '/p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Exclude="[xunit*]*%2c[*Test*]*" /p:CoverletOutput=$(Build.StagingDirectory)/coverage.xml'
 
-    #- powershell: 'cat $(Build.StagingDirectory)/coverage.xml'
-    #  errorActionPreference: silentlyContinue
-    #  displayName: 'cat coverage.xml'
-
     #SQ requires building the whole solution, specifically from .sln file, otherwise everything fails miserably
     - task: DotNetCoreCLI@2
       displayName: 'Build Solution'
