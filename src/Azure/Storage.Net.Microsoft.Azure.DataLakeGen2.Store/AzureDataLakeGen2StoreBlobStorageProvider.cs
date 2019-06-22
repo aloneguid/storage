@@ -54,26 +54,27 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
 
       public async Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken)
       {
-         string[] split = options.FolderPath.Split('/');
+         var info = new PathInformation(options.FolderPath);
 
          DirectoryList results =
-            await Client.ListDirectoryAsync(split[0], split[1], options.Recurse, options.MaxResults ?? ListBatchSize);
+            await Client.ListDirectoryAsync(info.Filesystem, info.Path, options.Recurse, options.MaxResults ?? ListBatchSize, cancellationToken);
 
-         return results.Paths.Select(x => new BlobId(x.Name, x.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File))
+         return results.Paths
+            .Select(x => new BlobId(x.Name, x.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File))
             .ToList();
       }
 
       public async Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(id);
-         string[] split = id.Split('/');
+         var info = new PathInformation(id);
 
          if(!append)
          {
-            await Client.CreateFileAsync(split[0], split[1]);
+            await Client.CreateFileAsync(info.Filesystem, info.Path, cancellationToken);
          }
 
-         using(Stream stream = await Client.OpenWriteAsync(split[0], split[1]))
+         using(Stream stream = await Client.OpenWriteAsync(info.Filesystem, info.Path, cancellationToken))
          {
             await sourceStream.CopyToAsync(stream);
          }
@@ -82,17 +83,17 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
       public async Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(id);
-         string[] split = id.Split('/');
+         var info = new PathInformation(id);
 
-         return await Client.OpenWriteAsync(split[0], split[1]);
+         return await Client.OpenWriteAsync(info.Filesystem, info.Path, cancellationToken);
       }
 
       public Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(id);
-         string[] split = id.Split('/');
+         var info = new PathInformation(id);
 
-         return Task.FromResult(Client.OpenRead(split[0], split[1]));
+         return Task.FromResult(Client.OpenRead(info.Filesystem, info.Path));
       }
 
       public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -102,8 +103,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
 
          await Task.WhenAll(idList.Select(x =>
          {
-            string[] split = x.Split('/');
-            return Client.DeleteFileAsync(split[0], split[1]);
+            var info = new PathInformation(x);
+            return Client.DeleteFileAsync(info.Filesystem, info.Path, cancellationToken);
          }));
       }
 
@@ -115,8 +116,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
 
          bool[] tasks = await Task.WhenAll(idList.Select(async x =>
          {
-            string[] split = x.Split('/');
-            Properties properties = await Client.GetPropertiesAsync(split[0], split[1]);
+            var info = new PathInformation(x);
+            Properties properties = await Client.GetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
             return properties.Exists;
          }));
 
@@ -131,8 +132,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
 
          return await Task.WhenAll(idList.Select(async x =>
          {
-            string[] split = x.Split('/');
-            Properties properties = await Client.GetPropertiesAsync(split[0], split[1]);
+            var info = new PathInformation(x);
+            Properties properties = await Client.GetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
             return new BlobMeta(properties.Length, null, properties.LastModified);
          }));
       }
@@ -147,5 +148,24 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
       }
 
       public IDataLakeGen2Client Client { get; }
+
+      private class PathInformation
+      {
+         public PathInformation(string id)
+         {
+            string[] split = id.Split('/');
+
+            if(split.Length < 2)
+            {
+               throw new ArgumentException("id must contain a filesystem and a path.");
+            }
+
+            Filesystem = split.First();
+            Path = string.Join("/", split.Skip(1));
+         }
+
+         public string Filesystem { get; }
+         public string Path { get; }
+      }
    }
 }
