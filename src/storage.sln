@@ -44,6 +44,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "General", "General", "{8098
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Storage.Net.Ftp", "General\Storage.Net.Ftp\Storage.Net.Ftp.csproj", "{8054AA5F-F409-4594-BA40-566650FDA596}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Storage.Net.Microsoft.Azure.DataLakeGen2.Store", "Azure\Storage.Net.Microsoft.Azure.DataLakeGen2.Store\Storage.Net.Microsoft.Azure.DataLakeGen2.Store.csproj", "{B871393D-E298-461C-9174-76B64F8CDEE6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -94,6 +96,10 @@ Global
 		{8054AA5F-F409-4594-BA40-566650FDA596}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8054AA5F-F409-4594-BA40-566650FDA596}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8054AA5F-F409-4594-BA40-566650FDA596}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B871393D-E298-461C-9174-76B64F8CDEE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B871393D-E298-461C-9174-76B64F8CDEE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B871393D-E298-461C-9174-76B64F8CDEE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B871393D-E298-461C-9174-76B64F8CDEE6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -113,6 +119,7 @@ Global
 		{B29220CF-8EB0-473F-88D6-D9A146AC6F39} = {76FFA3B1-8786-495D-B7B1-8F38A267D183}
 		{8098BD8F-AC7C-44CD-8F84-A514A5418C8C} = {59E9D41F-BCD2-4A64-B62F-515B78986B63}
 		{8054AA5F-F409-4594-BA40-566650FDA596} = {8098BD8F-AC7C-44CD-8F84-A514A5418C8C}
+		{B871393D-E298-461C-9174-76B64F8CDEE6} = {E5D1DA80-E9FE-4965-A498-DFFC8ED70E40}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C5FC6E9A-255E-4FD4-B08C-8EDE44BFE37A}

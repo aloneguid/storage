@@ -16,6 +16,7 @@
     <None Remove="Azure\**" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.DataLakeGen2.Store\Storage.Net.Microsoft.Azure.DataLakeGen2.Store.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Storage\Storage.Net.Microsoft.Azure.Storage.csproj" />
     <ProjectReference Include="..\..\src\Storage.Net\Storage.Net.csproj" />
   </ItemGroup>
