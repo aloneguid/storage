@@ -12,13 +12,11 @@ using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.Models;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
 {
-   class AzureDataLakeStoreGen2BlobStorageProvider : IBlobStorage
+   class AzureDataLakeStoreGen2BlobStorageProvider : IAzureDataLakeGen2Storage
    {
-      private readonly IDataLakeGen2Client _client;
-
       private AzureDataLakeStoreGen2BlobStorageProvider(IDataLakeGen2Client client)
       {
-         _client = client ?? throw new ArgumentNullException(nameof(client));
+         Client = client ?? throw new ArgumentNullException(nameof(client));
       }
 
       public int ListBatchSize { get; set; } = 5000;
@@ -59,7 +57,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          string[] split = options.FolderPath.Split('/');
 
          DirectoryList results =
-            await _client.ListDirectoryAsync(split[0], split[1], options.Recurse, options.MaxResults ?? ListBatchSize);
+            await Client.ListDirectoryAsync(split[0], split[1], options.Recurse, options.MaxResults ?? ListBatchSize);
 
          return results.Paths.Select(x => new BlobId(x.Name, x.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File))
             .ToList();
@@ -72,10 +70,10 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
 
          if(!append)
          {
-            await _client.CreateFileAsync(split[0], split[1]);
+            await Client.CreateFileAsync(split[0], split[1]);
          }
 
-         using(Stream stream = await _client.OpenWriteAsync(split[0], split[1]))
+         using(Stream stream = await Client.OpenWriteAsync(split[0], split[1]))
          {
             await sourceStream.CopyToAsync(stream);
          }
@@ -86,7 +84,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          GenericValidation.CheckBlobId(id);
          string[] split = id.Split('/');
 
-         return await _client.OpenWriteAsync(split[0], split[1]);
+         return await Client.OpenWriteAsync(split[0], split[1]);
       }
 
       public Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken)
@@ -94,7 +92,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          GenericValidation.CheckBlobId(id);
          string[] split = id.Split('/');
 
-         return Task.FromResult(_client.OpenRead(split[0], split[1]));
+         return Task.FromResult(Client.OpenRead(split[0], split[1]));
       }
 
       public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -105,7 +103,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          await Task.WhenAll(idList.Select(x =>
          {
             string[] split = x.Split('/');
-            return _client.DeleteFileAsync(split[0], split[1]);
+            return Client.DeleteFileAsync(split[0], split[1]);
          }));
       }
 
@@ -118,7 +116,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          bool[] tasks = await Task.WhenAll(idList.Select(async x =>
          {
             string[] split = x.Split('/');
-            Properties properties = await _client.GetPropertiesAsync(split[0], split[1]);
+            Properties properties = await Client.GetPropertiesAsync(split[0], split[1]);
             return properties.Exists;
          }));
 
@@ -134,7 +132,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          return await Task.WhenAll(idList.Select(async x =>
          {
             string[] split = x.Split('/');
-            Properties properties = await _client.GetPropertiesAsync(split[0], split[1]);
+            Properties properties = await Client.GetPropertiesAsync(split[0], split[1]);
             return new BlobMeta(properties.Length, null, properties.LastModified);
          }));
       }
@@ -147,5 +145,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
       {
          return Task.FromResult(EmptyTransaction.Instance);
       }
+
+      public IDataLakeGen2Client Client { get; }
    }
 }
