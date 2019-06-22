@@ -34,7 +34,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
 
       public override Task FlushAsync(CancellationToken cancellationToken)
       {
-         return _client.FlushFileAsync(_filesystem, _path, Position);
+         return _client.FlushFileAsync(_filesystem, _path, Position, cancellationToken);
       }
 
       public override int Read(byte[] buffer, int offset, int count)
@@ -43,9 +43,9 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
       }
 
       public override async Task<int> ReadAsync(byte[] buffer, int offset, int count,
-          CancellationToken cancellationToken)
+         CancellationToken cancellationToken)
       {
-         Properties properties = await _client.GetPropertiesAsync(_filesystem, _path);
+         Properties properties = await _client.GetPropertiesAsync(_filesystem, _path, cancellationToken);
 
          if(properties.Length == Position)
          {
@@ -55,7 +55,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          long endPosition = Position + count;
          long correctedEndPosition = endPosition < properties.Length ? endPosition : properties.Length;
 
-         byte[] content = await _client.ReadFileAsync(_filesystem, _path, Position, correctedEndPosition - 1);
+         byte[] content =
+            await _client.ReadFileAsync(_filesystem, _path, Position, correctedEndPosition - 1, cancellationToken);
          content.CopyTo(buffer, offset);
          Position = correctedEndPosition;
 
@@ -79,7 +80,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
 
       public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
       {
-         await _client.AppendFileAsync(_filesystem, _path, buffer.Skip(offset).Take(count).ToArray(), Position);
+         await _client.AppendFileAsync(_filesystem, _path, buffer.Skip(offset).Take(count).ToArray(), Position,
+            cancellationToken);
          Position += count;
          await FlushAsync(cancellationToken);
       }

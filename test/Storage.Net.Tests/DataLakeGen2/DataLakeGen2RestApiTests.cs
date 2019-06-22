@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL;
@@ -30,14 +31,14 @@ namespace Storage.Net.Tests.DataLakeGen2
          _responseReference = new HttpResponseMessage(HttpStatusCode.OK);
 
          _httpClient = new Mock<IHttpClientWrapper>();
-         _httpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>()))
-             .Returns(Task.FromResult(_responseReference));
+         _httpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(_responseReference));
 
          _authenticationHeaderValue = new AuthenticationHeaderValue("Bearer", "Token");
 
          _authorisation = new Mock<IAuthorisation>();
          _authorisation.Setup(x => x.AuthoriseAsync(It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(_authenticationHeaderValue));
+            .Returns(Task.FromResult(_authenticationHeaderValue));
 
          _dateTimeReference = new DateTime(2019, 6, 17);
 
@@ -45,35 +46,39 @@ namespace Storage.Net.Tests.DataLakeGen2
          _dateTime.Setup(x => x.Now).Returns(_dateTimeReference);
 
          _sut = new DataLakeGen2RestApi(_httpClient.Object, _authorisation.Object, _dateTime.Object,
-             StorageAccountName);
+            StorageAccountName);
       }
 
       [Fact]
       public async Task TestAppendPathRequestsWithHttpVerb()
       {
          HttpMethod expected = HttpMethod.Patch;
-         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] { 0, 1, 2 }, 0);
+         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] {0, 1, 2}, 0);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestAppendPathRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?action=append&position=0&timeout=60");
-         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] { 0, 1, 2 }, 0);
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?action=append&position=0&timeout=60");
+         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] {0, 1, 2}, 0);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestAppendPathRequestsWithSignature()
       {
-         byte[] data = { 0, 1, 2 };
+         byte[] data = {0, 1, 2};
          string expected =
-             $"PATCH\n\n\n{data.Length}\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\naction:append\nposition:0\ntimeout:60";
+            $"PATCH\n\n\n{data.Length}\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\naction:append\nposition:0\ntimeout:60";
          await _sut.AppendPathAsync(FilesystemName, FileName, data, 0);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -82,52 +87,52 @@ namespace Storage.Net.Tests.DataLakeGen2
       [Fact]
       public async Task TestAppendPathRequestsWithAuthorisationHeader()
       {
-         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] { 0, 1, 2 }, 0);
+         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] {0, 1, 2}, 0);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(
+               It.Is<HttpRequestMessage>(y => y.Headers.Authorization.Equals(_authenticationHeaderValue)
+               ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestAppendPathRequestsWithMsDateHeader()
       {
-         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] { 0, 1, 2 }, 0);
+         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] {0, 1, 2}, 0);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestAppendPathRequestsWithMsVersionHeader()
       {
-         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] { 0, 1, 2 }, 0);
+         await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] {0, 1, 2}, 0);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestAppendPathRequestsWithContent()
       {
-         byte[] content = { 0, 1, 2 };
+         byte[] content = {0, 1, 2};
          await _sut.AppendPathAsync(FilesystemName, FileName, content, 0);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.ReadAsByteArrayAsync().Result.SequenceEqual(content)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.ReadAsByteArrayAsync().Result.SequenceEqual(content)
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestAppendPathReturnsResponse()
       {
-         HttpResponseMessage actual = await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] { 0, 1, 2 }, 0);
+         HttpResponseMessage actual = await _sut.AppendPathAsync(FilesystemName, FileName, new byte[] {0, 1, 2}, 0);
 
          Assert.Equal(_responseReference, actual);
       }
@@ -138,25 +143,29 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Put;
          await _sut.CreateDirectoryAsync(FilesystemName, DirectoryName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestCreateDirectoryRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{DirectoryName}?resource=directory&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{DirectoryName}?resource=directory&timeout=60");
          await _sut.CreateDirectoryAsync(FilesystemName, DirectoryName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x => x.SendAsync(
+            It.Is<HttpRequestMessage>(y => y.RequestUri == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestCreateDirectoryRequestsWithSignature()
       {
          string expected =
-             $"PUT\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(DirectoryName)}\nresource:directory\ntimeout:60";
+            $"PUT\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(DirectoryName)}\nresource:directory\ntimeout:60";
          await _sut.CreateDirectoryAsync(FilesystemName, DirectoryName);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -168,9 +177,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateDirectoryAsync(FilesystemName, DirectoryName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -179,9 +188,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateDirectoryAsync(FilesystemName, DirectoryName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -190,9 +199,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateDirectoryAsync(FilesystemName, DirectoryName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -201,9 +210,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateDirectoryAsync(FilesystemName, DirectoryName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -220,18 +229,21 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Put;
          await _sut.CreateFileAsync(FilesystemName, FileName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestCreateFileRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?resource=file&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?resource=file&timeout=60");
          await _sut.CreateFileAsync(FilesystemName, FileName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
 
@@ -239,7 +251,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestCreateFileRequestsWithSignature()
       {
          string expected =
-             $"PUT\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\nresource:file\ntimeout:60";
+            $"PUT\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\nresource:file\ntimeout:60";
          await _sut.CreateFileAsync(FilesystemName, FileName);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -251,9 +263,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateFileAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -262,9 +274,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateFileAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -273,9 +285,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateFileAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -284,9 +296,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateFileAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -303,25 +315,29 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Put;
          await _sut.CreateFilesystemAsync(FilesystemName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestCreateFilesystemRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?resource=filesystem&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?resource=filesystem&timeout=60");
          await _sut.CreateFilesystemAsync(FilesystemName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestCreateFilesystemRequestsWithSignature()
       {
          string expected =
-             $"PUT\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\nresource:filesystem\ntimeout:60";
+            $"PUT\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\nresource:filesystem\ntimeout:60";
          await _sut.CreateFilesystemAsync(FilesystemName);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -333,9 +349,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateFilesystemAsync(FilesystemName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -344,9 +360,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateFilesystemAsync(FilesystemName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -355,9 +371,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateFilesystemAsync(FilesystemName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -366,9 +382,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.CreateFilesystemAsync(FilesystemName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -385,25 +401,29 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Delete;
          await _sut.DeleteFilesystemAsync(FilesystemName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestDeleteFilesystemRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?resource=filesystem&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?resource=filesystem&timeout=60");
          await _sut.DeleteFilesystemAsync(FilesystemName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected
+            ), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestDeleteFilesystemRequestsWithSignature()
       {
          string expected =
-             $"DELETE\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\nresource:filesystem\ntimeout:60";
+            $"DELETE\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\nresource:filesystem\ntimeout:60";
          await _sut.DeleteFilesystemAsync(FilesystemName);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -415,9 +435,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.DeleteFilesystemAsync(FilesystemName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -426,9 +446,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.DeleteFilesystemAsync(FilesystemName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -437,9 +457,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.DeleteFilesystemAsync(FilesystemName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -448,9 +468,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.DeleteFilesystemAsync(FilesystemName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -467,36 +487,40 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Delete;
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, true);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected),
+               CancellationToken.None));
       }
 
       [Fact]
       public async Task TestDeletePathRequestsWithUriForRecursive()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{DirectoryName}?recursive=true&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{DirectoryName}?recursive=true&timeout=60");
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, true);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestDeletePathRequestsWithUriForNonRecursive()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{DirectoryName}?recursive=false&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{DirectoryName}?recursive=false&timeout=60");
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, false);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestDeletePathRequestsWithSignatureForRecursive()
       {
          string expected =
-             $"DELETE\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(DirectoryName)}\nrecursive:true\ntimeout:60";
+            $"DELETE\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(DirectoryName)}\nrecursive:true\ntimeout:60";
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, true);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -506,7 +530,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestDeletePathRequestsWithSignatureForNonRecursive()
       {
          string expected =
-             $"DELETE\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(DirectoryName)}\nrecursive:false\ntimeout:60";
+            $"DELETE\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(DirectoryName)}\nrecursive:false\ntimeout:60";
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, false);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -518,9 +542,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, true);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -529,9 +553,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, true);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -540,9 +564,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, true);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -551,9 +575,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.DeletePathAsync(FilesystemName, DirectoryName, true);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -570,7 +594,8 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Head;
          await _sut.GetAccessControlAsync(FilesystemName, FileName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected), CancellationToken.None));
       }
 
 
@@ -578,18 +603,19 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestGetAccessControlRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?action=getaccesscontrol&upn=true&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?action=getaccesscontrol&upn=true&timeout=60");
          await _sut.GetAccessControlAsync(FilesystemName, FileName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestGetAccessControlRequestsWithSignature()
       {
          string expected =
-             $"HEAD\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\naction:getaccesscontrol\ntimeout:60\nupn:true";
+            $"HEAD\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\naction:getaccesscontrol\ntimeout:60\nupn:true";
          await _sut.GetAccessControlAsync(FilesystemName, FileName);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -601,9 +627,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.GetAccessControlAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -612,9 +638,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.GetAccessControlAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -623,9 +649,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.GetAccessControlAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -634,9 +660,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.GetAccessControlAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -653,7 +679,8 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Head;
          await _sut.GetStatusAsync(FilesystemName, FileName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected), CancellationToken.None));
       }
 
 
@@ -661,18 +688,19 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestGetStatusRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?timeout=60");
          await _sut.GetStatusAsync(FilesystemName, FileName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestGetStatusRequestsWithSignature()
       {
          string expected =
-             $"HEAD\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\ntimeout:60";
+            $"HEAD\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\ntimeout:60";
          await _sut.GetStatusAsync(FilesystemName, FileName);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -684,9 +712,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.GetStatusAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -695,9 +723,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.GetStatusAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -706,9 +734,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.GetStatusAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -717,9 +745,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.GetStatusAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -736,25 +764,27 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Patch;
          await _sut.FlushPathAsync(FilesystemName, FileName, 3);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestFlushPathRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?action=flush&position=3&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?action=flush&position=3&timeout=60");
          await _sut.FlushPathAsync(FilesystemName, FileName, 3);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestFlushPathRequestsWithSignature()
       {
          string expected =
-             $"PATCH\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\naction:flush\nposition:3\ntimeout:60";
+            $"PATCH\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\naction:flush\nposition:3\ntimeout:60";
          await _sut.FlushPathAsync(FilesystemName, FileName, 3);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -766,9 +796,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.FlushPathAsync(FilesystemName, FileName, 0);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -777,9 +807,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.FlushPathAsync(FilesystemName, FileName, 0);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -788,9 +818,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.FlushPathAsync(FilesystemName, FileName, 0);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -799,9 +829,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.FlushPathAsync(FilesystemName, FileName, 0);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -818,47 +848,51 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Get;
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 1000);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestListPathRequestsWithUriForRecursive()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?directory={DirectoryName}&maxresults=1000&recursive=true&resource=filesystem&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?directory={DirectoryName}&maxresults=1000&recursive=true&resource=filesystem&timeout=60");
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 1000);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestListPathRequestsWithUriForNonRecursive()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?directory={DirectoryName}&maxresults=1000&recursive=false&resource=filesystem&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?directory={DirectoryName}&maxresults=1000&recursive=false&resource=filesystem&timeout=60");
          await _sut.ListPathAsync(FilesystemName, DirectoryName, false, 1000);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestListPathRequestsWithUriForMaxResults()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?directory={DirectoryName}&maxresults=2000&recursive=true&resource=filesystem&timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}?directory={DirectoryName}&maxresults=2000&recursive=true&resource=filesystem&timeout=60");
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 2000);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestListPathRequestsWithSignatureForRecursive()
       {
          string expected =
-             $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\ndirectory:{DirectoryName}\nmaxresults:1000\nrecursive:true\nresource:filesystem\ntimeout:60";
+            $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\ndirectory:{DirectoryName}\nmaxresults:1000\nrecursive:true\nresource:filesystem\ntimeout:60";
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 1000);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -868,7 +902,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestListPathRequestsWithSignatureForNonRecursive()
       {
          string expected =
-             $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\ndirectory:{DirectoryName}\nmaxresults:1000\nrecursive:false\nresource:filesystem\ntimeout:60";
+            $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\ndirectory:{DirectoryName}\nmaxresults:1000\nrecursive:false\nresource:filesystem\ntimeout:60";
          await _sut.ListPathAsync(FilesystemName, DirectoryName, false, 1000);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -878,7 +912,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestListPathRequestsWithSignatureForMaxResults()
       {
          string expected =
-             $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\ndirectory:{DirectoryName}\nmaxresults:2000\nrecursive:true\nresource:filesystem\ntimeout:60";
+            $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}\ndirectory:{DirectoryName}\nmaxresults:2000\nrecursive:true\nresource:filesystem\ntimeout:60";
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 2000);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -890,9 +924,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 1000);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -901,9 +935,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 1000);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -912,9 +946,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 1000);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -923,9 +957,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ListPathAsync(FilesystemName, DirectoryName, true, 1000);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -942,25 +976,27 @@ namespace Storage.Net.Tests.DataLakeGen2
          HttpMethod expected = HttpMethod.Get;
          await _sut.ReadPathAsync(FilesystemName, FileName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestReadPathRequestsWithUri()
       {
          var expected =
-             new Uri(
-                 $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?timeout=60");
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/{FilesystemName}/{FileName}?timeout=60");
          await _sut.ReadPathAsync(FilesystemName, FileName);
 
-         _httpClient.Verify(x => x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected)));
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
       }
 
       [Fact]
       public async Task TestReadPathRequestsWithSignatureForFullRange()
       {
          string expected =
-             $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\ntimeout:60";
+            $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\ntimeout:60";
          await _sut.ReadPathAsync(FilesystemName, FileName);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -970,7 +1006,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestReadPathRequestsWithSignatureForRange()
       {
          string expected =
-             $"GET\n\n\n\n\n\n\n\n\n\n\nbytes=10-15\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\ntimeout:60";
+            $"GET\n\n\n\n\n\n\n\n\n\n\nbytes=10-15\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/{FilesystemName}/{Uri.EscapeDataString(FileName)}\ntimeout:60";
          await _sut.ReadPathAsync(FilesystemName, FileName, 10, 15);
 
          _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
@@ -982,9 +1018,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ReadPathAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.Authorization.Equals(_authenticationHeaderValue)
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -993,9 +1029,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ReadPathAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -1004,9 +1040,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ReadPathAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
       }
 
       [Fact]
@@ -1015,9 +1051,9 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ReadPathAsync(FilesystemName, FileName);
 
          _httpClient.Verify(x =>
-             x.SendAsync(It.Is<HttpRequestMessage>(y =>
-                 y.Content.Headers.ContentLength == 0
-             )));
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
       }
 
       [Fact]

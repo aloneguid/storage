@@ -1,4 +1,5 @@
 ﻿using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.Interfaces;
 
@@ -13,9 +14,9 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.Wrappers
          _httpClient = httpClient;
       }
 
-      public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
+      public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
       {
-         return _httpClient.SendAsync(request);
+         return _httpClient.SendAsync(request, cancellationToken);
       }
    }
 }

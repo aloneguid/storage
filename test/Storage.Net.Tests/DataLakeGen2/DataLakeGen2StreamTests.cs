@@ -33,20 +33,21 @@ namespace Storage.Net.Tests.DataLakeGen2
 
          _client = new Mock<IDataLakeGen2Client>();
 
-         _client.Setup(x => x.GetPropertiesAsync(It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(_properties));
+         _client.Setup(x => x.GetPropertiesAsync(It.IsAny<string>(), It.IsAny<string>(), CancellationToken.None))
+            .Returns(Task.FromResult(_properties));
 
          long? start = -1;
          long? end = -1;
          _client.Setup(x =>
-                 x.ReadFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long?>(), It.IsAny<long?>()))
-             .Callback<string, string, long?, long?>((a, b, c, d) =>
-             {
-                start = c;
-                end = d;
-             })
-             .Returns(() => Task.FromResult(_data.Skip((int)start.GetValueOrDefault())
-                 .Take((int)end.GetValueOrDefault() - (int)start.GetValueOrDefault() + 1).ToArray()));
+               x.ReadFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long?>(), It.IsAny<long?>(),
+                  CancellationToken.None))
+            .Callback<string, string, long?, long?, CancellationToken>((a, b, c, d, e) =>
+            {
+               start = c;
+               end = d;
+            })
+            .Returns(() => Task.FromResult(_data.Skip((int)start.GetValueOrDefault())
+               .Take((int)end.GetValueOrDefault() - (int)start.GetValueOrDefault() + 1).ToArray()));
 
          _sut = new DataLakeGen2Stream(_client.Object, Filesystem, FilePath);
       }
@@ -74,7 +75,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       {
          await _sut.ReadAsync(new byte[0], CancellationToken.None);
 
-         _client.Verify(x => x.GetPropertiesAsync(Filesystem, FilePath));
+         _client.Verify(x => x.GetPropertiesAsync(Filesystem, FilePath, CancellationToken.None));
       }
 
       [Fact]
@@ -83,7 +84,7 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ReadAsync(new byte[0], CancellationToken.None);
          await _sut.ReadAsync(new byte[0], CancellationToken.None);
 
-         _client.Verify(x => x.GetPropertiesAsync(Filesystem, FilePath), Times.Exactly(2));
+         _client.Verify(x => x.GetPropertiesAsync(Filesystem, FilePath, CancellationToken.None), Times.Exactly(2));
       }
 
       [Fact]
@@ -92,7 +93,7 @@ namespace Storage.Net.Tests.DataLakeGen2
          const int length = 100;
          await _sut.ReadAsync(new byte[length], CancellationToken.None);
 
-         _client.Verify(x => x.ReadFileAsync(Filesystem, FilePath, 0, length - 1));
+         _client.Verify(x => x.ReadFileAsync(Filesystem, FilePath, 0, length - 1, CancellationToken.None));
       }
 
       [Fact]
@@ -102,7 +103,7 @@ namespace Storage.Net.Tests.DataLakeGen2
          await _sut.ReadAsync(new byte[length], CancellationToken.None);
          await _sut.ReadAsync(new byte[length], CancellationToken.None);
 
-         _client.Verify(x => x.ReadFileAsync(Filesystem, FilePath, length, length * 2 - 1));
+         _client.Verify(x => x.ReadFileAsync(Filesystem, FilePath, length, length * 2 - 1, CancellationToken.None));
       }
 
       [Fact]
@@ -119,7 +120,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestFlushes()
       {
          await _sut.FlushAsync(CancellationToken.None);
-         _client.Verify(x => x.FlushFileAsync(Filesystem, FilePath, 0));
+         _client.Verify(x => x.FlushFileAsync(Filesystem, FilePath, 0, CancellationToken.None));
       }
 
       [Fact]
@@ -127,35 +128,37 @@ namespace Storage.Net.Tests.DataLakeGen2
       {
          const int count = 3;
          await _sut.WriteAsync(new byte[10], 0, 3);
-         _client.Verify(x => x.FlushFileAsync(Filesystem, FilePath, count));
+         _client.Verify(x => x.FlushFileAsync(Filesystem, FilePath, count, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestWrites()
       {
-         byte[] content = { 0, 1, 2 };
+         byte[] content = {0, 1, 2};
          await _sut.WriteAsync(content, 0, content.Length);
 
          _client.Verify(x =>
-             x.AppendFileAsync(Filesystem, FilePath, It.Is<byte[]>(y => content.SequenceEqual(y)), 0));
+            x.AppendFileAsync(Filesystem, FilePath, It.Is<byte[]>(y => content.SequenceEqual(y)), 0,
+               CancellationToken.None));
       }
 
       [Fact]
       public async Task TestWritesWithCurrentPosition()
       {
-         byte[] content1 = { 0, 1, 2 };
-         byte[] content2 = { 3, 4, 5 };
+         byte[] content1 = {0, 1, 2};
+         byte[] content2 = {3, 4, 5};
          await _sut.WriteAsync(content1, 0, content1.Length);
          await _sut.WriteAsync(content2, 0, content2.Length);
 
          _client.Verify(x =>
-             x.AppendFileAsync(Filesystem, FilePath, It.Is<byte[]>(y => content2.SequenceEqual(y)), 3));
+            x.AppendFileAsync(Filesystem, FilePath, It.Is<byte[]>(y => content2.SequenceEqual(y)), 3,
+               CancellationToken.None));
       }
 
       [Fact]
       public async Task TestPositionStoresCurrentPosition()
       {
-         byte[] content = { 0, 1, 2 };
+         byte[] content = {0, 1, 2};
          await _sut.WriteAsync(content, 0, content.Length);
 
          Assert.Equal(content.Length, _sut.Position);

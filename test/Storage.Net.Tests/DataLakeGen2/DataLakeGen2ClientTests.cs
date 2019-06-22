@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 using Moq;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL;
@@ -21,7 +22,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       private const string FileName = "test file.txt";
 
       private const string Acl =
-          "group::r-x,user::rwx,user:00000000-0000-0000-0000-000000000000:rwx,default:user:00000000-0000-0000-0000-000000000000:rwx";
+         "group::r-x,user::rwx,user:00000000-0000-0000-0000-000000000000:rwx,default:user:00000000-0000-0000-0000-000000000000:rwx";
 
       private const string ListResponse = @"
 {
@@ -51,7 +52,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       private const long ContentLength = 100;
       private readonly MediaTypeHeaderValue _contentType = new MediaTypeHeaderValue("application/octetstream");
       private readonly DateTimeOffset _lastModified = new DateTimeOffset(new DateTime(2019, 6, 21));
-      private readonly byte[] _readResponse = { 0, 1, 2, 3 };
+      private readonly byte[] _readResponse = {0, 1, 2, 3};
       private readonly Mock<IDataLakeGen2RestApi> _restApi;
       private readonly DataLakeGen2Client _sut;
 
@@ -60,66 +61,73 @@ namespace Storage.Net.Tests.DataLakeGen2
          _restApi = new Mock<IDataLakeGen2RestApi>();
 
          _restApi.Setup(x => x.AppendPathAsync(
-                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<long>()))
-             .Returns(Task.FromResult(new HttpResponseMessage()));
+               It.IsAny<string>(), It.IsAny<string>(), It.IsAny<byte[]>(), It.IsAny<long>(),
+               It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
 
-         _restApi.Setup(x => x.CreateFilesystemAsync(It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage()));
+         _restApi.Setup(x => x.CreateFilesystemAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
 
-         _restApi.Setup(x => x.CreateDirectoryAsync(It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage()));
+         _restApi.Setup(x =>
+               x.CreateDirectoryAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
 
-         _restApi.Setup(x => x.CreateFileAsync(It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage()));
+         _restApi.Setup(x => x.CreateFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
 
-         _restApi.Setup(x => x.DeleteFilesystemAsync(It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage()));
+         _restApi.Setup(x => x.DeleteFilesystemAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
 
-         _restApi.Setup(x => x.DeletePathAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
-             .Returns(Task.FromResult(new HttpResponseMessage()));
+         _restApi.Setup(x =>
+               x.DeletePathAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(),
+                  It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
 
          _restApi.Setup(x => x.FlushPathAsync(
-                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>()))
-             .Returns(Task.FromResult(new HttpResponseMessage()));
+               It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
 
          _restApi.Setup(x =>
-                 x.GetAccessControlAsync(It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage
-             {
-                Headers =
-                 {
-                        {"x-ms-acl", Acl}, {"x-ms-group", "$superuser"},
-                        {"x-ms-owner", "$superuser"}, {"x-ms-permissions", "rwxr-x---"}
-                 }
-             }));
+               x.GetAccessControlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage
+            {
+               Headers =
+               {
+                  {"x-ms-acl", Acl}, {"x-ms-group", "$superuser"},
+                  {"x-ms-owner", "$superuser"}, {"x-ms-permissions", "rwxr-x---"}
+               }
+            }));
 
          _restApi.Setup(x =>
-                 x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage
-             {
-                Content = new ByteArrayContent(new byte[0])
-                {
-                   Headers =
-                     {
-                            ContentLength = ContentLength,
-                            ContentType = _contentType,
-                            LastModified = _lastModified
-                     }
-                },
-                StatusCode = HttpStatusCode.OK
-             }));
+               x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage
+            {
+               Content = new ByteArrayContent(new byte[0])
+               {
+                  Headers =
+                  {
+                     ContentLength = ContentLength,
+                     ContentType = _contentType,
+                     LastModified = _lastModified
+                  }
+               },
+               StatusCode = HttpStatusCode.OK
+            }));
 
          _restApi.Setup(x =>
-                 x.ListPathAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>()))
-             .Returns(Task.FromResult(new HttpResponseMessage { Content = new StringContent(ListResponse) }));
+               x.ListPathAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(),
+                  It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage {Content = new StringContent(ListResponse)}));
 
          _restApi.Setup(x =>
-                 x.ReadPathAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long?>(), It.IsAny<long?>()))
-             .Returns(Task.FromResult(new HttpResponseMessage { Content = new ByteArrayContent(_readResponse) }));
+               x.ReadPathAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long?>(), It.IsAny<long?>(),
+                  It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage {Content = new ByteArrayContent(_readResponse)}));
 
          _restApi.Setup(x =>
-                 x.SetAccessControlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage()));
+               x.SetAccessControlAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                  It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage()));
 
          _sut = new DataLakeGen2Client(_restApi.Object);
       }
@@ -127,58 +135,58 @@ namespace Storage.Net.Tests.DataLakeGen2
       [Fact]
       public async Task TestAppendsFile()
       {
-         byte[] content = new byte[] { 0, 1, 2 };
+         byte[] content = {0, 1, 2};
          await _sut.AppendFileAsync(FilesystemName, FileName, content, 10);
-         _restApi.Verify(x => x.AppendPathAsync(FilesystemName, FileName, content, 10));
+         _restApi.Verify(x => x.AppendPathAsync(FilesystemName, FileName, content, 10, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestCreatesDirectory()
       {
          await _sut.CreateDirectoryAsync(FilesystemName, DirectoryName);
-         _restApi.Verify(x => x.CreateDirectoryAsync(FilesystemName, DirectoryName));
+         _restApi.Verify(x => x.CreateDirectoryAsync(FilesystemName, DirectoryName, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestCreatesFile()
       {
          await _sut.CreateFileAsync(FilesystemName, FileName);
-         _restApi.Verify(x => x.CreateFileAsync(FilesystemName, FileName));
+         _restApi.Verify(x => x.CreateFileAsync(FilesystemName, FileName, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestCreatesFilesystem()
       {
          await _sut.CreateFilesystemAsync(FilesystemName);
-         _restApi.Verify(x => x.CreateFilesystemAsync(FilesystemName));
+         _restApi.Verify(x => x.CreateFilesystemAsync(FilesystemName, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestDeletesDirectory()
       {
          await _sut.DeleteDirectoryAsync(FilesystemName, DirectoryName, true);
-         _restApi.Verify(x => x.DeletePathAsync(FilesystemName, DirectoryName, true));
+         _restApi.Verify(x => x.DeletePathAsync(FilesystemName, DirectoryName, true, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestDeletesFile()
       {
          await _sut.DeleteFileAsync(FilesystemName, FileName);
-         _restApi.Verify(x => x.DeletePathAsync(FilesystemName, FileName, false));
+         _restApi.Verify(x => x.DeletePathAsync(FilesystemName, FileName, false, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestDeletesFilesystem()
       {
          await _sut.DeleteFilesystemAsync(FilesystemName);
-         _restApi.Verify(x => x.DeleteFilesystemAsync(FilesystemName));
+         _restApi.Verify(x => x.DeleteFilesystemAsync(FilesystemName, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestGetsAccessControl()
       {
          await _sut.GetAccessControlAsync(FilesystemName, FileName);
-         _restApi.Verify(x => x.GetAccessControlAsync(FilesystemName, FileName));
+         _restApi.Verify(x => x.GetAccessControlAsync(FilesystemName, FileName, CancellationToken.None));
       }
 
       [Fact]
@@ -232,7 +240,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestGetsProperties()
       {
          await _sut.GetPropertiesAsync(FilesystemName, FileName);
-         _restApi.Verify(x => x.GetStatusAsync(FilesystemName, FileName));
+         _restApi.Verify(x => x.GetStatusAsync(FilesystemName, FileName, CancellationToken.None));
       }
 
       [Fact]
@@ -267,8 +275,8 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestExistsIsFalseIfNotFound()
       {
          _restApi.Setup(x =>
-                 x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)));
+               x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)));
 
          Properties actual = await _sut.GetPropertiesAsync(FilesystemName, FileName);
          Assert.False(actual.Exists);
@@ -278,14 +286,14 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestFlushesFile()
       {
          await _sut.FlushFileAsync(FilesystemName, FileName, 10);
-         _restApi.Verify(x => x.FlushPathAsync(FilesystemName, FileName, 10));
+         _restApi.Verify(x => x.FlushPathAsync(FilesystemName, FileName, 10, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestListsDirectory()
       {
          await _sut.ListDirectoryAsync(FilesystemName, DirectoryName, true, 2000);
-         _restApi.Verify(x => x.ListPathAsync(FilesystemName, DirectoryName, true, 2000));
+         _restApi.Verify(x => x.ListPathAsync(FilesystemName, DirectoryName, true, 2000, CancellationToken.None));
       }
 
       [Fact]
@@ -355,21 +363,21 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestOpenWriteCreatesFileIfNotExists()
       {
          _restApi.Setup(x =>
-                 x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>()))
-             .Returns(Task.FromResult(new HttpResponseMessage
-             {
-                StatusCode = HttpStatusCode.NotFound
-             }));
+               x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage
+            {
+               StatusCode = HttpStatusCode.NotFound
+            }));
 
          await _sut.OpenWriteAsync(FilesystemName, FileName);
-         _restApi.Verify(x => x.CreateFileAsync(FilesystemName, FileName));
+         _restApi.Verify(x => x.CreateFileAsync(FilesystemName, FileName, CancellationToken.None));
       }
 
       [Fact]
       public async Task TestOpenWriteDoesNotCreateFileIfExists()
       {
          await _sut.OpenWriteAsync(FilesystemName, FileName);
-         _restApi.Verify(x => x.CreateFileAsync(FilesystemName, FileName), Times.Never);
+         _restApi.Verify(x => x.CreateFileAsync(FilesystemName, FileName, CancellationToken.None), Times.Never);
       }
 
       [Fact]
@@ -383,7 +391,7 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestReadsFile()
       {
          await _sut.ReadFileAsync(FilesystemName, FileName, 10, 15);
-         _restApi.Verify(x => x.ReadPathAsync(FilesystemName, FileName, 10, 15));
+         _restApi.Verify(x => x.ReadPathAsync(FilesystemName, FileName, 10, 15, CancellationToken.None));
       }
 
       [Fact]
@@ -397,48 +405,48 @@ namespace Storage.Net.Tests.DataLakeGen2
       public async Task TestSetAccessControl()
       {
          await _sut.SetAccessControlAsync(FilesystemName, FileName, new List<AclItem>
+         {
+            new AclItem
             {
-                new AclItem
-                {
-                    Default = null,
-                    Access = new AclPermission
-                    {
-                        Read = true,
-                        Write = true,
-                        Execute = true
-                    },
-                    User = "user:"
-                },
-                new AclItem
-                {
-                    Access = new AclPermission
-                    {
-                        Read = true,
-                        Write = false,
-                        Execute = true
-                    },
-                    Default = null,
-                    User = "group:"
-                },
-                new AclItem
-                {
-                    Access = new AclPermission
-                    {
-                        Read = true,
-                        Write = true,
-                        Execute = true
-                    },
-                    Default = new AclPermission
-                    {
-                        Read = true,
-                        Write = true,
-                        Execute = true
-                    },
-                    User = "user:00000000-0000-0000-0000-000000000000"
-                }
-            });
+               Default = null,
+               Access = new AclPermission
+               {
+                  Read = true,
+                  Write = true,
+                  Execute = true
+               },
+               User = "user:"
+            },
+            new AclItem
+            {
+               Access = new AclPermission
+               {
+                  Read = true,
+                  Write = false,
+                  Execute = true
+               },
+               Default = null,
+               User = "group:"
+            },
+            new AclItem
+            {
+               Access = new AclPermission
+               {
+                  Read = true,
+                  Write = true,
+                  Execute = true
+               },
+               Default = new AclPermission
+               {
+                  Read = true,
+                  Write = true,
+                  Execute = true
+               },
+               User = "user:00000000-0000-0000-0000-000000000000"
+            }
+         });
 
-         _restApi.Verify(x => x.SetAccessControlAsync(FilesystemName, FileName, Acl));
+         _restApi.Verify(x => x.SetAccessControlAsync(FilesystemName, FileName, Acl, CancellationToken.None));
       }
    }
 }
