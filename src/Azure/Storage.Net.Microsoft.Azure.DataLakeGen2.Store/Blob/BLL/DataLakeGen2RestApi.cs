@@ -88,7 +88,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
 
       public Task<HttpResponseMessage> DeleteFilesystemAsync(string filesystem)
       {
-         string uriPath = $"{filesystem}";
+         string uriPath = filesystem;
          var query = new Dictionary<string, string>
             {
                 {"resource", "filesystem"},
@@ -157,7 +157,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
           int maxResults)
       {
          string recursive = isRecursive.ToString().ToLower();
-         string uriPath = $"{filesystem}";
+         string uriPath = filesystem;
          var query = new Dictionary<string, string>
             {
                 {"directory", directory},
