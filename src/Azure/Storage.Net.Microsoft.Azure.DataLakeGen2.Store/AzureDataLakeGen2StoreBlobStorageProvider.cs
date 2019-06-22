@@ -85,14 +85,15 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
       {
          GenericValidation.CheckBlobId(id);
          string[] split = id.Split('/');
+
          return await _client.OpenWriteAsync(split[0], split[1]);
       }
 
       public Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobId(id);
-
          string[] split = id.Split('/');
+
          return Task.FromResult(_client.OpenRead(split[0], split[1]));
       }
 
@@ -134,7 +135,6 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          {
             string[] split = x.Split('/');
             Properties properties = await _client.GetPropertiesAsync(split[0], split[1]);
-
             return new BlobMeta(properties.Length, null, properties.LastModified);
          }));
       }
