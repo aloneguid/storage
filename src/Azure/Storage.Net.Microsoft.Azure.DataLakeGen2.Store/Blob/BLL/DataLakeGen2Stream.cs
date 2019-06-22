@@ -81,6 +81,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
       {
          await _client.AppendFileAsync(_filesystem, _path, buffer.Skip(offset).Take(count).ToArray(), Position);
          Position += count;
+         await FlushAsync(cancellationToken);
       }
    }
 }

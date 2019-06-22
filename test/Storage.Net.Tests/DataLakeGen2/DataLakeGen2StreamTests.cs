@@ -123,11 +123,10 @@ namespace Storage.Net.Tests.DataLakeGen2
       }
 
       [Fact]
-      public async Task TestFlushesWithCurrentPosition()
+      public async Task TestWriteFlushes()
       {
          const int count = 3;
-         await _sut.ReadAsync(new byte[10], 0, 3);
-         await _sut.FlushAsync(CancellationToken.None);
+         await _sut.WriteAsync(new byte[10], 0, 3);
          _client.Verify(x => x.FlushFileAsync(Filesystem, FilePath, count));
       }
 
