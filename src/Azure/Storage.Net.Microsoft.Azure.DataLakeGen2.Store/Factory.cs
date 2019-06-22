@@ -11,7 +11,7 @@ namespace Storage.Net
    public static class Factory
    {
       /// <summary>
-      /// Creates and instance of Azure Data Lake Store client
+      /// Creates and instance of Azure Data Lake Gen 2 Store client
       /// </summary>
       /// <param name="factory">Factory reference</param>
       /// <param name="accountName">Data Lake account name</param>
@@ -20,7 +20,7 @@ namespace Storage.Net
       /// <param name="principalSecret">Principal Secret</param>
       /// <param name="listBatchSize">Batch size for list operation for this storage connection. If not set defaults to 5000.</param>
       /// <returns></returns>
-      public static IBlobStorage AzureDataLakeStoreByClientSecret(this IBlobStorageFactory factory,
+      public static IBlobStorage AzureDataLakeGen2StoreByClientSecret(this IBlobStorageFactory factory,
          string accountName,
          string tenantId,
          string principalId,
@@ -46,14 +46,14 @@ namespace Storage.Net
       }
 
       /// <summary>
-      /// Creates and instance of Azure Data Lake Store client
+      /// Creates and instance of Azure Data Lake Gen 2 Store client
       /// </summary>
       /// <param name="factory">Factory reference</param>
       /// <param name="accountName">Data Lake account name</param>
       /// <param name="accessKey">Shared access key</param>
       /// <param name="listBatchSize">Batch size for list operation for this storage connection. If not set defaults to 5000.</param>
       /// <returns></returns>
-      public static IBlobStorage AzureDataLakeStoreBySharedAccessKey(this IBlobStorageFactory factory,
+      public static IBlobStorage AzureDataLakeGen2StoreBySharedAccessKey(this IBlobStorageFactory factory,
          string accountName,
          string accessKey,
          int listBatchSize = 5000)
