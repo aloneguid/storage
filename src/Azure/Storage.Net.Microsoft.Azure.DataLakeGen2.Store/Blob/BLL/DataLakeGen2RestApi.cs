@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.Interfaces;
+using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.Models;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.Wrappers;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
@@ -45,7 +46,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(new HttpMethod("PATCH"), uriPath, query, new ByteArrayContent(content),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> CreateDirectoryAsync(string filesystem, string directory,
@@ -59,7 +60,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(HttpMethod.Put, uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> CreateFileAsync(string filesystem, string path,
@@ -73,7 +74,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(HttpMethod.Put, uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> CreateFilesystemAsync(string filesystem,
@@ -87,7 +88,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(HttpMethod.Put, uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> DeleteFilesystemAsync(string filesystem,
@@ -101,22 +102,21 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(HttpMethod.Delete, uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> DeletePathAsync(string filesystem, string path, bool isRecursive,
          CancellationToken cancellationToken = default)
       {
-         string recursive = isRecursive.ToString().ToLower();
          string uriPath = $"{filesystem}/{path}";
          var query = new Dictionary<string, string>
          {
-            {"recursive", recursive},
+            {"recursive", isRecursive.ToString().ToLower()},
             {"timeout", "60"}
          };
 
          return SendAsync(HttpMethod.Delete, uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> GetAccessControlAsync(string filesystem, string path,
@@ -131,7 +131,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(HttpMethod.Head, uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> GetStatusAsync(string filesystem, string path,
@@ -144,7 +144,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(HttpMethod.Head, uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), false, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> FlushPathAsync(string filesystem, string path, long position,
@@ -159,25 +159,37 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(new HttpMethod("PATCH"), uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
+      }
+
+      public Task<HttpResponseMessage> ListFilesystemsAsync(int maxResults, CancellationToken cancellationToken = default)
+      {
+         var query = new Dictionary<string, string>
+         {
+            {"maxresults", maxResults.ToString()},
+            {"resource", "account"},
+            {"timeout", "60"}
+         };
+
+         return SendAsync(HttpMethod.Get, "", query, new ByteArrayContent(new byte[0]),
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> ListPathAsync(string filesystem, string directory, bool isRecursive,
          int maxResults, CancellationToken cancellationToken = default)
       {
-         string recursive = isRecursive.ToString().ToLower();
          string uriPath = filesystem;
          var query = new Dictionary<string, string>
          {
             {"directory", directory},
             {"maxresults", maxResults.ToString()},
-            {"recursive", recursive},
+            {"recursive", isRecursive.ToString().ToLower()},
             {"resource", "filesystem"},
             {"timeout", "60"}
          };
 
          return SendAsync(HttpMethod.Get, uriPath, query, new ByteArrayContent(new byte[0]),
-            new Dictionary<string, string>(), true, cancellationToken);
+            new Dictionary<string, string>(), cancellationToken);
       }
 
       public Task<HttpResponseMessage> ReadPathAsync(string filesystem, string path, long? start = null,
@@ -197,7 +209,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          }
 
          return SendAsync(HttpMethod.Get, uriPath, query, new ByteArrayContent(new byte[0]), headers,
-            true, cancellationToken);
+            cancellationToken);
       }
 
       public Task<HttpResponseMessage> SetAccessControlAsync(string filesystem, string path, string acl,
@@ -216,7 +228,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          };
 
          return SendAsync(new HttpMethod("PATCH"), uriPath, query, new ByteArrayContent(new byte[0]), headers,
-            true, cancellationToken);
+            cancellationToken);
       }
 
       private async Task<HttpResponseMessage> SendAsync(
@@ -225,7 +237,6 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          IDictionary<string, string> query,
          HttpContent content,
          IDictionary<string, string> headers,
-         bool ensureSuccessfulStatusCode,
          CancellationToken cancellationToken)
       {
          string dateTimeReference = _dateTime.Now.ToString("R");
@@ -257,9 +268,16 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
 
          HttpResponseMessage result = await _httpClient.SendAsync(request, cancellationToken);
 
-         if(ensureSuccessfulStatusCode)
+         try
          {
             result.EnsureSuccessStatusCode();
+         }
+         catch(Exception e)
+         {
+            throw new DataLakeGen2Exception("Exception occurred during call to Data Lake Gen 2 Rest API.", e)
+            {
+               StatusCode = result.StatusCode
+            };
          }
 
          return result;

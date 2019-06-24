@@ -97,6 +97,15 @@ namespace Storage.Net.Tests.DataLakeGen2
       }
 
       [Fact]
+      public void TestReadsFromZeroPositionSync()
+      {
+         const int length = 100;
+         _sut.Read(new byte[length]);
+
+         _client.Verify(x => x.ReadFileAsync(Filesystem, FilePath, 0, length - 1, CancellationToken.None));
+      }
+
+      [Fact]
       public async Task TestReadsFromNextPosition()
       {
          const int length = 100;
@@ -124,6 +133,13 @@ namespace Storage.Net.Tests.DataLakeGen2
       }
 
       [Fact]
+      public void TestFlushesSync()
+      {
+         _sut.Flush();
+         _client.Verify(x => x.FlushFileAsync(Filesystem, FilePath, 0, CancellationToken.None));
+      }
+
+      [Fact]
       public async Task TestWriteFlushes()
       {
          const int count = 3;
@@ -136,6 +152,17 @@ namespace Storage.Net.Tests.DataLakeGen2
       {
          byte[] content = {0, 1, 2};
          await _sut.WriteAsync(content, 0, content.Length);
+
+         _client.Verify(x =>
+            x.AppendFileAsync(Filesystem, FilePath, It.Is<byte[]>(y => content.SequenceEqual(y)), 0,
+               CancellationToken.None));
+      }
+
+      [Fact]
+      public void TestWritesSync()
+      {
+         byte[] content = { 0, 1, 2 };
+         _sut.Write(content, 0, content.Length);
 
          _client.Verify(x =>
             x.AppendFileAsync(Filesystem, FilePath, It.Is<byte[]>(y => content.SequenceEqual(y)), 0,

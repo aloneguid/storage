@@ -29,7 +29,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
 
       public override void Flush()
       {
-         throw new NotImplementedException("Flush not implemented. Use FlushAsync.");
+         FlushAsync().Wait();
       }
 
       public override Task FlushAsync(CancellationToken cancellationToken)
@@ -39,7 +39,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
 
       public override int Read(byte[] buffer, int offset, int count)
       {
-         throw new NotImplementedException("Read not implemented. Use ReadAsync.");
+         return ReadAsync(buffer, offset, count).Result;
       }
 
       public override async Task<int> ReadAsync(byte[] buffer, int offset, int count,
@@ -75,7 +75,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
 
       public override void Write(byte[] buffer, int offset, int count)
       {
-         throw new NotImplementedException("Write not implemented. Use WriteAsync.");
+         WriteAsync(buffer, offset, count).Wait();
       }
 
       public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)

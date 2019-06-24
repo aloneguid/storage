@@ -24,7 +24,10 @@ namespace Storage.Net.Tests.DataLakeGen2
       private const string Acl =
          "group::r-x,user::rwx,user:00000000-0000-0000-0000-000000000000:rwx,default:user:00000000-0000-0000-0000-000000000000:rwx";
 
-      private const string ListResponse = @"
+      private const string ListFilesystemsResponse =
+         @"{""filesystems"":[{""etag"":""0x8D6EF1030B1D96A"",""lastModified"":""Wed, 12 Jun 2019 08:30:13 GMT"",""name"":""test1""},{""etag"":""0x8D6F70CB958994F"",""lastModified"":""Sat, 22 Jun 2019 12:25:34 GMT"",""name"":""test2""}]}";
+
+      private const string ListPathsResponse = @"
 {
   ""paths"": [
     {
@@ -98,26 +101,34 @@ namespace Storage.Net.Tests.DataLakeGen2
                }
             }));
 
+         var getStatusResponse = new HttpResponseMessage
+         {
+            Content = new ByteArrayContent(new byte[0])
+            {
+               Headers =
+               {
+                  ContentLength = ContentLength,
+                  ContentType = _contentType,
+                  LastModified = _lastModified
+               }
+            },
+            StatusCode = HttpStatusCode.OK
+         };
+
+         getStatusResponse.Headers.Add("x-ms-resource-type", "directory");
+
          _restApi.Setup(x =>
                x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(new HttpResponseMessage
-            {
-               Content = new ByteArrayContent(new byte[0])
-               {
-                  Headers =
-                  {
-                     ContentLength = ContentLength,
-                     ContentType = _contentType,
-                     LastModified = _lastModified
-                  }
-               },
-               StatusCode = HttpStatusCode.OK
-            }));
+            .Returns(Task.FromResult(getStatusResponse));
+
+         _restApi.Setup(x =>
+               x.ListFilesystemsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(new HttpResponseMessage { Content = new StringContent(ListFilesystemsResponse) }));
 
          _restApi.Setup(x =>
                x.ListPathAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<int>(),
                   It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(new HttpResponseMessage {Content = new StringContent(ListResponse)}));
+            .Returns(Task.FromResult(new HttpResponseMessage {Content = new StringContent(ListPathsResponse)}));
 
          _restApi.Setup(x =>
                x.ReadPathAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<long?>(), It.IsAny<long?>(),
@@ -265,21 +276,10 @@ namespace Storage.Net.Tests.DataLakeGen2
       }
 
       [Fact]
-      public async Task TestGetPropertiesReturnsExists()
+      public async Task TestGetPropertiesReturnsIsDirectory()
       {
          Properties actual = await _sut.GetPropertiesAsync(FilesystemName, FileName);
-         Assert.True(actual.Exists);
-      }
-
-      [Fact]
-      public async Task TestExistsIsFalseIfNotFound()
-      {
-         _restApi.Setup(x =>
-               x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)));
-
-         Properties actual = await _sut.GetPropertiesAsync(FilesystemName, FileName);
-         Assert.False(actual.Exists);
+         Assert.True(actual.IsDirectory);
       }
 
       [Fact]
@@ -353,6 +353,41 @@ namespace Storage.Net.Tests.DataLakeGen2
       }
 
       [Fact]
+      public async Task TestListsFilesystems()
+      {
+         await _sut.ListFilesystemsAsync(5000);
+         _restApi.Verify(x => x.ListFilesystemsAsync(5000, CancellationToken.None));
+      }
+
+      [Fact]
+      public async Task TestListFilesystemsDeserialisesResponse()
+      {
+         FilesystemList response = await _sut.ListFilesystemsAsync(5000);
+         Assert.Equal(2, response.Filesystems.Count);
+      }
+
+      [Fact]
+      public async Task TestListFilesystemsDeserialisesEtag()
+      {
+         FilesystemList response = await _sut.ListFilesystemsAsync(5000);
+         Assert.Equal("0x8D6EF1030B1D96A", response.Filesystems.First().Etag);
+      }
+
+      [Fact]
+      public async Task TestListFilesystemsDeserialisesLastModified()
+      {
+         FilesystemList response = await _sut.ListFilesystemsAsync(5000);
+         Assert.Equal(new DateTime(2019, 6, 12, 8, 30, 13), response.Filesystems.First().LastModified);
+      }
+
+      [Fact]
+      public async Task TestListFilesystemsDeserialisesName()
+      {
+         FilesystemList response = await _sut.ListFilesystemsAsync(5000);
+         Assert.Equal("test1", response.Filesystems.First().Name);
+      }
+
+      [Fact]
       public void TestOpenReadReturnsDataLakeGen2Stream()
       {
          Stream actual = _sut.OpenRead(FilesystemName, FileName);
@@ -364,10 +399,8 @@ namespace Storage.Net.Tests.DataLakeGen2
       {
          _restApi.Setup(x =>
                x.GetStatusAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(new HttpResponseMessage
-            {
-               StatusCode = HttpStatusCode.NotFound
-            }));
+            .ThrowsAsync(new DataLakeGen2Exception("Test message.", null)
+               {StatusCode = HttpStatusCode.NotFound});
 
          await _sut.OpenWriteAsync(FilesystemName, FileName);
          _restApi.Verify(x => x.CreateFileAsync(FilesystemName, FileName, CancellationToken.None));

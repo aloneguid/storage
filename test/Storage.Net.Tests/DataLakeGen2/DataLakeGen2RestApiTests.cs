@@ -1063,5 +1063,93 @@ namespace Storage.Net.Tests.DataLakeGen2
 
          Assert.Equal(_responseReference, actual);
       }
+
+
+
+
+
+      [Fact]
+      public async Task TestListFilesystemRequestsWithHttpVerb()
+      {
+         HttpMethod expected = HttpMethod.Get;
+         await _sut.ListFilesystemsAsync(1000);
+
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.Method == expected), CancellationToken.None));
+      }
+
+      [Fact]
+      public async Task TestListFilesystemRequestsWithUri()
+      {
+         var expected =
+            new Uri(
+               $"https://{StorageAccountName}.dfs.core.windows.net/?maxresults=1000&resource=account&timeout=60");
+         await _sut.ListFilesystemsAsync(1000);
+
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y => y.RequestUri == expected), CancellationToken.None));
+      }
+
+      [Fact]
+      public async Task TestListFilesystemRequestsWithSignature()
+      {
+         string expected =
+            $"GET\n\n\n\n\n\n\n\n\n\n\n\nx-ms-date:{_dateTimeReference:R}\nx-ms-version:2018-11-09\n/{StorageAccountName}/\nmaxresults:1000\nresource:account\ntimeout:60";
+         await _sut.ListFilesystemsAsync(1000);
+
+         _authorisation.Verify(x => x.AuthoriseAsync(StorageAccountName, expected));
+      }
+
+      [Fact]
+      public async Task TestListFilesystemRequestsWithAuthorisationHeader()
+      {
+         await _sut.ListFilesystemsAsync(1000);
+
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.Authorization.Equals(_authenticationHeaderValue)
+            ), CancellationToken.None));
+      }
+
+      [Fact]
+      public async Task TestListFilesystemRequestsWithMsDateHeader()
+      {
+         await _sut.ListFilesystemsAsync(1000);
+
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-date").Value.First() == _dateTimeReference.ToString("R")
+            ), CancellationToken.None));
+      }
+
+      [Fact]
+      public async Task TestListFilesystemRequestsWithMsVersionHeader()
+      {
+         await _sut.ListFilesystemsAsync(1000);
+
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Headers.First(z => z.Key == "x-ms-version").Value.First() == "2018-11-09"
+            ), CancellationToken.None));
+      }
+
+      [Fact]
+      public async Task TestListFilesystemRequestsWithEmptyContent()
+      {
+         await _sut.ListFilesystemsAsync(1000);
+
+         _httpClient.Verify(x =>
+            x.SendAsync(It.Is<HttpRequestMessage>(y =>
+               y.Content.Headers.ContentLength == 0
+            ), CancellationToken.None));
+      }
+
+      [Fact]
+      public async Task TestListFilesystemReturnsResponse()
+      {
+         HttpResponseMessage actual = await _sut.ListFilesystemsAsync(1000);
+
+         Assert.Equal(_responseReference, actual);
+      }
    }
 }

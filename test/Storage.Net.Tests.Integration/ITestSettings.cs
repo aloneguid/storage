@@ -50,6 +50,21 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.DataLake.SubscriptionId")]
       string AzureDataLakeSubscriptionId { get; }
 
+      [Option(Alias = "Azure.DataLakeGen2.TenantId")]
+      string AzureDataLakeGen2TenantId { get; }
+
+      [Option(Alias = "Azure.DataLakeGen2.PrincipalId")]
+      string AzureDataLakeGen2PrincipalId { get; }
+
+      [Option(Alias = "Azure.DataLakeGen2.PrincipalSecret")]
+      string AzureDataLakeGen2PrincipalSecret { get; }
+
+      [Option(Alias = "Azure.DataLakeGen2.SharedAccessKey")]
+      string AzureDataLakeGen2SharedAccessKey { get; }
+
+      [Option(Alias = "Azure.DataLakeGen2.Store.AccountName")]
+      string AzureDataLakeGen2StoreAccountName { get; }
+
       [Option(Alias = "Azure.KeyVault.Uri")]
       Uri KeyVaultUri { get; }
 

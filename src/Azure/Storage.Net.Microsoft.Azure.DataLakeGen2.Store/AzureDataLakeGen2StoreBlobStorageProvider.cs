@@ -52,16 +52,125 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
             credential.UserName, credential.Password));
       }
 
+      public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
+      {
+         var idList = ids.ToList();
+         GenericValidation.CheckBlobId(idList);
+
+         await Task.WhenAll(idList.Select(x => DeleteAsync(x, cancellationToken)).ToList());
+      }
+
+      public async Task DeleteAsync(string id, CancellationToken cancellationToken)
+      {
+         GenericValidation.CheckBlobId(id);
+         var info = new PathInformation(id);
+         string[] directoryLevels = info.Path.Split('/');
+
+         var levels = await Task.WhenAll(directoryLevels
+            .Select((y, z) => string.Join("/", directoryLevels.Take(directoryLevels.Length - z)))
+            .Select(async x =>
+            {
+               Properties properties = await Client.GetPropertiesAsync(info.Filesystem, x, cancellationToken);
+
+               return new
+               {
+                  Path = x,
+                  properties.IsDirectory
+               };
+            }));
+
+         foreach(var level in levels)
+         {
+            if(!level.IsDirectory)
+            {
+               await Client.DeleteFileAsync(info.Filesystem, info.Path, cancellationToken);
+               continue;
+            }
+
+            DirectoryList directoryList =
+                  await Client.ListDirectoryAsync(info.Filesystem, level.Path, true, 2, cancellationToken);
+
+            if(directoryList.Paths.Any())
+            {
+               return;
+            }
+
+            await Client.DeleteDirectoryAsync(info.Filesystem, level.Path, true, cancellationToken);
+         }
+      }
+
       public async Task<IReadOnlyCollection<BlobId>> ListAsync(ListOptions options, CancellationToken cancellationToken)
       {
+         if(options == null)
+         {
+            options = new ListOptions()
+            {
+               FolderPath = "/",
+               Recurse = true
+            };
+         }
+
+         GenericValidation.CheckBlobId(options.FolderPath);
+
+         var blobs = new List<BlobId>();
          var info = new PathInformation(options.FolderPath);
 
-         DirectoryList results =
-            await Client.ListDirectoryAsync(info.Filesystem, info.Path, options.Recurse, options.MaxResults ?? ListBatchSize, cancellationToken);
+         FilesystemList filesystemList = await Client.ListFilesystemsAsync(cancellationToken: cancellationToken);
 
-         return results.Paths
-            .Select(x => new BlobId(x.Name, x.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File))
-            .ToList();
+         IEnumerable<FilesystemItem> filesystems = filesystemList.Filesystems
+            .Where(x => info.Filesystem == "" || x.Name == info.Filesystem)
+            .OrderBy(x => x.Name);
+
+         foreach(FilesystemItem filesystem in filesystems)
+         {
+            try
+            {
+               DirectoryList directoryList = await Client.ListDirectoryAsync(
+                  filesystem.Name, info.Path, options.Recurse,
+                  options.MaxResults ?? ListBatchSize, cancellationToken);
+
+               IEnumerable<BlobId> results = directoryList.Paths
+                  .Where(x => options.FilePrefix == null || x.Name.StartsWith(options.FilePrefix))
+                  .Select(x => new BlobId($"{filesystem.Name}/{x.Name}", x.IsDirectory
+                     ? BlobItemKind.Folder
+                     : BlobItemKind.File))
+                  .Where(x => options.BrowseFilter == null || options.BrowseFilter(x));
+
+               blobs.AddRange(results);
+            }
+            catch(DataLakeGen2Exception e)
+            {
+               if(e.StatusCode != HttpStatusCode.NotFound)
+               {
+                  throw;
+               }
+            }
+
+            if(blobs.Count >= options.MaxResults)
+            {
+               return blobs.Take(options.MaxResults.GetValueOrDefault()).ToList();
+            }
+         }
+
+         return blobs;
+      }
+
+      public async Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken)
+      {
+         GenericValidation.CheckBlobId(id);
+         var info = new PathInformation(id);
+
+         return await TryGetPropertiesAsync(info.Filesystem, info.Path, cancellationToken) == null
+            ? null
+            : Client.OpenRead(info.Filesystem, info.Path);
+      }
+
+      public async Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
+      {
+         GenericValidation.CheckBlobId(id);
+         var info = new PathInformation(id);
+
+         return await Client.OpenWriteAsync(info.Filesystem, info.Path, cancellationToken);
       }
 
       public async Task WriteAsync(string id, Stream sourceStream, bool append, CancellationToken cancellationToken)
@@ -80,34 +189,6 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          }
       }
 
-      public async Task<Stream> OpenWriteAsync(string id, bool append, CancellationToken cancellationToken)
-      {
-         GenericValidation.CheckBlobId(id);
-         var info = new PathInformation(id);
-
-         return await Client.OpenWriteAsync(info.Filesystem, info.Path, cancellationToken);
-      }
-
-      public Task<Stream> OpenReadAsync(string id, CancellationToken cancellationToken)
-      {
-         GenericValidation.CheckBlobId(id);
-         var info = new PathInformation(id);
-
-         return Task.FromResult(Client.OpenRead(info.Filesystem, info.Path));
-      }
-
-      public async Task DeleteAsync(IEnumerable<string> ids, CancellationToken cancellationToken)
-      {
-         var idList = ids.ToList();
-         GenericValidation.CheckBlobId(idList);
-
-         await Task.WhenAll(idList.Select(x =>
-         {
-            var info = new PathInformation(x);
-            return Client.DeleteFileAsync(info.Filesystem, info.Path, cancellationToken);
-         }));
-      }
-
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> ids,
          CancellationToken cancellationToken)
       {
@@ -117,8 +198,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          bool[] tasks = await Task.WhenAll(idList.Select(async x =>
          {
             var info = new PathInformation(x);
-            Properties properties = await Client.GetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
-            return properties.Exists;
+            Properties properties = await TryGetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
+            return properties != null;
          }));
 
          return tasks.ToList();
@@ -133,8 +214,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
          return await Task.WhenAll(idList.Select(async x =>
          {
             var info = new PathInformation(x);
-            Properties properties = await Client.GetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
-            return new BlobMeta(properties.Length, null, properties.LastModified);
+            Properties properties = await TryGetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
+            return properties == null ? null : new BlobMeta(properties.Length, null, properties.LastModified);
          }));
       }
 
@@ -145,6 +226,23 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store
       public Task<ITransaction> OpenTransactionAsync()
       {
          return Task.FromResult(EmptyTransaction.Instance);
+      }
+
+      private async Task<Properties> TryGetPropertiesAsync(string filesystem, string path, CancellationToken cancellationToken)
+      {
+         try
+         {
+            return await Client.GetPropertiesAsync(filesystem, path, cancellationToken);
+         }
+         catch(DataLakeGen2Exception e)
+         {
+            if(e.StatusCode == HttpStatusCode.NotFound)
+            {
+               return null;
+            }
+
+            throw;
+         }
       }
 
       public IDataLakeGen2Client Client { get; }

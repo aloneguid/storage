@@ -31,6 +31,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.Interfaces
       Task<DirectoryList> ListDirectoryAsync(string filesystem, string directory,
          bool isRecursive = false, int maxResults = 5000, CancellationToken cancellationToken = default);
 
+      Task<FilesystemList> ListFilesystemsAsync(int maxResults = 5000, CancellationToken cancellationToken = default);
+
       Stream OpenRead(string filesystem, string path);
       Task<Stream> OpenWriteAsync(string filesystem, string path, CancellationToken cancellationToken = default);
 

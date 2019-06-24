@@ -33,6 +33,8 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.Interfaces
       Task<HttpResponseMessage> FlushPathAsync(string filesystem, string path, long position,
          CancellationToken cancellationToken = default);
 
+      Task<HttpResponseMessage> ListFilesystemsAsync(int maxResults, CancellationToken cancellationToken = default);
+
       Task<HttpResponseMessage> ListPathAsync(string filesystem, string directory, bool isRecursive, int maxResults,
          CancellationToken cancellationToken = default);
 

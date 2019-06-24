@@ -88,17 +88,12 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
       {
          HttpResponseMessage result = await _restApi.GetStatusAsync(filesystem, path, cancellationToken);
 
-         if(result.StatusCode == HttpStatusCode.NotFound)
-         {
-            return new Properties {Exists = false};
-         }
-
          return new Properties
          {
             ContentType = result.Content.Headers.ContentType,
             LastModified = result.Content.Headers.LastModified.GetValueOrDefault(),
             Length = result.Content.Headers.ContentLength.GetValueOrDefault(),
-            Exists = true
+            IsDirectory = result.Headers.GetValues("x-ms-resource-type").First() == "directory"
          };
       }
 
@@ -110,6 +105,15 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
          string content = await result.Content.ReadAsStringAsync();
 
          return JsonConvert.DeserializeObject<DirectoryList>(content);
+      }
+
+      public async Task<FilesystemList> ListFilesystemsAsync(int maxResults = 5000, CancellationToken cancellationToken = default)
+      {
+         HttpResponseMessage result =
+            await _restApi.ListFilesystemsAsync(maxResults, cancellationToken);
+         string content = await result.Content.ReadAsStringAsync();
+
+         return JsonConvert.DeserializeObject<FilesystemList>(content);
       }
 
       public async Task<byte[]> ReadFileAsync(string filesystem, string path, long? start = null, long? end = null,
@@ -150,11 +154,16 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Blob.BLL
       public async Task<Stream> OpenWriteAsync(string filesystem, string path,
          CancellationToken cancellationToken = default)
       {
-         Properties properties = await GetPropertiesAsync(filesystem, path, cancellationToken);
-
-         if(!properties.Exists)
+         try
          {
-            await CreateFileAsync(filesystem, path, cancellationToken);
+            Properties properties = await GetPropertiesAsync(filesystem, path, cancellationToken);
+         }
+         catch(DataLakeGen2Exception e)
+         {
+            if(e.StatusCode == HttpStatusCode.NotFound)
+            {
+               await CreateFileAsync(filesystem, path, cancellationToken);
+            }
          }
 
          return new DataLakeGen2Stream(this, filesystem, path);
