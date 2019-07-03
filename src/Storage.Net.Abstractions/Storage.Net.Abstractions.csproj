@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
    <PropertyGroup>
       <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
-      <AssemblyTitle>Storage.Net</AssemblyTitle>
+      <AssemblyTitle>Storage.Net.Abstractions</AssemblyTitle>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <TargetFrameworks>netstandard1.6;netstandard2.0</TargetFrameworks>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
-      <AssemblyName>Storage.Net</AssemblyName>
+      <AssemblyName>Storage.Net.Abstractions</AssemblyName>
       <AssemblyOriginatorKeyFile>../storage.snk</AssemblyOriginatorKeyFile>
       <SignAssembly>true</SignAssembly>
-      <PackageId>Storage.Net</PackageId>
+      <PackageId>Storage.Net.Abstractions</PackageId>
       <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
@@ -25,11 +25,7 @@
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
    </PropertyGroup>
-   <ItemGroup>
-      <PackageReference Include="NetBox" Version="2.1.8" />
+   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
       <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
-   </ItemGroup>
-   <ItemGroup>
-     <ProjectReference Include="..\Storage.Net.Abstractions\Storage.Net.Abstractions.csproj" />
    </ItemGroup>
 </Project>

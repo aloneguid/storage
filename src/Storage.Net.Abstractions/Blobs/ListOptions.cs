@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using NetBox.Extensions;
 
 namespace Storage.Net.Blobs
 {
@@ -80,11 +78,19 @@ namespace Storage.Net.Blobs
       {
          if(MaxResults == null || (dest.Count + src.Count < MaxResults.Value))
          {
-            dest.AddRange(src);
+            foreach(Blob blob in src)
+            {
+               dest.Add(blob);
+            }
+
             return false;
          }
 
-         dest.AddRange(src.Take(MaxResults.Value - dest.Count));
+         foreach(Blob blob in src.Take(MaxResults.Value - dest.Count))
+         {
+            dest.Add(blob);
+         }
+
          return true;
       }
 
