@@ -112,7 +112,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <summary>
       /// See interface
       /// </summary>
-      public async Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
+      public async Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
       {
          IEnumerable<PartitionReceiver> receivers = await CreateReceiversAsync();
 
@@ -122,7 +122,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          }
       }
 
-      private async Task ReceiverPumpAsync(PartitionReceiver receiver, Func<IReadOnlyCollection<QueueMessage>, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
+      private async Task ReceiverPumpAsync(PartitionReceiver receiver, Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
       {
          while (true)
          {
@@ -134,7 +134,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
                if (events != null && !cancellationToken.IsCancellationRequested)
                {
                   List<QueueMessage> qms = events.Select(ed => Converter.ToQueueMessage(ed, receiver.PartitionId)).ToList();
-                  await onMessage(qms);
+                  await onMessage(qms, cancellationToken);
 
                   QueueMessage lastMessage = qms.LastOrDefault();
 

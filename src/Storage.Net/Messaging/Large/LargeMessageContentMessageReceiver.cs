@@ -52,15 +52,15 @@ namespace Storage.Net.Messaging.Large
 
       public Task<ITransaction> OpenTransactionAsync() => _parentReceiver.OpenTransactionAsync();
 
-      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
+      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
       {
          return _parentReceiver.StartMessagePumpAsync(
-            (mms) => DownloadingMessagePumpAsync(mms, onMessageAsync, cancellationToken),
+            (mms, ct) => DownloadingMessagePumpAsync(mms, onMessageAsync, ct),
             maxBatchSize, cancellationToken);
       }
 
       private async Task DownloadingMessagePumpAsync(IReadOnlyCollection<QueueMessage> messages,
-         Func<IReadOnlyCollection<QueueMessage>, Task> onParentMessagesAsync,
+         Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onParentMessagesAsync,
          CancellationToken cancellationToken)
       {
          //process messages to download external content
@@ -72,7 +72,7 @@ namespace Storage.Net.Messaging.Large
          }
 
          //now that messages are augmented pass them to parent
-         await onParentMessagesAsync(messages);
+         await onParentMessagesAsync(messages, cancellationToken);
       }
 
       public Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default) =>

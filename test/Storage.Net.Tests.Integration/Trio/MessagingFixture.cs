@@ -112,7 +112,7 @@ namespace Storage.Net.Tests.Integration.Messaging
          Console.WriteLine(line);
       }
 
-      private async Task ReceiverPumpAsync(IReadOnlyCollection<QueueMessage> messages)
+      private async Task ReceiverPumpAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken)
       {
          foreach(QueueMessage qm in messages)
          {
@@ -131,7 +131,7 @@ namespace Storage.Net.Tests.Integration.Messaging
 
          try
          {
-            await Receiver.ConfirmMessagesAsync(messages);
+            await Receiver.ConfirmMessagesAsync(messages, cancellationToken);
          }
          catch(NotSupportedException)
          {

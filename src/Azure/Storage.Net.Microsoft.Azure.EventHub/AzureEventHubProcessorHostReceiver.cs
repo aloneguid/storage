@@ -47,7 +47,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       public Task<ITransaction> OpenTransactionAsync() => Task.FromResult(EmptyTransaction.Instance);
 
       public Task StartMessagePumpAsync(
-         Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync,
+         Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync,
          int maxBatchSize = 1,
          CancellationToken cancellationToken = default)
       {

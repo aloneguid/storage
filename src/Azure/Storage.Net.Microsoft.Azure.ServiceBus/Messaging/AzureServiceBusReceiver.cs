@@ -108,7 +108,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
       }
 
       public Task StartMessagePumpAsync(
-         Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync,
+         Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync,
          int maxBatchSize = 1,
          CancellationToken cancellationToken = default)
       {
@@ -124,7 +124,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
 
                if(!_autoComplete)
                   _messageIdToBrokeredMessage[qm.Id] = message;
-               await onMessageAsync(new[] { qm }).ConfigureAwait(false);
+               await onMessageAsync(new[] { qm }, token).ConfigureAwait(false);
             },
             _messageHandlerOptions);
 

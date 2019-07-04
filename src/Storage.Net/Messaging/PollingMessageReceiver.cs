@@ -56,7 +56,7 @@ namespace Storage.Net.Messaging
                               /// <summary>
                               /// See interface
                               /// </summary>
-      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
+      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
       {
          if (onMessageAsync == null) throw new ArgumentNullException(nameof(onMessageAsync));
@@ -66,14 +66,14 @@ namespace Storage.Net.Messaging
          return Task.FromResult(true);
       }
 
-      private async Task PollTasksAsync(Func<IReadOnlyCollection<QueueMessage>, Task> callback, int maxBatchSize, CancellationToken cancellationToken)
+      private async Task PollTasksAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> callback, int maxBatchSize, CancellationToken cancellationToken)
       {
          try
          {
             IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
             while(messages != null && messages.Count > 0)
             {
-               await callback(messages);
+               await callback(messages, cancellationToken);
 
                messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
 
