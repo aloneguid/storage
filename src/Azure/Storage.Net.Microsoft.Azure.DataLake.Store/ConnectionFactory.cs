@@ -10,7 +10,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store
    {
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == "azure.datalakestore")
+         if(connectionString.Prefix == "azure.datalake.g1")
          {
             connectionString.GetRequired("accountName", true, out string accountName);
             connectionString.GetRequired("tenantId", true, out string tenantId);
