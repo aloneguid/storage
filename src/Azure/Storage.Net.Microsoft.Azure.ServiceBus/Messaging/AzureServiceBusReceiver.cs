@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
@@ -19,8 +18,11 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
       protected readonly IReceiverClient _receiverClient;
       //message received is only used for "advanced" operations not available in IReceiverClient. If you can not use it please do.
       private readonly ISBMessageReceiver _messageReceiver;
+
       protected readonly MessageHandlerOptions _messageHandlerOptions;
       protected readonly bool _autoComplete;
+
+      private CancellationTokenSource _cancellationTokenSource;
 
       public AzureServiceBusReceiver(IReceiverClient receiverClient, ISBMessageReceiver messageReceiver, MessageHandlerOptions messageHandlerOptions)
       {
@@ -79,7 +81,6 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
 
       public Task<int> GetMessageCountAsync() => throw new NotSupportedException();
 
-
       public async Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default)
       {
          if(_autoComplete)
@@ -107,7 +108,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          return Task.FromResult(EmptyTransaction.Instance);
       }
 
-      public Task StartMessagePumpAsync(
+      public async Task ListenAsync(
          Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync,
          int maxBatchSize = 1,
          CancellationToken cancellationToken = default)
@@ -115,33 +116,50 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          if(onMessageAsync == null)
             throw new ArgumentNullException(nameof(onMessageAsync));
 
-         _receiverClient.PrefetchCount = maxBatchSize;
+         if(_cancellationTokenSource != null)
+         {
+            _cancellationTokenSource.Dispose();
+         }
 
+         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+         _receiverClient.PrefetchCount = maxBatchSize;
          _receiverClient.RegisterMessageHandler(
             async (message, token) =>
             {
-               QueueMessage qm = Converter.ToQueueMessage(message);
+               var queueMessage = Converter.ToQueueMessage(message);
 
                if(!_autoComplete)
-                  _messageIdToBrokeredMessage[qm.Id] = message;
-               await onMessageAsync(new[] { qm }, token).ConfigureAwait(false);
+                  _messageIdToBrokeredMessage[queueMessage.Id] = message;
+
+               using(var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(token, _cancellationTokenSource.Token))
+               {
+                  await onMessageAsync(new[] { queueMessage }, linkedSource.Token).ConfigureAwait(false);
+               }
             },
             _messageHandlerOptions);
 
-         return Task.FromResult(true);
+         var source = new TaskCompletionSource<object>();
+         _cancellationTokenSource.Token.Register(() => source.SetResult(null));
+         await source.Task.ConfigureAwait(false);
       }
 
       public void Dispose()
       {
-         _receiverClient.CloseAsync();
+         if(_cancellationTokenSource != null)
+         {
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
+            _cancellationTokenSource = null;
+         }
+
+         _receiverClient.CloseAsync().GetAwaiter().GetResult();
       }
 
       protected static MessageReceiver CreateMessageReceiver(string connectionString, string entityName, bool peekLock)
       {
          ReceiveMode mode = peekLock ? ReceiveMode.PeekLock : ReceiveMode.ReceiveAndDelete;
-
          return new MessageReceiver(connectionString, entityName, mode);
       }
-
    }
 }

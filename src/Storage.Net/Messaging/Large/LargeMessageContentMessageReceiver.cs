@@ -52,9 +52,9 @@ namespace Storage.Net.Messaging.Large
 
       public Task<ITransaction> OpenTransactionAsync() => _parentReceiver.OpenTransactionAsync();
 
-      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
+      public Task ListenAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
       {
-         return _parentReceiver.StartMessagePumpAsync(
+         return _parentReceiver.ListenAsync(
             (mms, ct) => DownloadingMessagePumpAsync(mms, onMessageAsync, ct),
             maxBatchSize, cancellationToken);
       }

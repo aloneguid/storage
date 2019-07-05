@@ -35,17 +35,20 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          string consumerGroupName = null,
          IBlobStorage stateStorage = null)
       {
-         if (connectionString == null)
+         if(connectionString == null)
             throw new ArgumentNullException(nameof(connectionString));
 
-         if (hubPath == null)
+         if(hubPath == null)
             throw new ArgumentNullException(nameof(hubPath));
 
          _partitionIds = partitionIds == null ? null : new HashSet<string>(partitionIds);
 
          var builder = new EventHubsConnectionStringBuilder(connectionString) { EntityPath = hubPath };
          _hubClient = EventHubClient.CreateFromConnectionString(builder.ToString());
-         if (partitionIds != null) _partitionIds.AddRange(_partitionIds);
+
+         if(partitionIds != null)
+            _partitionIds.AddRange(_partitionIds);
+
          _consumerGroupName = consumerGroupName;
          _state = new EventHubStateAdapter(stateStorage ?? StorageFactory.Blobs.InMemory());
       }
@@ -56,7 +59,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <returns></returns>
       public async Task<IEnumerable<string>> GetPartitionIdsAsync()
       {
-         EventHubRuntimeInformation info = await _hubClient.GetRuntimeInformationAsync();
+         EventHubRuntimeInformation info = await _hubClient.GetRuntimeInformationAsync().ConfigureAwait(false);
 
          return info.PartitionIds;
       }
@@ -65,16 +68,16 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       {
          var receivers = new List<PartitionReceiver>();
 
-         EventHubRuntimeInformation runtimeInfo = await _hubClient.GetRuntimeInformationAsync();
+         EventHubRuntimeInformation runtimeInfo = await _hubClient.GetRuntimeInformationAsync().ConfigureAwait(false);
 
-         foreach (string partitionId in runtimeInfo.PartitionIds)
+         foreach(string partitionId in runtimeInfo.PartitionIds)
          {
-            if (_partitionIds == null || _partitionIds.Contains(partitionId))
+            if(_partitionIds == null || _partitionIds.Contains(partitionId))
             {
                PartitionReceiver receiver = _hubClient.CreateReceiver(
                   _consumerGroupName ?? PartitionReceiver.DefaultConsumerGroupName,
                   partitionId,
-                  (await _state.GetPartitionPosition(partitionId)));
+                  await _state.GetPartitionPosition(partitionId).ConfigureAwait(false));
 
                receivers.Add(receiver);
             }
@@ -112,38 +115,42 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// <summary>
       /// See interface
       /// </summary>
-      public async Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
+      public async Task ListenAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
       {
-         IEnumerable<PartitionReceiver> receivers = await CreateReceiversAsync();
+         IEnumerable<PartitionReceiver> receivers = await CreateReceiversAsync().ConfigureAwait(false);
 
-         foreach(PartitionReceiver receiver in receivers)
-         {
-            Task pump = ReceiverPumpAsync(receiver, onMessageAsync, maxBatchSize, cancellationToken);
-         }
+         await Task.WhenAll(receivers
+            .Select(receiver =>
+            {
+               return Task.Factory.StartNew(() =>
+               {
+                  return ReceiverPumpAsync(receiver, onMessageAsync, maxBatchSize, cancellationToken);
+               }, TaskCreationOptions.LongRunning);
+            }))
+            .ConfigureAwait(false);
       }
 
       private async Task ReceiverPumpAsync(PartitionReceiver receiver, Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessage, int maxBatchSize, CancellationToken cancellationToken)
       {
-         while (true)
+         while(true)
          {
             try
             {
+               IEnumerable<EventData> events = await receiver.ReceiveAsync(maxBatchSize, _waitTime).ConfigureAwait(false);
 
-               IEnumerable<EventData> events = await receiver.ReceiveAsync(maxBatchSize, _waitTime);
-
-               if (events != null && !cancellationToken.IsCancellationRequested)
+               if(events != null && !cancellationToken.IsCancellationRequested)
                {
                   List<QueueMessage> qms = events.Select(ed => Converter.ToQueueMessage(ed, receiver.PartitionId)).ToList();
-                  await onMessage(qms, cancellationToken);
+                  await onMessage(qms, cancellationToken).ConfigureAwait(false);
 
                   QueueMessage lastMessage = qms.LastOrDefault();
 
                   //save state
-                  if (lastMessage != null)
+                  if(lastMessage != null)
                   {
                      const string sequenceNumberPropertyName = "x-opt-sequence-number";
 
-                     if (lastMessage.Properties.TryGetValue(sequenceNumberPropertyName, out string sequenceNumber))
+                     if(lastMessage.Properties.TryGetValue(sequenceNumberPropertyName, out string sequenceNumber))
                      {
                         long? sequenceNumberLong = null;
                         if(long.TryParse(sequenceNumber, out long seqenceNumberNonNullable))
@@ -151,29 +158,28 @@ namespace Storage.Net.Microsoft.Azure.EventHub
                            sequenceNumberLong = seqenceNumberNonNullable;
                         }
 
-                        await _state.SetPartitionStateAsync(receiver.PartitionId, sequenceNumberLong);
+                        await _state.SetPartitionStateAsync(receiver.PartitionId, sequenceNumberLong).ConfigureAwait(false);
                      }
                   }
                }
 
-               if (cancellationToken.IsCancellationRequested)
+               if(cancellationToken.IsCancellationRequested)
                {
-                  await receiver.CloseAsync();
+                  await receiver.CloseAsync().ConfigureAwait(false);
                   return;
                }
-
             }
             catch(ArgumentException ex)
             {
                Console.WriteLine("failed with message: '{0}', clearing partition state.", ex);
 
-               await _state.SetPartitionStateAsync(receiver.PartitionId, EventPosition.FromStart().SequenceNumber);
+               await _state.SetPartitionStateAsync(receiver.PartitionId, EventPosition.FromStart().SequenceNumber).ConfigureAwait(false);
             }
             catch(OperationCanceledException)
             {
                return;
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                Console.WriteLine("receiver stopped: {0}", ex);
 
@@ -190,11 +196,9 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          //nothing to dispose
       }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-      public async Task<ITransaction> OpenTransactionAsync()
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+      public Task<ITransaction> OpenTransactionAsync()
       {
-         return EmptyTransaction.Instance;
+         return Task.FromResult(EmptyTransaction.Instance);
       }
 
       /// <summary>

@@ -185,13 +185,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
          {
             batch = await _queue.GetMessagesAsync(maxBatchSize, _messageVisibilityTimeout, null, null, cancellationToken);
          }
-         catch(WSE ex) when (ex.InnerException is TaskCanceledException)
+         catch(WSE ex) when(ex.InnerException is TaskCanceledException)
          {
             throw ex.InnerException;
          }
 
          if(batch == null)
             return null;
+
          List<QueueMessage> result = batch.Select(Converter.ToQueueMessage).ToList();
          return result.Count == 0 ? null : result;
       }

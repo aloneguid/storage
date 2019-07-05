@@ -54,7 +54,7 @@ namespace Storage.Net.Tests.Integration.Messaging
          _pumpStarted = true;
 
          //start the pump
-         await Receiver.StartMessagePumpAsync(ReceiverPumpAsync, cancellationToken: _cts.Token, maxBatchSize: 500).ConfigureAwait(false);
+         await Receiver.ListenAsync(ReceiverPumpAsync, cancellationToken: _cts.Token, maxBatchSize: 500).ConfigureAwait(false);
       }
 
       public async Task<string> PutMessageAsync(QueueMessage message = null)

@@ -32,10 +32,10 @@ namespace Storage.Net.Messaging
       Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default);
 
       /// <summary>
-      /// Starts automatic message pumping trying to use native features as much as possible. Message pump stops when you dispose the instance.
-      /// Disposing the instance will also stop message pump for you.
+      /// Starts automatic message pumping trying to use native features as much as possible. 
+      /// The task only completes when the cancellation token signals a cancel.
       /// </summary>
-      Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default);
+      Task ListenAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default);
 
       /// <summary>
       /// Notifies the backend that processing is still happening and message should be marked alive.

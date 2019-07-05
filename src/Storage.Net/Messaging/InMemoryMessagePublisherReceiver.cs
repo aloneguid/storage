@@ -16,14 +16,16 @@ namespace Storage.Net.Messaging
 
       public static InMemoryMessagePublisherReceiver CreateOrGet(string name)
       {
-         if (name == null) throw new ArgumentNullException(nameof(name));
+         if(name == null)
+            throw new ArgumentNullException(nameof(name));
 
          return _inMemoryMessagingNameToInstance.GetOrAdd(name, () => new InMemoryMessagePublisherReceiver());
       }
 
       public Task PutMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
-         if (messages == null) return Task.FromResult(true);
+         if(messages == null)
+            return Task.FromResult(true);
 
          foreach(QueueMessage qm in messages)
          {

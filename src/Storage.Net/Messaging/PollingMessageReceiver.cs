@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using NetBox.Extensions;
 using Storage.Net.Messaging.Polling;
 
 namespace Storage.Net.Messaging
@@ -52,18 +51,15 @@ namespace Storage.Net.Messaging
          return Task.FromResult(EmptyTransaction.Instance);
       }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-                              /// <summary>
-                              /// See interface
-                              /// </summary>
-      public Task StartMessagePumpAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+      /// <summary>
+      /// See interface
+      /// </summary>
+      public async Task ListenAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync, int maxBatchSize = 1, CancellationToken cancellationToken = default)
       {
-         if (onMessageAsync == null) throw new ArgumentNullException(nameof(onMessageAsync));
+         if(onMessageAsync == null)
+            throw new ArgumentNullException(nameof(onMessageAsync));
 
-         Task.Factory.StartNew(() => PollTasksAsync(onMessageAsync, maxBatchSize, cancellationToken), TaskCreationOptions.LongRunning);
-
-         return Task.FromResult(true);
+         await PollTasksAsync(onMessageAsync, maxBatchSize, cancellationToken).ConfigureAwait(false);
       }
 
       private async Task PollTasksAsync(Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> callback, int maxBatchSize, CancellationToken cancellationToken)
@@ -71,6 +67,7 @@ namespace Storage.Net.Messaging
          try
          {
             IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
+
             while(messages != null && messages.Count > 0)
             {
                await callback(messages, cancellationToken);
