@@ -70,9 +70,9 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }*/
 
-   public class AzureDataLakeGen2SharedAccessKeyStorageFixture : BlobFixture
+   public class AdlsGen2Fixture : BlobFixture
    {
-      public AzureDataLakeGen2SharedAccessKeyStorageFixture() : base("test/")
+      public AdlsGen2Fixture() : base("test/")
       {
 
       }
@@ -85,10 +85,10 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }
 
-   public class AzureDataLakeGen2SharedAccessKeyTest : BlobTest,
-      IClassFixture<AzureDataLakeGen2SharedAccessKeyStorageFixture>
+   public class AdlsGen2Test : BlobTest,
+      IClassFixture<AdlsGen2Fixture>
    {
-      public AzureDataLakeGen2SharedAccessKeyTest(AzureDataLakeGen2SharedAccessKeyStorageFixture fixture) :
+      public AdlsGen2Test(AdlsGen2Fixture fixture) :
          base(fixture)
       {
       }

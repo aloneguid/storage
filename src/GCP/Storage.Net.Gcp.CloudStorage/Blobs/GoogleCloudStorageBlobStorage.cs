@@ -4,10 +4,13 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Api.Gax;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Storage.v1.Data;
 using Google.Cloud.Storage.V1;
 using Storage.Net.Blobs;
+using Objects = Google.Apis.Storage.v1.Data.Objects;
+using Object = Google.Apis.Storage.v1.Data.Object;
 
 namespace Storage.Net.Gcp.CloudStorage.Blobs
 {
@@ -26,9 +29,9 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
 
       public async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
       {
-         Bucket bucket = await _client.GetBucketAsync(_bucketName);
+         PagedAsyncEnumerable<Objects, Object> objects = _client.ListObjectsAsync(_bucketName);
 
-         return null;
+         return await GConvert.ToBlobsAsync(objects);
       }
 
       public Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotImplementedException();
