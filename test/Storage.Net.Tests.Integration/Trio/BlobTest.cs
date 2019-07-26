@@ -63,7 +63,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 
          await _storage.WriteTextAsync(targetId, "test");
 
-         IReadOnlyCollection<Blob> rootContent = await _storage.ListAsync(new ListOptions { Recurse = false, IncludeAttributes = true });
+         IReadOnlyCollection<Blob> rootContent = await _storage.ListAsync();
 
          Assert.NotEmpty(rootContent);
       }

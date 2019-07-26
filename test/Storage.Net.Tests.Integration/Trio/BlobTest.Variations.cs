@@ -68,7 +68,7 @@ namespace Storage.Net.Tests.Integration.Blobs
       public AzureDataLakeGen2ClientSecretTest(AzureDataLakeGen2ClientSecretStorageFixture fixture) : base(fixture)
       {
       }
-   }
+   }*/
 
    public class AzureDataLakeGen2SharedAccessKeyStorageFixture : BlobFixture
    {
@@ -79,7 +79,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
-         return StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(
+         return StorageFactory.Blobs.AzureBlobStorage(
             settings.AzureDataLakeGen2Name, 
             settings.AzureDataLakeGen2Key);
       }
@@ -92,7 +92,7 @@ namespace Storage.Net.Tests.Integration.Blobs
          base(fixture)
       {
       }
-   }*/
+   }
 
    public class DiskDirectoryStorageFixture : BlobFixture
    {
@@ -187,6 +187,25 @@ namespace Storage.Net.Tests.Integration.Blobs
    public class FtpTest : BlobTest, IClassFixture<FtpFixture>
    {
       public FtpTest(FtpFixture fixture) : base(fixture)
+      {
+
+      }
+   }
+
+   public class GcpFixture : BlobFixture
+   {
+      protected override IBlobStorage CreateStorage(ITestSettings settings)
+      {
+         return StorageFactory.Blobs.GoogleCloudStorageFromJson(
+            settings.GcpStorageBucketName,
+            settings.GcpStorageJsonCreds,
+            true);
+      }
+   }
+
+   public class GcpTest : BlobTest, IClassFixture<GcpFixture>
+   {
+      public GcpTest(GcpFixture fixture) : base(fixture)
       {
 
       }

@@ -24,7 +24,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
       private readonly string _bucketName;
       private readonly AmazonS3Client _client;
       private readonly TransferUtility _fileTransferUtility;
-      private bool _skipBucketCreation = false;
+      private readonly bool _skipBucketCreation = false;
       private bool _initialised = false;
       
 

@@ -1,11 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+     <AssemblyOriginatorKeyFile>../../storage.snk</AssemblyOriginatorKeyFile>
+     <SignAssembly>true</SignAssembly>
+     <Description>Extension to Storage.Net providing integration with Google Cloud Storage</Description>
+     <LangVersion>latest</LangVersion>
+     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+     <WarningsAsErrors />
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Google.Cloud.Storage.V1" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
   </ItemGroup>
 
 </Project>
