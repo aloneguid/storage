@@ -117,22 +117,21 @@ namespace Storage.Net.Blobs
 
          foreach(string path in fullPaths)
          {
-            //try to delete as file first
+            //try to delete as entry
             Blob pb = path;
             if(_pathToTag.ContainsKey(pb))
             {
                _pathToTag.Remove(pb);
             }
-            else
+
+
+            string prefix = StoragePath.Normalize(path) + StoragePath.PathSeparatorString;
+
+            List<Blob> candidates = _pathToTag.Where(p => p.Value.blob.FullPath.StartsWith(prefix)).Select(p => p.Value.blob).ToList();
+
+            foreach(Blob candidate in candidates)
             {
-               string prefix = StoragePath.Normalize(path) + StoragePath.PathSeparatorString;
-
-               List<Blob> candidates = _pathToTag.Where(p => p.Value.blob.FullPath.StartsWith(prefix)).Select(p => p.Value.blob).ToList();
-
-               foreach(Blob candidate in candidates)
-               {
-                  _pathToTag.Remove(candidate);
-               }
+               _pathToTag.Remove(candidate);
             }
          }
          return Task.FromResult(true);
@@ -180,7 +179,8 @@ namespace Storage.Net.Blobs
          {
             if(_pathToTag.TryGetValue(blob, out Tag tag))
             {
-               tag.blob.Metadata = new Dictionary<string, string>(blob.Metadata);
+               tag.blob.Metadata.Clear();
+               tag.blob.Metadata.AddRange(blob.Metadata);
             }
          }
 

@@ -26,7 +26,7 @@
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
    </PropertyGroup>
    <ItemGroup>
-      <PackageReference Include="NetBox" Version="2.3.3" />
+      <PackageReference Include="NetBox" Version="2.3.4" />
       <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
    </ItemGroup>
 </Project>

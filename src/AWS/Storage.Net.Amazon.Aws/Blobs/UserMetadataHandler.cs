@@ -39,7 +39,6 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
          GetObjectResponse obj = await client.GetObjectAsync(bucketName, blob.FullPath, cancellationToken).ConfigureAwait(false);
 
-         blob.Metadata = new Dictionary<string, string>();
          foreach(string key in obj.Metadata.Keys)
          {
             string value = obj.Metadata[key];

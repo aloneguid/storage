@@ -74,7 +74,6 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
 
          blob.LastModificationTime = item.Attributes.Updated;
 
-         blob.Properties = new Dictionary<string, string>();
          if(item.Attributes.Created != null)
             blob.Properties["Created"] = item.Attributes.Created.Value.ToIso8601DateString();
          if(item.Attributes.Enabled != null)
@@ -92,7 +91,7 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
             blob.Properties["Managed"] = item.Managed.Value.ToString();
 
          if(item.Tags != null && item.Tags.Count > 0)
-            blob.Metadata = new Dictionary<string, string>(item.Tags);
+            blob.Metadata.MergeRange(item.Tags);
 
          return blob;
       }

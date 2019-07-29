@@ -1,6 +1,7 @@
 ﻿using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.Storage.Blobs;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Xunit;
@@ -61,6 +62,19 @@ namespace Storage.Net.Tests.Integration.Azure
          using(BlobLease lease1 = await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20)))
          {
             await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20), true);
+         }
+      }
+
+      [Fact]
+      public async Task Top_level_folders_are_containers()
+      {
+         IReadOnlyCollection<Blob> containers = await _native.ListAsync();
+
+         foreach(Blob container in containers)
+         {
+            Assert.Equal(BlobItemKind.Folder, container.Kind);
+            Assert.True(container.Properties?.ContainsKey("IsContainer"), "isContainer property not present at all");
+            Assert.Equal("True", container.Properties["IsContainer"]);
          }
       }
    }

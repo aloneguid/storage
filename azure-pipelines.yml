@@ -75,9 +75,27 @@ stages:
       inputs:
         ArtifactName: nuget
 
+- stage: Test
+  dependsOn: []
+  jobs:
+  - job: Platform
+    displayName: 'Tests'
+    pool:
+      vmImage: $(vmImage)
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: 'run tests'
+      continueOnError: true
+      inputs:
+        command: test
+        projects: test/Storage.Net.Tests.Integration/Storage.Net.Tests.Integration.csproj
+        arguments: '--filter Category=Blobs'
+
+
 - stage: Deploy
-  #condition: "eq(variables['Build.SourceBranch'], 'refs/heads/master')"
-  condition: "and( or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/v7') ), succeeded('Build') )"
+  dependsOn: ['Build'] 
+  condition: "eq(variables['Build.SourceBranch'], 'refs/heads/master')"
+  #condition: "and( or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/v7') ), succeeded('Build') )"
   jobs:
   - deployment: NugetOrg
     pool:

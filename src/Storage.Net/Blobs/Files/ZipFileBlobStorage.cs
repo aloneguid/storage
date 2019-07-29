@@ -15,6 +15,7 @@ namespace Storage.Net.Blobs.Files
       private ZipArchive _archive;
       private readonly string _filePath;
       private bool? _isWriteMode;
+      private readonly object _lock = new object();
 
       public ZipFileBlobStorage(string filePath)
       {
@@ -39,50 +40,56 @@ namespace Storage.Net.Blobs.Files
 
       public Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
-         ZipArchive zipArchive = GetArchive(false);
-         if(zipArchive == null)
+         lock(_lock)
          {
-            return Task.FromResult<IReadOnlyCollection<bool>>(new bool[fullPaths.Count()]);
+            ZipArchive zipArchive = GetArchive(false);
+            if(zipArchive == null)
+            {
+               return Task.FromResult<IReadOnlyCollection<bool>>(new bool[fullPaths.Count()]);
+            }
+
+            var result = new List<bool>();
+
+            foreach(string fullPath in fullPaths)
+            {
+               string nid = StoragePath.Normalize(fullPath, false);
+
+               ZipArchiveEntry entry = zipArchive.GetEntry(nid);
+
+               result.Add(entry != null);
+            }
+
+            return Task.FromResult<IReadOnlyCollection<bool>>(result);
          }
-
-         var result = new List<bool>();
-
-         foreach(string fullPath in fullPaths)
-         {
-            string nid = StoragePath.Normalize(fullPath, false);
-
-            ZipArchiveEntry entry = zipArchive.GetEntry(nid);
-
-            result.Add(entry != null);
-         }
-
-         return Task.FromResult<IReadOnlyCollection<bool>>(result);
       }
 
       public Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
-         var result = new List<Blob>();
-         ZipArchive zipArchive = GetArchive(false);
-
-         foreach (string fullPath in fullPaths)
+         lock(_lock)
          {
-            string nid = StoragePath.Normalize(fullPath, false);
+            var result = new List<Blob>();
+            ZipArchive zipArchive = GetArchive(false);
 
-            try
+            foreach(string fullPath in fullPaths)
             {
-               ZipArchiveEntry entry = zipArchive.GetEntry(nid);
+               string nid = StoragePath.Normalize(fullPath, false);
 
-               long originalLength = entry.Length;
+               try
+               {
+                  ZipArchiveEntry entry = zipArchive.GetEntry(nid);
 
-               result.Add(new Blob(nid) { Size = originalLength, LastModificationTime = entry.LastWriteTime });
+                  long originalLength = entry.Length;
+
+                  result.Add(new Blob(nid) { Size = originalLength, LastModificationTime = entry.LastWriteTime });
+               }
+               catch(NullReferenceException)
+               {
+                  result.Add(null);
+               }
             }
-            catch (NullReferenceException)
-            {
-               result.Add(null);
-            }
+
+            return Task.FromResult<IReadOnlyCollection<Blob>>(result);
          }
-
-         return Task.FromResult<IReadOnlyCollection<Blob>>(result);
       }
 
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
@@ -92,30 +99,77 @@ namespace Storage.Net.Blobs.Files
 
       public Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options, CancellationToken cancellationToken = default)
       {
-         if (!File.Exists(_filePath)) return Task.FromResult<IReadOnlyCollection<Blob>>(new List<Blob>());
+         lock(_lock)
+         {
+            if(!File.Exists(_filePath))
+               return Task.FromResult<IReadOnlyCollection<Blob>>(new List<Blob>());
 
-         ZipArchive archive = GetArchive(false);
+            ZipArchive archive = GetArchive(false);
 
-         if (options == null) options = new ListOptions();
-         IEnumerable<Blob> ids = archive.Entries.Select(ze => new Blob(ze.FullName, BlobItemKind.File));
-         if (options.FilePrefix != null) ids = ids.Where(id => id.Name.StartsWith(options.FilePrefix));
-         if (options.BrowseFilter != null) ids = ids.Where(id => options.BrowseFilter(id));
-         if (options.MaxResults != null) ids = ids.Take(options.MaxResults.Value);
+            if(options == null)
+               options = new ListOptions();
 
-         return Task.FromResult<IReadOnlyCollection<Blob>>(ids.ToList());
+            IEnumerable<Blob> blobs = archive.Entries.Select(ze => new Blob(ze.FullName, BlobItemKind.File));
+
+            if(options.FilePrefix != null)
+               blobs = blobs.Where(id => id.Name.StartsWith(options.FilePrefix));
+
+            //find ones that belong to this folder
+            if(!StoragePath.IsRootPath(options.FolderPath))
+            {
+               blobs = blobs.Where(id => id.FullPath.StartsWith(options.FolderPath));
+            }
+
+            blobs = AppendVirtualFolders(options.FolderPath ?? StoragePath.RootFolderPath, blobs.ToList());
+
+            //cut off sub-items
+            if(!options.Recurse)
+            {
+               blobs = blobs
+                  .Select(b => new { rp = b.FullPath.Substring(options.FolderPath.Length + 1), b = b })
+                  .Where(a => !a.rp.Contains(StoragePath.PathSeparator))
+                  .Select(a => a.b);
+
+
+               //blobs = blobs.Where(id => !id.FullPath.Substring(0, options.FolderPath.Length).Contains(StoragePath.PathSeparator));
+            }
+
+            if(options.BrowseFilter != null)
+               blobs = blobs.Where(id => options.BrowseFilter(id));
+
+            if(options.MaxResults != null)
+               blobs = blobs.Take(options.MaxResults.Value);
+
+            return Task.FromResult<IReadOnlyCollection<Blob>>(blobs.ToList());
+         }
+      }
+
+      private IEnumerable<Blob> AppendVirtualFolders(string rootFolderPath, List<Blob> files)
+      {
+         var uniqueFolders = new HashSet<string>(
+            files.Where(f => f.FolderPath != rootFolderPath).Select(f => f.FolderPath));
+
+         files.AddRange(uniqueFolders.Select(path => new Blob(path, BlobItemKind.Folder)));
+
+         return files;
       }
 
       public Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
       {
-         fullPath = StoragePath.Normalize(fullPath, false);
+         lock(_lock)
+         {
+            fullPath = StoragePath.Normalize(fullPath, false);
 
-         ZipArchive archive = GetArchive(false);
-         if (archive == null) return Task.FromResult<Stream>(null);
+            ZipArchive archive = GetArchive(false);
+            if(archive == null)
+               return Task.FromResult<Stream>(null);
 
-         ZipArchiveEntry entry = archive.GetEntry(fullPath);
-         if (entry == null) return Task.FromResult<Stream>(null);
+            ZipArchiveEntry entry = archive.GetEntry(fullPath);
+            if(entry == null)
+               return Task.FromResult<Stream>(null);
 
-         return Task.FromResult(entry.Open());
+            return Task.FromResult(entry.Open());
+         }
       }
 
       public Task<ITransaction> OpenTransactionAsync()
@@ -125,48 +179,56 @@ namespace Storage.Net.Blobs.Files
 
       public Task<Stream> OpenWriteAsync(string fullPath, bool append, CancellationToken cancellationToken)
       {
-         var callbackStream = new FixedStream(new MemoryStream(), null, fx =>
+         lock(_lock)
          {
-            fullPath = StoragePath.Normalize(fullPath, false);
-            ZipArchive archive = GetArchive(true);
-
-            ZipArchiveEntry entry = archive.CreateEntry(fullPath, CompressionLevel.Optimal);
-            using(Stream dest = entry.Open())
+            var callbackStream = new FixedStream(new MemoryStream(), null, fx =>
             {
-               fx.Parent.Position = 0;
-               fx.Parent.CopyTo(dest);
-            }
-         });
+               fullPath = StoragePath.Normalize(fullPath, false);
+               ZipArchive archive = GetArchive(true);
 
-         return Task.FromResult<Stream>(callbackStream);
+               ZipArchiveEntry entry = archive.CreateEntry(fullPath, CompressionLevel.Optimal);
+               using(Stream dest = entry.Open())
+               {
+                  fx.Parent.Position = 0;
+                  fx.Parent.CopyTo(dest);
+                  fx.Parent.Flush();
+                  dest.Flush();
+               }
+            });
+
+            return Task.FromResult<Stream>(callbackStream);
+         }
       }
 
       public Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
-         ZipArchive archive = GetArchive(true);
-
-         foreach(string fullPath in fullPaths)
+         lock(_lock)
          {
-            string nid = StoragePath.Normalize(fullPath, false);
+            ZipArchive archive = GetArchive(true);
 
-            ZipArchiveEntry entry = archive.GetEntry(nid);
-            if(entry != null)
+            foreach(string fullPath in fullPaths)
             {
-               entry.Delete();
-            }
-            else
-            {
-               //try to delete this as a folder
-               string prefix = fullPath + StoragePath.PathSeparatorString;
-               List<ZipArchiveEntry> folderEntries = archive.Entries.Where(e => e.FullName.StartsWith(prefix)).ToList();
-               foreach(ZipArchiveEntry fi in folderEntries)
+               string nid = StoragePath.Normalize(fullPath, false);
+
+               ZipArchiveEntry entry = archive.GetEntry(nid);
+               if(entry != null)
                {
-                  fi.Delete();
+                  entry.Delete();
+               }
+               else
+               {
+                  //try to delete this as a folder
+                  string prefix = fullPath + StoragePath.PathSeparatorString;
+                  List<ZipArchiveEntry> folderEntries = archive.Entries.Where(e => e.FullName.StartsWith(prefix)).ToList();
+                  foreach(ZipArchiveEntry fi in folderEntries)
+                  {
+                     fi.Delete();
+                  }
                }
             }
-         }
 
-         return Task.FromResult(true);
+            return Task.FromResult(true);
+         }
       }
 
       private ZipArchive GetArchive(bool? forWriting)

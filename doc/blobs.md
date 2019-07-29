@@ -53,7 +53,7 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("disk://path=pa
 
 Zip file provider maps to a single zip archive. All the operations that include path are created as subfolders in zip archive. Archive itself doesn't need to exist, however any write operation will create a new archive and put any data you write to it.
 
-The provider is built into Storage.Net main package as zip API are a part of .NET Standard nowadays.
+The provider is built into Storage.Net main package as zip API are a part of .NET Standard nowadays. It is thread safe by default.
 
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.ZipFile(pathToZipFile);
@@ -64,8 +64,6 @@ To create from connection string:
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("zip://path=path_to_file");
 ```
-
-...
 
 ### FTP
 
@@ -121,7 +119,7 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blob://d
 
 This storage is working with `block blobs` only. We are planning to add `append blobs` support but that requires some architectural changes and as always you're welcome to help.
 
-This package treats the first part of the path as **container name**. This allows you to have access to all the containers at once. For instance, path `root/file.txt` creates file `file.txt` in the root of container called `root`. `root/folder1/file.txt` creates file `file.txt` in folder `folder1` under container `root` and so on.
+This package treats the first part of the path as **container name**. This allows you to have access to all the containers at once. For instance, path `root/file.txt` creates file `file.txt` in the root of container called `root`. `root/folder1/file.txt` creates file `file.txt` in folder `folder1` under container `root` and so on. You can check if the folder returned is a container by referring to `isContainer` custom property (`blob.Properties["IsContainer"] == "True"`).
 
 
 #### Native Operations

@@ -88,7 +88,6 @@ namespace Storage.Net.Ftp
             ? BlobItemKind.File
             : BlobItemKind.Folder);
 
-         id.Properties = new Dictionary<string, string>();
          if (ff.RawPermissions != null)
          {
             id.Properties["RawPermissions"] = ff.RawPermissions;

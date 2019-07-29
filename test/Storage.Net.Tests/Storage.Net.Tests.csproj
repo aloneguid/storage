@@ -19,7 +19,7 @@
    </ItemGroup>
    <ItemGroup>
       <PackageReference Include="LogMagic" Version="2.17.5" />
-      <PackageReference Include="Config.Net" Version="4.13.2" />
+      <PackageReference Include="Config.Net" Version="4.13.7" />
       <PackageReference Include="Moq" Version="4.12.0" />
       <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
       <PackageReference Include="xunit" Version="2.4.1" />

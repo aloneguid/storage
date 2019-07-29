@@ -166,7 +166,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
          if(source.Metadata?.Count > 0)
          {
-            destination.Metadata = new Dictionary<string, string>(source.Metadata);
+            destination.Metadata.MergeRange(source.Metadata);
          }
       }
 
@@ -208,7 +208,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
             containers.AddRange(await GetCloudBlobContainersAsync(cancellationToken));
 
             //represent containers as folders in the result
-            result.AddRange(containers.Select(c => new Blob(c.Name, BlobItemKind.Folder)));
+            result.AddRange(containers.Select(AzConvert.ToBlob));
 
             if(!options.Recurse)
                return result;

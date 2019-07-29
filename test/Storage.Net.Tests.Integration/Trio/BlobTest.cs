@@ -199,10 +199,11 @@ namespace Storage.Net.Tests.Integration.Blobs
          const int count = 500;
          //arrange
 
-         //something like FTP doesn't support multiple connections
-         for(int i = 0; i < count; i++)
+         //something like FTP doesn't support multiple connections, however this should be implemented in FTP provider itself
+
+         for(int it = 0; it < 50; it++)
          {
-            await _storage.WriteTextAsync(RandomBlobPath(), "123");
+            await Task.WhenAll(Enumerable.Range(0, 10).Select(i => _storage.WriteTextAsync(RandomBlobPath(), "123")));
          }
 
          //act
@@ -354,11 +355,8 @@ namespace Storage.Net.Tests.Integration.Blobs
       public async Task UserMetadata_write_readsback()
       {
          var blob = new Blob(RandomBlobPath());
-         blob.Metadata = new Dictionary<string, string>
-         {
-            ["user"] = "ivan",
-            ["fun"] = "no"
-         };
+         blob.Metadata["user"] = "ivan";
+         blob.Metadata["fun"] = "no";
 
          await _storage.WriteTextAsync(blob, "test");
          try
@@ -383,11 +381,8 @@ namespace Storage.Net.Tests.Integration.Blobs
       {
          //setup
          var blob = new Blob(RandomBlobPath());
-         blob.Metadata = new Dictionary<string, string>
-         {
-            ["user"] = "ivan",
-            ["fun"] = "no"
-         };
+         blob.Metadata["user"] = "ivan";
+         blob.Metadata["fun"] = "no";
          await _storage.WriteTextAsync(blob, "test");
          try
          {
@@ -397,10 +392,8 @@ namespace Storage.Net.Tests.Integration.Blobs
          {
             return;
          }
-         blob.Metadata = new Dictionary<string, string>
-         {
-            ["user"] = "ivan2"
-         };
+         blob.Metadata.Clear();
+         blob.Metadata["user"] = "ivan2";
          await _storage.WriteTextAsync(blob, "test2");
          await _storage.SetBlobAsync(blob);
 
@@ -415,11 +408,8 @@ namespace Storage.Net.Tests.Integration.Blobs
       public async Task UserMetadata_openwrite_readsback()
       {
          var blob = new Blob(RandomBlobPath());
-         blob.Metadata = new Dictionary<string, string>
-         {
-            ["user"] = "ivan",
-            ["fun"] = "no"
-         };
+         blob.Metadata["user"] = "ivan";
+         blob.Metadata["fun"] = "no";
 
          using(Stream s = await _storage.OpenWriteAsync(blob))
          {
@@ -446,11 +436,8 @@ namespace Storage.Net.Tests.Integration.Blobs
       public async Task UserMetadata_List_AlsoReturnsMetadata()
       {
          var blob = new Blob(RandomBlobPath());
-         blob.Metadata = new Dictionary<string, string>
-         {
-            ["user"] = "ivan",
-            ["fun"] = "no"
-         };
+         blob.Metadata["user"] = "ivan";
+         blob.Metadata["fun"] = "no";
          await _storage.WriteTextAsync(blob, "test2");
 
          try
