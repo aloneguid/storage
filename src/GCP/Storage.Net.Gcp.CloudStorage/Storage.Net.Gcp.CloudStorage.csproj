@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Cloud.Storage.V1" Version="2.3.0" />
+    <PackageReference Include="NetBox" Version="2.3.4" />
   </ItemGroup>
 
   <ItemGroup>

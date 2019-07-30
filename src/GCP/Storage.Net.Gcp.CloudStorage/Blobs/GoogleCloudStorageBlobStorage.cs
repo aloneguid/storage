@@ -11,6 +11,7 @@ using Google.Cloud.Storage.V1;
 using Storage.Net.Blobs;
 using Objects = Google.Apis.Storage.v1.Data.Objects;
 using Object = Google.Apis.Storage.v1.Data.Object;
+using Storage.Net.Streaming;
 
 namespace Storage.Net.Gcp.CloudStorage.Blobs
 {
@@ -35,17 +36,53 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
       }
 
       public Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-      public void Dispose()
-      {
-
-      }
+      
 
       public Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotImplementedException();
       public Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotImplementedException();
       
-      public Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-      public Task<ITransaction> OpenTransactionAsync() => throw new NotImplementedException();
-      public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
+      public Task<ITransaction> OpenTransactionAsync() => EmptyTransaction.TaskInstance;
+
+      public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
+      {
+         if(append)
+            throw new NotSupportedException();
+         GenericValidation.CheckBlobFullPath(fullPath);
+         fullPath = StoragePath.Normalize(fullPath, false);
+
+         // no write streaming support in this crappy SDK
+
+         return Task.FromResult<Stream>(new FixedStream(new MemoryStream(), null, async (fx) =>
+         {
+            var ms = (MemoryStream)fx.Parent;
+            ms.Position = 0;
+
+            await _client.UploadObjectAsync(
+               _bucketName, fullPath, null, ms,
+               cancellationToken: cancellationToken).ConfigureAwait(false);
+         }));
+      }
+
+      public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
+      {
+         GenericValidation.CheckBlobFullPath(fullPath);
+         fullPath = StoragePath.Normalize(fullPath, false);
+
+         // no read streaming support in this crappy SDK
+
+         var ms = new MemoryStream();
+         await _client.DownloadObjectAsync(_bucketName, fullPath, ms, cancellationToken: cancellationToken);
+         ms.Position = 0;
+         return ms;
+      }
+
+
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
+      public void Dispose()
+      {
+
+      }
    }
 }
