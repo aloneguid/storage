@@ -17,6 +17,11 @@ namespace Storage.Net.Blobs
       public BlobItemKind Kind { get; private set; }
 
       /// <summary>
+      /// Simply checks if kind of this item is <see cref="BlobItemKind.Folder"/>
+      /// </summary>
+      public bool IsFolder => Kind == BlobItemKind.Folder;
+
+      /// <summary>
       /// Gets the folder path containing this item
       /// </summary>
       public string FolderPath { get; private set; }

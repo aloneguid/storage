@@ -71,6 +71,12 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.KeyVault.Creds")]
       NetworkCredential KeyVaultCreds { get; }
 
+      [Option(Alias = "Azure.Databricks.BaseUri")]
+      string DatabricksBaseUri { get; }
+
+      [Option(Alias = "Azure.Databricks.Token")]
+      string DatabricksToken { get; }
+
       #endregion
 
       #region [ Amazon Web Services ]

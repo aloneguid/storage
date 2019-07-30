@@ -4,10 +4,6 @@ root=true
 indent_style=space
 indent_size=3
 
-[*.yml]
-indent_style=space
-indent_size=2
-
 [*.cs]
 
 #### Language code styles
@@ -130,7 +126,7 @@ csharp_preserve_single_line_blocks = true
 # Async methods should have "Async" suffix
 dotnet_naming_rule.async_methods_end_in_async.symbols = any_async_methods
 dotnet_naming_rule.async_methods_end_in_async.style = end_in_async
-dotnet_naming_rule.async_methods_end_in_async.severity = error
+dotnet_naming_rule.async_methods_end_in_async.severity = suggestion
 
 dotnet_naming_symbols.any_async_methods.applicable_kinds = method
 dotnet_naming_symbols.any_async_methods.applicable_accessibilities = *
@@ -138,3 +134,14 @@ dotnet_naming_symbols.any_async_methods.required_modifiers = async
 
 dotnet_naming_style.end_in_async.required_suffix = Async
 dotnet_naming_style.end_in_async.capitalization = pascal_case
+
+# private variables should be underscored
+dotnet_naming_rule.private_members_with_underscore.symbols  = private_fields
+dotnet_naming_rule.private_members_with_underscore.style    = prefix_underscore
+dotnet_naming_rule.private_members_with_underscore.severity = suggestion
+
+dotnet_naming_symbols.private_fields.applicable_kinds           = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
+dotnet_naming_style.prefix_underscore.required_prefix = _
