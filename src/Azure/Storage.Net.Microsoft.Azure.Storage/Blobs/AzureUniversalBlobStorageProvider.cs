@@ -99,6 +99,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
             GenericValidation.CheckBlobFullPath(fullPath);
 
             (CloudBlobContainer container, string path) = await GetPartsAsync(fullPath, false).ConfigureAwait(false);
+
             if(container == null)
             {
                result.Add(false);
