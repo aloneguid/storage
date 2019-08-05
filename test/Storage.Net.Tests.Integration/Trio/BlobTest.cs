@@ -440,6 +440,8 @@ namespace Storage.Net.Tests.Integration.Blobs
          blob.Metadata["fun"] = "no";
          await _storage.WriteTextAsync(blob, "test2");
 
+         await _storage.WriteTextAsync(StoragePath.Combine(RandomBlobPath(), Guid.NewGuid().ToString()), "subfolder");
+
          try
          {
             await _storage.SetBlobAsync(blob);

@@ -18,13 +18,13 @@ namespace Storage.Net.Amazon.Aws.Blobs
    /// <summary>
    /// Amazon S3 storage adapter for blobs
    /// </summary>
-   class AwsS3BlobStorageProvider : IBlobStorage, IAwsS3BlobStorage
+   class AwsS3BlobStorage : IBlobStorage, IAwsS3BlobStorage
    {
       private const int ListChunkSize = 10;
       private readonly string _bucketName;
       private readonly AmazonS3Client _client;
       private readonly TransferUtility _fileTransferUtility;
-      private bool _skipBucketCreation = false;
+      private readonly bool _skipBucketCreation = false;
       private bool _initialised = false;
       
 
@@ -37,31 +37,29 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorageProvider"/> for a given region endpoint, and will assume the runnning AWS ECS Task role credentials or Lambda role credentials />
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint, and will assume the runnning AWS ECS Task role credentials or Lambda role credentials />
       /// </summary>
-      public AwsS3BlobStorageProvider(string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
       {
-
          _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
          _client = new AmazonS3Client(regionEndpoint);
          _skipBucketCreation = skipBucketCreation;
          _fileTransferUtility = new TransferUtility(_client);
-
       }
 
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorageProvider"/> for a given region endpoint/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint/>
       /// </summary>
-      public AwsS3BlobStorageProvider(string accessKeyId, string secretAccessKey, string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
          : this(accessKeyId, secretAccessKey, bucketName, new AmazonS3Config { RegionEndpoint = regionEndpoint ?? RegionEndpoint.EUWest1 }, skipBucketCreation)
       {
       }
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorageProvider"/> for an S3-compatible storage provider hosted on an alternative service URL/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for an S3-compatible storage provider hosted on an alternative service URL/>
       /// </summary>
-      public AwsS3BlobStorageProvider(string accessKeyId, string secretAccessKey, string bucketName, string serviceUrl, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, string serviceUrl, bool skipBucketCreation = false)
          : this(accessKeyId, secretAccessKey, bucketName, new AmazonS3Config
          {
             RegionEndpoint = RegionEndpoint.USEast1,
@@ -71,9 +69,9 @@ namespace Storage.Net.Amazon.Aws.Blobs
       }
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorageProvider"/> for a given S3 client configuration/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given S3 client configuration/>
       /// </summary>
-      public AwsS3BlobStorageProvider(string accessKeyId, string secretAccessKey, string bucketName, AmazonS3Config clientConfig, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, AmazonS3Config clientConfig, bool skipBucketCreation = false)
       {
          if (accessKeyId == null) throw new ArgumentNullException(nameof(accessKeyId));
          if (secretAccessKey == null) throw new ArgumentNullException(nameof(secretAccessKey));
@@ -123,7 +121,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
          if(options.IncludeAttributes)
          {
-            foreach(IEnumerable<Blob> page in blobs.Chunk(ListChunkSize))
+            foreach(IEnumerable<Blob> page in blobs.Where(b => !b.IsFolder).Chunk(ListChunkSize))
             {
                await Converter.AppendMetadataAsync(client, _bucketName, page, cancellationToken).ConfigureAwait(false);
             }

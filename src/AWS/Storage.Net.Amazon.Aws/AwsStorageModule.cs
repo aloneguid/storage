@@ -25,7 +25,7 @@ namespace Storage.Net.Amazon.Aws
 
             RegionEndpoint endpoint = RegionEndpoint.GetBySystemName(string.IsNullOrEmpty(region) ? "eu-west-1" : region);
 
-            return new AwsS3BlobStorageProvider(keyId, key, bucket, endpoint);
+            return new AwsS3BlobStorage(keyId, key, bucket, endpoint);
          }
 
 

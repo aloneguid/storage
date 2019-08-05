@@ -36,7 +36,7 @@ namespace Storage.Net
          RegionEndpoint regionEndpoint = null,
          bool skipBucketCreation = false)
       {
-         return new AwsS3BlobStorageProvider(bucketName, regionEndpoint, skipBucketCreation);
+         return new AwsS3BlobStorage(bucketName, regionEndpoint, skipBucketCreation);
       }
 
 
@@ -55,7 +55,7 @@ namespace Storage.Net
          string bucketName,
          RegionEndpoint regionEndpoint = null)
       {
-         return new AwsS3BlobStorageProvider(accessKeyId, secretAccessKey, bucketName, regionEndpoint);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, bucketName, regionEndpoint);
       }
 
       /// <summary>
@@ -73,7 +73,7 @@ namespace Storage.Net
          string bucketName,
          string serviceUrl)
       {
-         return new AwsS3BlobStorageProvider(accessKeyId, secretAccessKey, bucketName, serviceUrl);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, bucketName, serviceUrl);
       }
 
       /// <summary>
@@ -91,7 +91,7 @@ namespace Storage.Net
          string bucketName,
          AmazonS3Config clientConfig)
       {
-         return new AwsS3BlobStorageProvider(accessKeyId, secretAccessKey, bucketName, clientConfig);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, bucketName, clientConfig);
       }
 
       /// <summary>
