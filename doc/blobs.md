@@ -10,6 +10,9 @@ This page lists blob storage providers available in Storage.Net
 - [FTP](#ftp)
 - [Microsoft Azure Blob Storage](#microsoft-azure-blob-storage)
 - [Amazon S3 Storage](#amazon-s3-storage)
+- [Azure Data Lake Store](#azure-data-lake-store)
+  - [Gen 1](#gen-1) 
+  - [Gen 2](#gen-2) 
 
 ### In-Memory
 
@@ -204,7 +207,40 @@ where:
 
 #### Native Operations
 
-Native operations are exposed via [IAwsS3BlobStorageNativeOperations](../src/AWS/Storage.Net.Amazon.Aws/Blobs/IAwsS3BlobStorageNativeOperations.cs) interface.
+Native operations are exposed via [IAwsS3BlobStorageNativeOperations](../src/AWS/Storage.Net.Amazon.Aws/Blobs/IAwsS3BlobStorage.cs) interface.
+
+## Azure Data Lake Store
+
+In order to use, reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.DataLake.Store.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.DataLake.Store/) package first. Both **Gen1** and **Gen2** storage accounts are supported.
+
+### Gen 1
+
+To create using a factory method, use the following signature:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen1StoreByClientSecret(
+         string accountName,
+         string tenantId,
+         string principalId,
+         string principalSecret,
+         int listBatchSize = 5000)
+```
+
+The last parameter *listBatchSize* indicates how to query storage for list operations - by default a batch of 5k items will be used. Note that the larger the batch size, the more data you will receive in the request. This speeds up list operations, however may result in HTTP time-out the slower your internet connection is. This feature is not available in the standard .NET SDK and was implemented from scratch.
+
+You can also use connection strings:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.datalake.gen1://account=...;tenantId=...;principalId=...;principalSecret=...;listBatchSize=...");
+```
+
+the last parameter *listBatchSize* is optional and defaults to `5000`.
+
+### Gen 2
+
+Gen 2 is the new generation of the storage API, however only works if your ADLS was created with Gen 2 support.
+
+> todo
 
 
 
