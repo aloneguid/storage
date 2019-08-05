@@ -7,14 +7,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL;
-using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.Interfaces;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
-   class AzureDataLakeStoreGen2BlobStorageProvider : IAzureDataLakeGen2Storage
+   class AzureDataLakeStoreGen2BlobStorageProvider : IBlobStorage
    {
-      private AzureDataLakeStoreGen2BlobStorageProvider(IDataLakeGen2Client client)
+      private DataLakeGen2Client Client { get; }
+
+      private AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client client)
       {
          Client = client ?? throw new ArgumentNullException(nameof(client));
       }
@@ -204,8 +205,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             return null;
          }
       }
-
-      public IDataLakeGen2Client Client { get; }
 
       private class PathInformation
       {

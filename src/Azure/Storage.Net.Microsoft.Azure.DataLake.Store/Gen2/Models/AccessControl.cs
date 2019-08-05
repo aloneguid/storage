@@ -2,7 +2,7 @@
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models
 {
-   public class AccessControl
+   class AccessControl
    {
       public List<AclItem> Acl { get; set; }
       public string Group { get; set; }

@@ -7,7 +7,7 @@ using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.Interfaces;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
 {
-   public class SharedAccessKeyAuthorisation : IAuthorisation
+   class SharedAccessKeyAuthorisation : IAuthorisation
    {
       private readonly string _sharedAccessKey;
 

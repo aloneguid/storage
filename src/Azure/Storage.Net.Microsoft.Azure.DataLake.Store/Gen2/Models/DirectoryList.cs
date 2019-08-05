@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models
 {
-   public class DirectoryList
+   class DirectoryList
    {
       [JsonProperty("paths")] public List<DirectoryItem> Paths { get; set; }
    }

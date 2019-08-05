@@ -14,7 +14,7 @@ namespace Storage.Net
    {
       public static IModulesFactory UseAzureDataLake(this IModulesFactory factory)
       {
-         return factory.Use(new ExternalModule());
+         return factory.Use(new Module());
       }
 
       /// <summary>

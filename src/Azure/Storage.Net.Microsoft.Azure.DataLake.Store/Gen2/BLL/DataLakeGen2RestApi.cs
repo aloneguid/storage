@@ -10,26 +10,24 @@ using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Wrappers;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
 {
-   public class DataLakeGen2RestApi : IDataLakeGen2RestApi
+   class DataLakeGen2RestApi : IDataLakeGen2RestApi
    {
       private const string ApiVersion = "2018-11-09";
       private readonly IAuthorisation _authorisation;
       private readonly string _baseUri;
-      private readonly IDateTimeWrapper _dateTime;
       private readonly IHttpClientWrapper _httpClient;
       private readonly string _storageAccountName;
 
       public DataLakeGen2RestApi(HttpClient httpClient, IAuthorisation authorisation, string storageAccountName) :
-         this(new HttpClientWrapper(httpClient), authorisation, new DateTimeWrapper(), storageAccountName)
+         this(new HttpClientWrapper(httpClient), authorisation, storageAccountName)
       {
       }
 
       public DataLakeGen2RestApi(IHttpClientWrapper httpClient, IAuthorisation authorisation,
-         IDateTimeWrapper dateTime, string storageAccountName)
+         string storageAccountName)
       {
          _httpClient = httpClient;
          _authorisation = authorisation;
-         _dateTime = dateTime;
          _storageAccountName = storageAccountName;
          _baseUri = $"https://{_storageAccountName}.dfs.core.windows.net";
       }
@@ -239,7 +237,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
          IDictionary<string, string> headers,
          CancellationToken cancellationToken)
       {
-         string dateTimeReference = _dateTime.Now.ToString("R");
+         string dateTimeReference = DateTime.Now.ToString("R");
 
          headers.Add("x-ms-date", dateTimeReference);
          headers.Add("x-ms-version", ApiVersion);

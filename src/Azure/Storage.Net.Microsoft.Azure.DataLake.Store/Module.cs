@@ -3,16 +3,19 @@ using Storage.Net.ConnectionString;
 using Storage.Net.KeyValue;
 using Storage.Net.Messaging;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen1;
+using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store
 {
-   class ConnectionFactory : IConnectionFactory
+   class Module : IExternalModule, IConnectionFactory
    {
+      public IConnectionFactory ConnectionFactory => this;
+
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
       {
          if(connectionString.Prefix == "azure.datalake.gen1")
          {
-            connectionString.GetRequired("accountName", true, out string accountName);
+            connectionString.GetRequired("account", true, out string accountName);
             connectionString.GetRequired("tenantId", true, out string tenantId);
             connectionString.GetRequired("principalId", true, out string principalId);
             connectionString.GetRequired("principalSecret", true, out string principalSecret);
@@ -28,6 +31,24 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store
             }
 
             return client;
+         }
+         else if(connectionString.Prefix == "azure.datalake.gen2")
+         {
+            connectionString.GetRequired("account", true, out string accountName);
+
+            string key = connectionString.Get("key");
+
+            if(!string.IsNullOrWhiteSpace(key))
+            {
+               //connect with shared key
+
+               return AzureDataLakeStoreGen2BlobStorageProvider.CreateBySharedAccessKey(accountName, key);
+            }
+            else
+            {
+               return null;
+            }
+
          }
 
          return null;

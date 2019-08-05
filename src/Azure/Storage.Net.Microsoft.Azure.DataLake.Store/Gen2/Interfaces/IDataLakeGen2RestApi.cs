@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.Interfaces
 {
-   public interface IDataLakeGen2RestApi
+   interface IDataLakeGen2RestApi
    {
       Task<HttpResponseMessage> AppendPathAsync(string filesystem, string path, byte[] content,
          long position, CancellationToken cancellationToken = default);

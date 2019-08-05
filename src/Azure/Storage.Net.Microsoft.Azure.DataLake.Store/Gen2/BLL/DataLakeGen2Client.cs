@@ -11,7 +11,7 @@ using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
 {
-   public class DataLakeGen2Client : IDataLakeGen2Client
+   class DataLakeGen2Client
    {
       private readonly IDataLakeGen2RestApi _restApi;
 

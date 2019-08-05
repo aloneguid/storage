@@ -1,6 +1,6 @@
 ﻿namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models
 {
-   public class AclItem
+   class AclItem
    {
       public string User { get; set; }
       public AclPermission Access { get; set; }

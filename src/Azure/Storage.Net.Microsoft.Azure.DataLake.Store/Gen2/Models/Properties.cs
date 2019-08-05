@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models
 {
-   public class Properties
+   class Properties
    {
       public MediaTypeHeaderValue ContentType { get; set; }
       public DateTimeOffset LastModified { get; set; }

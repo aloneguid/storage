@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models
 {
-   public class FilesystemItem
+   class FilesystemItem
    {
       [JsonProperty("etag")]
       public string Etag { get; set; }

@@ -3,7 +3,7 @@ using System.Net;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models
 {
-   public class DataLakeGen2Exception : Exception
+   class DataLakeGen2Exception : Exception
    {
       public DataLakeGen2Exception(string message, Exception innerException) : base(message, innerException)
       {

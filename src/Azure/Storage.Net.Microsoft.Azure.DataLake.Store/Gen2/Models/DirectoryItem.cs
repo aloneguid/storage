@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models
 {
-   public class DirectoryItem
+   class DirectoryItem
    {
       [JsonProperty("contentLength")] public int? ContentLength { get; set; }
 

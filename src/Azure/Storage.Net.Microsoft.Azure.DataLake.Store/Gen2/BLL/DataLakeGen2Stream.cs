@@ -8,13 +8,13 @@ using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
 {
-   public class DataLakeGen2Stream : Stream
+   class DataLakeGen2Stream : Stream
    {
-      private readonly IDataLakeGen2Client _client;
+      private readonly DataLakeGen2Client _client;
       private readonly string _filesystem;
       private readonly string _path;
 
-      public DataLakeGen2Stream(IDataLakeGen2Client client, string filesystem, string path)
+      public DataLakeGen2Stream(DataLakeGen2Client client, string filesystem, string path)
       {
          _client = client;
          _filesystem = filesystem;

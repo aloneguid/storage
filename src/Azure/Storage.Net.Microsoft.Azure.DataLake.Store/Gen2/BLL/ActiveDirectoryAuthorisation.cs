@@ -5,7 +5,7 @@ using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.Interfaces;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
 {
-   public class ActiveDirectoryAuthorisation : IAuthorisation
+   class ActiveDirectoryAuthorisation : IAuthorisation
    {
       private const string Resource = "https://storage.azure.com/";
       private readonly string _authority;
