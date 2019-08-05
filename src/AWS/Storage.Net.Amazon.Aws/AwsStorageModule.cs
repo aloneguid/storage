@@ -18,12 +18,23 @@ namespace Storage.Net.Amazon.Aws
       {
          if(connectionString.Prefix == "aws.s3")
          {
-            connectionString.GetRequired("keyId", true, out string keyId);
-            connectionString.GetRequired("key", true, out string key);
+            string keyId = connectionString.Get("keyId");
+            string key = connectionString.Get("key");
+
+            if((keyId == null) != (key == null))
+            {
+               throw new ArgumentException($"connection string requires both 'key' and 'keyId' parameters, or neither.");
+            }
+
             connectionString.GetRequired("bucket", true, out string bucket);
             string region = connectionString.Get("region");
 
             RegionEndpoint endpoint = RegionEndpoint.GetBySystemName(string.IsNullOrEmpty(region) ? "eu-west-1" : region);
+
+            if(keyId == null)
+            {
+               return new AwsS3BlobStorage(bucket, endpoint);
+            }
 
             return new AwsS3BlobStorage(keyId, key, bucket, endpoint);
          }

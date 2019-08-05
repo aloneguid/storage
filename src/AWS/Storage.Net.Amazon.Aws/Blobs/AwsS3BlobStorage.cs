@@ -37,7 +37,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint, and will assume the runnning AWS ECS Task role credentials or Lambda role credentials />
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint, and will assume the running AWS ECS Task role credentials or Lambda role credentials 
       /// </summary>
       public AwsS3BlobStorage(string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
       {
@@ -49,7 +49,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint
       /// </summary>
       public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
          : this(accessKeyId, secretAccessKey, bucketName, new AmazonS3Config { RegionEndpoint = regionEndpoint ?? RegionEndpoint.EUWest1 }, skipBucketCreation)
@@ -57,7 +57,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
       }
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for an S3-compatible storage provider hosted on an alternative service URL/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for an S3-compatible storage provider hosted on an alternative service URL
       /// </summary>
       public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, string serviceUrl, bool skipBucketCreation = false)
          : this(accessKeyId, secretAccessKey, bucketName, new AmazonS3Config
@@ -69,7 +69,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
       }
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given S3 client configuration/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given S3 client configuration
       /// </summary>
       public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, AmazonS3Config clientConfig, bool skipBucketCreation = false)
       {
