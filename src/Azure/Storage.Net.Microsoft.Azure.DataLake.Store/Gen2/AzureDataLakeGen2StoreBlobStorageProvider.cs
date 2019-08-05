@@ -13,11 +13,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
    class AzureDataLakeStoreGen2BlobStorageProvider : IBlobStorage
    {
-      private DataLakeGen2Client Client { get; }
+      private readonly DataLakeGen2Client _client;
 
       private AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client client)
       {
-         Client = client ?? throw new ArgumentNullException(nameof(client));
+         _client = client ?? throw new ArgumentNullException(nameof(client));
       }
 
       public int ListBatchSize { get; set; } = 5000;
@@ -78,7 +78,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          int maxResults = options.MaxResults ?? ListBatchSize;
          var blobs = new List<Blob>();
 
-         FilesystemList filesystemList = await Client.ListFilesystemsAsync(cancellationToken: cancellationToken);
+         FilesystemList filesystemList = await _client.ListFilesystemsAsync(cancellationToken: cancellationToken);
 
          IEnumerable<FilesystemItem> filesystems =
             filesystemList.Filesystems
@@ -89,7 +89,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          {
             try
             {
-               DirectoryList directoryList = await Client.ListDirectoryAsync(
+               DirectoryList directoryList = await _client.ListDirectoryAsync(
                   filesystem.Name, info.Path, options.Recurse,
                   cancellationToken: cancellationToken);
 
@@ -124,7 +124,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
          return await TryGetPropertiesAsync(info.Filesystem, info.Path, cancellationToken) == null
             ? null
-            : Client.OpenRead(info.Filesystem, info.Path);
+            : _client.OpenRead(info.Filesystem, info.Path);
       }
 
       public async Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
@@ -134,10 +134,10 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
          if(!append)
          {
-            await Client.CreateFileAsync(info.Filesystem, info.Path, cancellationToken);
+            await _client.CreateFileAsync(info.Filesystem, info.Path, cancellationToken);
          }
 
-         return await Client.OpenWriteAsync(info.Filesystem, info.Path, cancellationToken);
+         return await _client.OpenWriteAsync(info.Filesystem, info.Path, cancellationToken);
       }
 
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths,
@@ -183,22 +183,22 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          GenericValidation.CheckBlobFullPath(fullPath);
          var info = new PathInformation(fullPath);
 
-         Properties properties = await Client.GetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
+         Properties properties = await _client.GetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
 
          if(properties.IsDirectory)
          {
-            await Client.DeleteDirectoryAsync(info.Filesystem, info.Path, true, cancellationToken);
+            await _client.DeleteDirectoryAsync(info.Filesystem, info.Path, true, cancellationToken);
             return;
          }
 
-         await Client.DeleteFileAsync(info.Filesystem, info.Path, cancellationToken);
+         await _client.DeleteFileAsync(info.Filesystem, info.Path, cancellationToken);
       }
 
       private async Task<Properties> TryGetPropertiesAsync(string filesystem, string path, CancellationToken cancellationToken)
       {
          try
          {
-            return await Client.GetPropertiesAsync(filesystem, path, cancellationToken);
+            return await _client.GetPropertiesAsync(filesystem, path, cancellationToken);
          }
          catch(DataLakeGen2Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
          {

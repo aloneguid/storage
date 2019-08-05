@@ -7,7 +7,7 @@ namespace Microsoft.Azure.DataLake.Store
    /// <summary>
    /// Enumerable that exposes enumerator:FileStatusList
    /// </summary>
-   internal class FileStatusOutput : IEnumerable<DirectoryEntry>
+   class FileStatusOutput : IEnumerable<DirectoryEntry>
    {
       /// <summary>
       /// Number of maximum directory entries to be retrieved from server. If -1 then retrieve all entries

@@ -11,7 +11,7 @@ namespace Microsoft.Azure.DataLake.Store
    /// Encapsulates a collection storing the list of directory entries. Once the collection is traversed, retrieves next set of directory entries from server
    /// This is for internal use only. Made public because we want to cast the enumerator to test enumeration with a smaller page size.
    /// </summary>
-   internal class FileStatusList : IEnumerator<DirectoryEntry>
+   class FileStatusList : IEnumerator<DirectoryEntry>
    {
       private const int MaxListSize = 200000;
 

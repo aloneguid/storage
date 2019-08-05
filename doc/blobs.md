@@ -242,6 +242,11 @@ Gen 2 is the new generation of the storage API, however only works if your ADLS 
 
 > todo
 
+You can also use connection strings:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.datalake.gen2://account=...;key=...");
+```
 
 
 

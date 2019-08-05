@@ -13,7 +13,7 @@
       <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
-      <Description>Provides Azure Data Lake Store integration for Storage.Net library</Description>
+      <Description>Provides Azure Data Lake Store integration for Storage.Net library. Supports both ADLS Gen 1 and Gen 2 accounts.</Description>
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
