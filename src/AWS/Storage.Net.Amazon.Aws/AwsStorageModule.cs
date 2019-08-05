@@ -21,7 +21,7 @@ namespace Storage.Net.Amazon.Aws
             string keyId = connectionString.Get("keyId");
             string key = connectionString.Get("key");
 
-            if((keyId == null) != (key == null))
+            if(string.IsNullOrEmpty(keyId) != string.IsNullOrEmpty(key))
             {
                throw new ArgumentException($"connection string requires both 'key' and 'keyId' parameters, or neither.");
             }
@@ -31,7 +31,7 @@ namespace Storage.Net.Amazon.Aws
 
             RegionEndpoint endpoint = RegionEndpoint.GetBySystemName(string.IsNullOrEmpty(region) ? "eu-west-1" : region);
 
-            if(keyId == null)
+            if(string.IsNullOrEmpty(keyId))
             {
                return new AwsS3BlobStorage(bucket, endpoint);
             }
