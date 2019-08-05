@@ -176,8 +176,8 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("aws.s3://keyId
 ```
 
 where:
-- **keyId** is access key ID.
-- **key** is secret access key.
+- **keyId** is (optional) access key ID.
+- **key** is (optional) secret access key.
 - **bucket** is bucket name.
 - **region** is an optional value and defaults to `EU West 1` if not specified. At the moment of this wring the following regions are supported. However as we are using the official AWS SDK, when region information changes, storage.net gets automatically updated.
   - `us-east-1`
@@ -201,6 +201,8 @@ where:
   - `cn-north-1`
   - `cn-northwest-1`
   - `ca-central-1`
+
+If **keyId** and **key** are omitted, the AWS SDK's default approach to credential resolution will be used. For example: if running in Lambda, it will assume the Lambda execution role; if there are credentials configured in ~/.aws, it will use those; etc.  See [AWS SDK Documentation](https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/net-dg-config-creds.html) for more details.
 
 #### Native Operations
 
