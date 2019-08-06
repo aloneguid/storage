@@ -146,6 +146,14 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
          );
       }
 
+      public static DataLakeGen2Client Create(string storageAccount)
+      {
+         return new DataLakeGen2Client(new HttpClient(),
+            new ManagedIdentityAuthorisation(), 
+            storageAccount
+         );
+      }
+
       public Stream OpenRead(string filesystem, string path)
       {
          return new DataLakeGen2Stream(this, filesystem, path);
