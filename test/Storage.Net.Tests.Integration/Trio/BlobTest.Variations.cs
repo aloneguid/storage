@@ -48,11 +48,6 @@ namespace Storage.Net.Tests.Integration.Blobs
 
    public class AdlsGen2Fixture : BlobFixture
    {
-      public AdlsGen2Fixture() : base("test/")
-      {
-
-      }
-
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
          return StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(settings.AzureDataLakeGen2Name, settings.AzureDataLakeGen2Key);

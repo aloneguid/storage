@@ -8,16 +8,19 @@ using System.Threading.Tasks;
 using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models;
+using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
    class AzureDataLakeStoreGen2BlobStorageProvider : IBlobStorage
    {
       private readonly DataLakeGen2Client _client;
+      private readonly IDataLakeApi _restApi;
 
-      private AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client client)
+      private AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client client, IDataLakeApi restApi)
       {
          _client = client ?? throw new ArgumentNullException(nameof(client));
+         _restApi = restApi;
       }
 
       public int ListBatchSize { get; set; } = 5000;
@@ -31,7 +34,9 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          if(sharedAccessKey == null)
             throw new ArgumentNullException(nameof(sharedAccessKey));
 
-         return new AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client.Create(accountName, sharedAccessKey));
+         return new AzureDataLakeStoreGen2BlobStorageProvider(
+            DataLakeGen2Client.Create(accountName, sharedAccessKey),
+            DataLakeApiFactory.CreateApi(accountName, sharedAccessKey));
       }
 
       public static AzureDataLakeStoreGen2BlobStorageProvider CreateByClientSecret(string accountName,
@@ -50,7 +55,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             throw new ArgumentException("Principal Secret (Password in NetworkCredential) part is required");
 
          return new AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client.Create(accountName, credential.Domain,
-            credential.UserName, credential.Password));
+            credential.UserName, credential.Password), null);
       }
 
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
@@ -64,13 +69,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       public async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
       {
          if(options == null)
-         {
-            options = new ListOptions()
-            {
-               FolderPath = "/",
-               Recurse = true
-            };
-         }
+            options = new ListOptions();
 
          GenericValidation.CheckBlobFullPath(options.FolderPath);
 
@@ -79,6 +78,8 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          var blobs = new List<Blob>();
 
          FilesystemList filesystemList = await _client.ListFilesystemsAsync(cancellationToken: cancellationToken);
+
+         Rest.Model.FilesystemList list = await _restApi.ListFilesystemsAsync();
 
          IEnumerable<FilesystemItem> filesystems =
             filesystemList.Filesystems
