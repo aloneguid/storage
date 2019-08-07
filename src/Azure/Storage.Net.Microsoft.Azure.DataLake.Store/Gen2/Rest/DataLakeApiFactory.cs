@@ -45,10 +45,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
       {
          string canonicalHeaders = $"x-ms-date:{DateTime.UtcNow.ToString("R")}\nx-ms-version:2018-11-09";
 
+         //event when content length is present but length is 0 the signature wants is to be an empty string
+         string contentLengthValue = contentLength == null
+            ? string.Empty
+            : contentLength > 0
+               ? contentLength.ToString()
+               : string.Empty;
+
          return httpVerb + "\n" +
                 contentEncoding + "\n" +
                 contentLanguage + "\n" +
-                (contentLength?.ToString() ?? "") + "\n" +
+                contentLengthValue + "\n" +
                 contentMd5 + "\n" +
                 contentType + "\n" +
                 date + "\n" +
@@ -94,6 +101,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
 
             string signature = DataLakeApiFactory.GenerateSignature(
                httpVerb: request.Method.Method,
+               contentLength: request.Content?.Headers?.ContentLength,
                canonicalisedHeaders: canonicalisedHeaders,
                canonicalisedResource: canonicalisedResource);
 

@@ -9,6 +9,7 @@ using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
+using System.Text;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
@@ -16,6 +17,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
    {
       private readonly DataLakeGen2Client _client;
       private readonly IDataLakeApi _restApi;
+      private static readonly Stream EmptyStream = new MemoryStream(new byte[0]);
 
       private AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client client, IDataLakeApi restApi)
       {
@@ -75,6 +77,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          int maxResults = options.MaxResults ?? ListBatchSize;
          var blobs = new List<Blob>();
 
+         //todo: remove this legacy
          FilesystemList filesystemList = await _client.ListFilesystemsAsync(cancellationToken: cancellationToken);
 
          IReadOnlyCollection<Blob> list = await new DirectoryBrowser(_restApi).ListAsync(options, cancellationToken);
@@ -126,17 +129,29 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             : _client.OpenRead(info.Filesystem, info.Path);
       }
 
-      public async Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
+      public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
       {
-         GenericValidation.CheckBlobFullPath(fullPath);
-         var info = new PathInformation(fullPath);
+         DecomposePath(fullPath, out string filesystemName, out string relativePath);
 
-         if(!append)
+         //todo: only if it doesn't exist
+         //await _restApi.CreateFilesystemAsync(filesystemName).ConfigureAwait(false);
+
+         return Task.FromResult<Stream>(new Rest.Model.FlushingStream(_restApi, filesystemName, relativePath));
+      }
+
+      private void DecomposePath(string path, out string filesystemName, out string relativePath)
+      {
+         GenericValidation.CheckBlobFullPath(path);
+         string[] parts = StoragePath.Split(path);
+
+         if(parts.Length == 1)
          {
-            await _client.CreateFileAsync(info.Filesystem, info.Path, cancellationToken);
+            throw new ArgumentException($"path {path} must include filesystem name as root folder", nameof(path));
          }
 
-         return await _client.OpenWriteAsync(info.Filesystem, info.Path, cancellationToken);
+         filesystemName = parts[0];
+
+         relativePath = StoragePath.Combine(parts.Skip(1));
       }
 
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths,

@@ -10,7 +10,7 @@ using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Wrappers;
 
 namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
 {
-   class DataLakeGen2RestApi : IDataLakeGen2RestApi
+   class DataLakeGen2RestApi
    {
       private const string ApiVersion = "2018-11-09";
       private readonly IAuthorisation _authorisation;

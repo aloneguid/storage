@@ -13,14 +13,14 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
 {
    class DataLakeGen2Client
    {
-      private readonly IDataLakeGen2RestApi _restApi;
+      private readonly DataLakeGen2RestApi _restApi;
 
       public DataLakeGen2Client(HttpClient httpClient, IAuthorisation authorisation, string storageAccountName) :
          this(new DataLakeGen2RestApi(httpClient, authorisation, storageAccountName))
       {
       }
 
-      public DataLakeGen2Client(IDataLakeGen2RestApi restApi)
+      public DataLakeGen2Client(DataLakeGen2RestApi restApi)
       {
          _restApi = restApi;
       }

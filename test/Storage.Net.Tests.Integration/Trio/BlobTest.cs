@@ -285,7 +285,7 @@ namespace Storage.Net.Tests.Integration.Blobs
       [Fact]
       public async Task Write_with_openwrite_succeeds()
       {
-         string id = RandomBlobPath();
+         string id = RandomBlobPath(subfolder: "whatsit", extension: ".txt");
          byte[] data = Encoding.UTF8.GetBytes("oh my");
 
          using(Stream dest = await _storage.OpenWriteAsync(id))
@@ -474,11 +474,13 @@ namespace Storage.Net.Tests.Integration.Blobs
          Assert.Equal(hash, hash2);
       }
 
-      private string RandomBlobPath(string prefix = null)
+      private string RandomBlobPath(string prefix = null, string subfolder = null, string extension = "")
       {
          return _blobPrefix +
+            (subfolder == null ? string.Empty : (subfolder + StoragePath.PathSeparator)) +
             (prefix == null ? string.Empty : prefix) +
-            Guid.NewGuid().ToString();
+            Guid.NewGuid().ToString() + 
+            extension;
       }
 
       class TestDocument
