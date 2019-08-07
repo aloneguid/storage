@@ -2,8 +2,6 @@
 
    <PropertyGroup>
       <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
-      <AssemblyOriginatorKeyFile>../../src/storage.snk</AssemblyOriginatorKeyFile>
-      <SignAssembly>true</SignAssembly>
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />

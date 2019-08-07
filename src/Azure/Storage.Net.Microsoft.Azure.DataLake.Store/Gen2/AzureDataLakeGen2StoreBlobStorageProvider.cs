@@ -71,15 +71,13 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          if(options == null)
             options = new ListOptions();
 
-         GenericValidation.CheckBlobFullPath(options.FolderPath);
-
          var info = new PathInformation(options.FolderPath);
          int maxResults = options.MaxResults ?? ListBatchSize;
          var blobs = new List<Blob>();
 
          FilesystemList filesystemList = await _client.ListFilesystemsAsync(cancellationToken: cancellationToken);
 
-         Rest.Model.FilesystemList list = await _restApi.ListFilesystemsAsync();
+         IReadOnlyCollection<Blob> list = await new DirectoryBrowser(_restApi).ListAsync(options, cancellationToken);
 
          IEnumerable<FilesystemItem> filesystems =
             filesystemList.Filesystems

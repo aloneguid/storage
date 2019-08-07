@@ -11,7 +11,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
    /// Refit interface wrapping the calls.
    /// REST API documentation - https://docs.microsoft.com/en-us/rest/api/storageservices/data-lake-storage-gen2
    /// </summary>
-   public interface IDataLakeApi
+   interface IDataLakeApi
    {
       /// <summary>
       /// https://docs.microsoft.com/en-gb/rest/api/storageservices/datalakestoragegen2/filesystem/list
@@ -22,6 +22,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          string prefix = null,
          string continuation = null,
          int? maxResults = null,
-         int? timeoutSeconds = null);
+         int? timeoutSeconds = null,
+         [AliasAs("x-ms-client-request-id")] string xMsClientRequestId = null);
    }
 }
