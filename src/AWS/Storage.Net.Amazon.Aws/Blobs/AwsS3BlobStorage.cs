@@ -96,6 +96,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
             catch (AmazonS3Exception ex) when (ex.ErrorCode == "BucketAlreadyOwnedByYou")
             {
                //ignore this error as bucket already exists
+               _initialised = true;
             }
          }
 
