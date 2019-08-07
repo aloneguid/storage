@@ -73,50 +73,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          if(options == null)
             options = new ListOptions();
 
-         var info = new PathInformation(options.FolderPath);
-         int maxResults = options.MaxResults ?? ListBatchSize;
-         var blobs = new List<Blob>();
-
-         //todo: remove this legacy
-         FilesystemList filesystemList = await _client.ListFilesystemsAsync(cancellationToken: cancellationToken);
-
-         IReadOnlyCollection<Blob> list = await new DirectoryBrowser(_restApi).ListAsync(options, cancellationToken);
-
-         IEnumerable<FilesystemItem> filesystems =
-            filesystemList.Filesystems
-               .Where(x => info.Filesystem == "" || x.Name == info.Filesystem)
-               .OrderBy(x => x.Name);
-
-         foreach(FilesystemItem filesystem in filesystems)
-         {
-            try
-            {
-               DirectoryList directoryList = await _client.ListDirectoryAsync(
-                  filesystem.Name, info.Path, options.Recurse,
-                  cancellationToken: cancellationToken);
-
-               IEnumerable<Blob> results = directoryList.Paths
-                  .Where(x => options.FilePrefix == null || x.Name.StartsWith(options.FilePrefix))
-                  .Select(x =>
-                     new Blob($"{filesystem.Name}/{x.Name}",
-                        x.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File))
-                  .Where(x => options.BrowseFilter == null || options.BrowseFilter(x))
-                  .OrderBy(x => x.FullPath);
-
-               blobs.AddRange(results);
-            }
-            catch(DataLakeGen2Exception e) when(e.StatusCode == HttpStatusCode.NotFound)
-            {
-
-            }
-
-            if(blobs.Count >= maxResults)
-            {
-               return blobs.Take(maxResults).ToList();
-            }
-         }
-
-         return blobs.ToList();
+         return await new DirectoryBrowser(_restApi).ListAsync(options, cancellationToken).ConfigureAwait(false);
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)

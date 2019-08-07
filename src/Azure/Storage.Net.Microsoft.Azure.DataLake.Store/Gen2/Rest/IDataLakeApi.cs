@@ -38,7 +38,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
       /// </summary>
       /// <param name="path">The file or directory path.</param>
       /// <param name="resource">Required only for Create File and Create Directory. The value must be "file" or "directory".</param>
-      [Put("/{filesystem}/{path}")]
+      [Put("/{filesystem}/{**path}")]
       Task CreatePathAsync(
          string filesystem,
          string path,
@@ -80,7 +80,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
       /// <param name="timeoutSeconds"></param>
       /// <param name="body"></param>
       /// <returns></returns>
-      [Patch("/{filesystem}/{path}")]
+      [Patch("/{filesystem}/{**path}")]
       Task UpdatePathAsync(
          string filesystem,
          string path,

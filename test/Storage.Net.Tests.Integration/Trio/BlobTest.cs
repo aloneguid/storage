@@ -476,11 +476,11 @@ namespace Storage.Net.Tests.Integration.Blobs
 
       private string RandomBlobPath(string prefix = null, string subfolder = null, string extension = "")
       {
-         return _blobPrefix +
-            (subfolder == null ? string.Empty : (subfolder + StoragePath.PathSeparator)) +
-            (prefix == null ? string.Empty : prefix) +
-            Guid.NewGuid().ToString() + 
-            extension;
+         return StoragePath.Combine(
+            _blobPrefix,
+            subfolder,
+            prefix,
+            Guid.NewGuid().ToString() + extension);
       }
 
       class TestDocument

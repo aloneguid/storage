@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
 {
+   /// <summary>
+   /// This stream calls API on every write operation, that's less than good so can be optimised
+   /// </summary>
    class FlushingStream : Stream
    {
       private static readonly Stream EmptyStream = new MemoryStream(new byte[0]);
