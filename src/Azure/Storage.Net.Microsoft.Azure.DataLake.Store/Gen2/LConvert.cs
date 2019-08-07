@@ -14,5 +14,20 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          blob.Properties["IsFilesystem"] = "True";
          return blob;
       }
+
+      public static Blob ToBlob(string filesystemName, Path path)
+      {
+         var blob = new Blob(StoragePath.Combine(filesystemName, path.Name), path.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File)
+         {
+            Size = path.ContentLength,
+            LastModificationTime = path.LastModified
+         };
+         blob.Properties["ETag"] = path.ETag;
+         blob.Properties["Owner"] = path.Owner;
+         blob.Properties["Group"] = path.Group;
+         blob.Properties["Permissions"] = path.Permissions;
+
+         return blob;
+      }
    }
 }

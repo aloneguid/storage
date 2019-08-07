@@ -138,6 +138,31 @@ namespace Storage.Net
       }
 
       /// <summary>
+      /// Gets the root folder name
+      /// </summary>
+      public static string GetRootFolder(string path)
+      {
+         string[] parts = Split(path);
+         if(parts.Length == 1)
+            return null;
+
+         return parts[0];
+      }
+
+      /// <summary>
+      /// Removes root folder from path
+      /// </summary>
+      public static string RemoveRootFolder(string path)
+      {
+         string[] parts = Split(path);
+         if(parts.Length == 1)
+            return path;
+
+         return Combine(parts.Skip(1));
+
+      }
+
+      /// <summary>
       /// Compare that two path entries are equal. This takes into account path entries which are slightly different as strings but identical in physical location.
       /// </summary>
       public static bool ComparePath(string path1, string path2)

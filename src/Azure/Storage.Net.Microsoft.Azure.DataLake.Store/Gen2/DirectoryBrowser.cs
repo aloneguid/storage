@@ -39,14 +39,18 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          }
          else
          {
-            throw new NotImplementedException();
+            string fs = StoragePath.GetRootFolder(path);
+
+            PathList list = await _api.ListPathAsync(fs, StoragePath.RemoveRootFolder(path), recursive: false).ConfigureAwait(false);
+
+            batch.AddRange(list.Paths.Select(p => LConvert.ToBlob(fs, p)));
          }
 
          container.AddRange(batch);
 
          if(options.Recurse)
          {
-            await Task.WhenAll(batch.Where(b => !b.IsFolder).Select(f => ListAsync(container, f, options, cancellationToken)));
+            await Task.WhenAll(batch.Where(b => b.IsFolder).Select(f => ListAsync(container, f, options, cancellationToken)));
          }
       }
 
