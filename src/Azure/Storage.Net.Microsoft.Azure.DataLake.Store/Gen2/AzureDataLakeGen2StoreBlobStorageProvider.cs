@@ -9,18 +9,19 @@ using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
+using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model;
+using Refit;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
    class AzureDataLakeStoreGen2BlobStorageProvider : IBlobStorage
    {
-      private readonly DataLakeGen2Client _client;
+      private readonly DataLakeGen2Client _legacyClient;
       private readonly IDataLakeApi _restApi;
-      private static readonly Stream EmptyStream = new MemoryStream(new byte[0]);
 
       private AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client client, IDataLakeApi restApi)
       {
-         _client = client ?? throw new ArgumentNullException(nameof(client));
+         _legacyClient = client ?? throw new ArgumentNullException(nameof(client));
          _restApi = restApi;
       }
 
@@ -89,7 +90,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
          return await TryGetPropertiesAsync(info.Filesystem, info.Path, cancellationToken) == null
             ? null
-            : _client.OpenRead(info.Filesystem, info.Path);
+            : _legacyClient.OpenRead(info.Filesystem, info.Path);
       }
 
       public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
@@ -97,7 +98,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          DecomposePath(fullPath, out string filesystemName, out string relativePath);
 
          //FlushingStream already handles missing filesystem and attempts to create it on error
-         return Task.FromResult<Stream>(new Rest.Model.FlushingStream(_restApi, filesystemName, relativePath));
+         return Task.FromResult<Stream>(new FlushingStream(_restApi, filesystemName, relativePath));
       }
 
       private void DecomposePath(string path, out string filesystemName, out string relativePath)
@@ -118,7 +119,25 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths,
          CancellationToken cancellationToken = default)
       {
-         return (await GetBlobsAsync(fullPaths, cancellationToken)).Select(x => x != null).ToList();
+         GenericValidation.CheckBlobFullPaths(fullPaths);
+
+         return await Task.WhenAll(fullPaths.Select(path => ExistsAsync(path, cancellationToken)));
+      }
+
+      private async Task<bool> ExistsAsync(string fullPath, CancellationToken cancellationToken)
+      {
+         DecomposePath(fullPath, out string fs, out string rp);
+
+         try
+         {
+            await _restApi.GetPathPropertiesAsync(fs, rp, "getStatus").ConfigureAwait(false);
+         }
+         catch(ApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
+         {
+            return false;
+         }
+
+         return true;
       }
 
       public async Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths,
@@ -157,7 +176,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       {
          try
          {
-            return await _client.GetPropertiesAsync(filesystem, path, cancellationToken);
+            return await _legacyClient.GetPropertiesAsync(filesystem, path, cancellationToken);
          }
          catch(DataLakeGen2Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
          {

@@ -91,12 +91,38 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          [AliasAs("timeout")] int? timeoutSeconds = null,
          [Body] Stream body = null);
 
-      [Delete("/{filesystem}/{path}")]
+      /// <summary>
+      /// https://docs.microsoft.com/en-gb/rest/api/storageservices/datalakestoragegen2/path/delete
+      /// </summary>
+      /// <param name="filesystem"></param>
+      /// <param name="path"></param>
+      /// <param name="recursive"></param>
+      /// <param name="continuation"></param>
+      /// <param name="timeoutSeconds"></param>
+      /// <returns></returns>
+      [Delete("/{filesystem}/{**path}")]
       Task DeletePathAsync(
          string filesystem,
          string path,
          bool? recursive = null,
          string continuation = null,
+         [AliasAs("timeout")] int? timeoutSeconds = null);
+
+      /// <summary>
+      /// https://docs.microsoft.com/en-gb/rest/api/storageservices/datalakestoragegen2/path/getproperties
+      /// </summary>
+      /// <param name="filesystem"></param>
+      /// <param name="path"></param>
+      /// <param name="action">Optional. If the value is "getStatus" only the system defined properties for the path are returned. If the value is "getAccessControl" the access control list is returned in the response headers (Hierarchical Namespace must be enabled for the account), otherwise the properties are returned.</param>
+      /// <param name="upn">Optional. Valid only when Hierarchical Namespace is enabled for the account. If "true", the user identity values returned in the x-ms-owner, x-ms-group, and x-ms-acl response headers will be transformed from Azure Active Directory Object IDs to User Principal Names. If "false", the values will be returned as Azure Active Directory Object IDs. The default value is false. Note that group and application Object IDs are not translated because they do not have unique friendly names.</param>
+      /// <param name="timeoutSeconds"></param>
+      /// <returns></returns>
+      [Head("/{filesystem}/{**path}")]
+      Task GetPathPropertiesAsync(
+         string filesystem,
+         string path,
+         string action = null,
+         string upn = null,
          [AliasAs("timeout")] int? timeoutSeconds = null);
 
       #endregion
