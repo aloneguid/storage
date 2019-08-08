@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Refit;
 using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model;
@@ -72,7 +74,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          string fs = parts[0];
          string relativePath = StoragePath.Combine(parts.Skip(1));
 
-         PathList list = await _api.ListPathAsync(fs, relativePath, recursive: options.Recurse).ConfigureAwait(false);
+         PathList list;
+
+         try
+         {
+            list = await _api.ListPathAsync(fs, relativePath, recursive: options.Recurse).ConfigureAwait(false);
+         }
+         catch(ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+         {
+            // specified path is not found, nothing serious
+            return new List<Blob>();
+         }
 
          IEnumerable<Blob> result = list.Paths.Select(p => LConvert.ToBlob(fs, p));
 

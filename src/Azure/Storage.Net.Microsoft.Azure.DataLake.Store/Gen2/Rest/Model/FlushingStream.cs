@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Refit;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
 {
@@ -58,7 +60,18 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
       {
          if(_pos == 0)
          {
-            await _api.CreatePathAsync(_filesystemName, _relativePath, "file").ConfigureAwait(false);
+            try
+            {
+               await _api.CreatePathAsync(_filesystemName, _relativePath, "file").ConfigureAwait(false);
+            }
+            catch(ApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
+            {
+               //filesystem doesn't exist, create it
+               await _api.CreateFilesystemAsync(_filesystemName).ConfigureAwait(false);
+
+               //now create path again
+               await _api.CreatePathAsync(_filesystemName, _relativePath, "file").ConfigureAwait(false);
+            }
          }
 
          await _api.UpdatePathAsync(_filesystemName, _relativePath, "append",
