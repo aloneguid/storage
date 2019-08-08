@@ -90,7 +90,12 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
                .OrderBy(key => key)
                .Select(key => $"{key}:{coll[key]}"));
 
-            return $"/{_accountName}{request.RequestUri.LocalPath}\n{headersResource}";
+            if(headersResource.Length > 0)
+            {
+               headersResource = "\n" + headersResource;
+            }
+
+            return $"/{_accountName}{request.RequestUri.LocalPath}{headersResource}";
          }
 
          protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -102,6 +107,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
             string signature = DataLakeApiFactory.GenerateSignature(
                httpVerb: request.Method.Method,
                contentLength: request.Content?.Headers?.ContentLength,
+               range: request.Headers?.Range?.ToString(),
                canonicalisedHeaders: canonicalisedHeaders,
                canonicalisedResource: canonicalisedResource);
 

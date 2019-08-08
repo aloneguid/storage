@@ -56,49 +56,6 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
          };
       }
 
-      public async Task<Properties> GetPropertiesAsync(string filesystem, string path,
-         CancellationToken cancellationToken = default)
-      {
-         HttpResponseMessage result = await _restApi.GetStatusAsync(filesystem, path, cancellationToken);
-
-         return new Properties
-         {
-            ContentType = result.Content.Headers.ContentType,
-            LastModified = result.Content.Headers.LastModified.GetValueOrDefault(),
-            Length = result.Content.Headers.ContentLength.GetValueOrDefault(),
-            IsDirectory = result.Headers.GetValues("x-ms-resource-type").First() == "directory"
-         };
-      }
-
-      public async Task<byte[]> ReadFileAsync(string filesystem, string path, long? start = null, long? end = null,
-         CancellationToken cancellationToken = default)
-      {
-         HttpResponseMessage result = await _restApi.ReadPathAsync(filesystem, path, start, end, cancellationToken);
-         return await result.Content.ReadAsByteArrayAsync();
-      }
-
-      public static DataLakeGen2Client Create(string storageAccount, string sharedAccessKey)
-      {
-         return new DataLakeGen2Client(new HttpClient(),
-            new SharedAccessKeyAuthorisation(sharedAccessKey),
-            storageAccount
-         );
-      }
-
-      public static DataLakeGen2Client Create(string storageAccount, string tenantId, string clientId,
-         string clientSecret)
-      {
-         return new DataLakeGen2Client(new HttpClient(),
-            new ActiveDirectoryAuthorisation(tenantId, clientId, clientSecret),
-            storageAccount
-         );
-      }
-
-      public Stream OpenRead(string filesystem, string path)
-      {
-         return new DataLakeGen2Stream(this, filesystem, path);
-      }
-
       private static string SerialiseAcl(IEnumerable<AclItem> acl)
       {
          return string.Join(",", acl

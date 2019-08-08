@@ -29,5 +29,16 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
          return blob;
       }
+
+      public static Blob ToBlob(string fullPath, PathProperties pp)
+      {
+         var result = new Blob(fullPath)
+         {
+            Size = pp.Length,
+            LastModificationTime = pp.LastModified
+         };
+
+         return result;
+      }
    }
 }

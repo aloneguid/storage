@@ -92,6 +92,23 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          [Body] Stream body = null);
 
       /// <summary>
+      /// https://docs.microsoft.com/en-gb/rest/api/storageservices/datalakestoragegen2/path/read
+      /// </summary>
+      /// <param name="filesystem"></param>
+      /// <param name="path"></param>
+      /// <param name="range">The HTTP Range request header specifies one or more byte ranges of the resource to be retrieved.</param>
+      /// <param name="body">Body must be present but must be empty</param>
+      /// <param name="timeoutSeconds"></param>
+      /// <returns></returns>
+      [Get("/{filesystem}/{**path}")]
+      Task<Stream> ReadPathAsync(
+         string filesystem,
+         string path,
+         [Header("range")] string range,
+         [Body] Stream body,
+         [AliasAs("timeout")] int? timeoutSeconds = null);
+
+      /// <summary>
       /// https://docs.microsoft.com/en-gb/rest/api/storageservices/datalakestoragegen2/path/delete
       /// </summary>
       /// <param name="filesystem"></param>
@@ -118,7 +135,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
       /// <param name="timeoutSeconds"></param>
       /// <returns></returns>
       [Head("/{filesystem}/{**path}")]
-      Task GetPathPropertiesAsync(
+      Task<ApiResponse<string>> GetPathPropertiesAsync(
          string filesystem,
          string path,
          string action = null,

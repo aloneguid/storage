@@ -245,7 +245,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
          string canonicalisedHeaders = CreateCanonicalisedHeaders(headers);
          string canonicalisedResources = CreateCanonicalisedResources(query);
          string queryString = CreateQueryString(query);
-         var uri = new Uri($"{_baseUri}/{path}?{queryString}");
+         var uri = new Uri($"{_baseUri}/{path}{queryString}");
 
          string signature = GenerateSignature(method.Method,
             contentLength: content.Headers.ContentLength > 0 ? content.Headers.ContentLength.ToString() : "",
@@ -331,9 +331,11 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
 
       private static string CreateQueryString(IDictionary<string, string> query)
       {
-         return string.Join("&", query
+         string qs = string.Join("&", query
             .Select(x => $"{x.Key}={x.Value}")
             .ToArray());
+
+         return (qs.Length > 0 ? "?" : "") + qs;
       }
    }
 }

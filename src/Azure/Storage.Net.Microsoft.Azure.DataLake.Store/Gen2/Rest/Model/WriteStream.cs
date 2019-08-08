@@ -12,16 +12,15 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
    /// <summary>
    /// This stream calls API on every write operation, that's less than good so can be optimised
    /// </summary>
-   class FlushingStream : Stream
+   class WriteStream : Stream
    {
-      private static readonly Stream EmptyStream = new MemoryStream(new byte[0]);
       private long _pos;
       private readonly IDataLakeApi _api;
       private readonly string _filesystemName;
       private readonly string _relativePath;
       private bool _flushed;
 
-      public FlushingStream(IDataLakeApi api, string filesystemName, string relativePath)
+      public WriteStream(IDataLakeApi api, string filesystemName, string relativePath)
       {
          _api = api;
          _filesystemName = filesystemName;
@@ -80,6 +79,8 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
 
          _pos += count;
       }
+
+      private Stream EmptyStream => new MemoryStream(new byte[0]);
 
       public override void Flush()
       {

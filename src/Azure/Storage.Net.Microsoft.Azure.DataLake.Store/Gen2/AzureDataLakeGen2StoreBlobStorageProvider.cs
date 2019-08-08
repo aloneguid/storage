@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL;
-using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model;
 using Refit;
@@ -16,12 +15,10 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
    class AzureDataLakeStoreGen2BlobStorageProvider : IBlobStorage
    {
-      private readonly DataLakeGen2Client _legacyClient;
       private readonly IDataLakeApi _restApi;
 
-      private AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client client, IDataLakeApi restApi)
+      private AzureDataLakeStoreGen2BlobStorageProvider(IDataLakeApi restApi)
       {
-         _legacyClient = client ?? throw new ArgumentNullException(nameof(client));
          _restApi = restApi;
       }
 
@@ -37,7 +34,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             throw new ArgumentNullException(nameof(sharedAccessKey));
 
          return new AzureDataLakeStoreGen2BlobStorageProvider(
-            DataLakeGen2Client.Create(accountName, sharedAccessKey),
             DataLakeApiFactory.CreateApi(accountName, sharedAccessKey));
       }
 
@@ -56,8 +52,9 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          if(string.IsNullOrEmpty(credential.Password))
             throw new ArgumentException("Principal Secret (Password in NetworkCredential) part is required");
 
-         return new AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client.Create(accountName, credential.Domain,
-            credential.UserName, credential.Password), null);
+         //return new AzureDataLakeStoreGen2BlobStorageProvider(
+         //   DataLakeGen2Client.Create(accountName, credential.Domain, credential.UserName, credential.Password), null);
+         throw new NotImplementedException();
       }
 
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
@@ -86,11 +83,21 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
-         var info = new PathInformation(fullPath);
+         DecomposePath(fullPath, out string fs, out string rp);
 
-         return await TryGetPropertiesAsync(info.Filesystem, info.Path, cancellationToken) == null
-            ? null
-            : _legacyClient.OpenRead(info.Filesystem, info.Path);
+         PathProperties pp;
+
+         try
+         {
+            pp = await GetPathPropertiesAsync(fs, rp, "getStatus").ConfigureAwait(false);
+         }
+         catch(ApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
+         {
+            //the file is not found, return null
+            return null;
+         }
+
+         return new BufferedStream(new ReadStream(_restApi, (long)pp.Length, fs, rp), 4096);
       }
 
       public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
@@ -98,7 +105,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          DecomposePath(fullPath, out string filesystemName, out string relativePath);
 
          //FlushingStream already handles missing filesystem and attempts to create it on error
-         return Task.FromResult<Stream>(new FlushingStream(_restApi, filesystemName, relativePath));
+         return Task.FromResult<Stream>(new WriteStream(_restApi, filesystemName, relativePath));
       }
 
       private void DecomposePath(string path, out string filesystemName, out string relativePath)
@@ -130,7 +137,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
          try
          {
-            await _restApi.GetPathPropertiesAsync(fs, rp, "getStatus").ConfigureAwait(false);
+            await GetPathPropertiesAsync(fs, rp, "getStatus").ConfigureAwait(false);
          }
          catch(ApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
@@ -143,19 +150,24 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       public async Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths,
          CancellationToken cancellationToken = default)
       {
-         var fullPathsList = fullPaths.ToList();
-         GenericValidation.CheckBlobFullPaths(fullPathsList);
+         return await Task.WhenAll(fullPaths.Select(path => GetBlobAsync(path, cancellationToken))).ConfigureAwait(false);
+      }
 
-         return await Task.WhenAll(fullPathsList.Select(async x =>
+      private async Task<Blob> GetBlobAsync(string fullPath, CancellationToken cancellationToken)
+      {
+         DecomposePath(fullPath, out string fs, out string rp);
+         PathProperties pp;
+
+         try
          {
-            var info = new PathInformation(x);
-            Properties properties = await TryGetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
-            return properties == null ? null : new Blob(x, properties.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File)
-            {
-               LastModificationTime = properties.LastModified,
-               Size = properties.Length
-            };
-         }));
+            pp = await GetPathPropertiesAsync(fs, rp, "getStatus").ConfigureAwait(false);
+         }
+         catch(ApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
+         {
+            return null;
+         }
+
+         return LConvert.ToBlob(fullPath, pp);
       }
 
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
@@ -172,35 +184,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          return Task.FromResult(EmptyTransaction.Instance);
       }
 
-      private async Task<Properties> TryGetPropertiesAsync(string filesystem, string path, CancellationToken cancellationToken)
+
+      private async Task<PathProperties> GetPathPropertiesAsync(
+         string filesystem,
+         string path,
+         string action = null,
+         string upn = null,
+         int? timeoutSeconds = null)
       {
-         try
-         {
-            return await _legacyClient.GetPropertiesAsync(filesystem, path, cancellationToken);
-         }
-         catch(DataLakeGen2Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
-         {
-            return null;
-         }
-      }
-
-      private class PathInformation
-      {
-         public PathInformation(string id)
-         {
-            string[] split = id.Split('/');
-
-            if(split.Length < 1)
-            {
-               throw new ArgumentException("id must contain a filesystem.");
-            }
-
-            Filesystem = split.First();
-            Path = string.Join("/", split.Skip(1));
-         }
-
-         public string Filesystem { get; }
-         public string Path { get; }
+         ApiResponse<string> response = await _restApi.GetPathPropertiesAsync(filesystem, path, action, upn, timeoutSeconds);
+         await response.EnsureSuccessStatusCodeAsync();
+         return new PathProperties(response);
       }
    }
 }
