@@ -91,6 +91,14 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          [AliasAs("timeout")] int? timeoutSeconds = null,
          [Body] Stream body = null);
 
+      [Delete("/{filesystem}/{path}")]
+      Task DeletePathAsync(
+         string filesystem,
+         string path,
+         bool? recursive = null,
+         string continuation = null,
+         [AliasAs("timeout")] int? timeoutSeconds = null);
+
       #endregion
    }
 }

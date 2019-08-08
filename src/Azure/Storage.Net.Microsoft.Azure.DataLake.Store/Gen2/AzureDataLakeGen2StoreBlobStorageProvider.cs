@@ -9,7 +9,6 @@ using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Models;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
-using System.Text;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
@@ -65,7 +64,14 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          var fullPathsList = fullPaths.ToList();
          GenericValidation.CheckBlobFullPaths(fullPathsList);
 
-         await Task.WhenAll(fullPathsList.Select(x => DeleteAsync(x, cancellationToken)).ToList());
+         await Task.WhenAll(fullPathsList.Select(path => DeleteAsync(path, cancellationToken)));
+      }
+
+      private async Task DeleteAsync(string fullPath, CancellationToken cancellationToken)
+      {
+         DecomposePath(fullPath, out string fs, out string rp);
+
+         await _restApi.DeletePathAsync(fs, rp, true).ConfigureAwait(false);
       }
 
       public async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
@@ -90,9 +96,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       {
          DecomposePath(fullPath, out string filesystemName, out string relativePath);
 
-         //todo: only if it doesn't exist
-         //await _restApi.CreateFilesystemAsync(filesystemName).ConfigureAwait(false);
-
+         //FlushingStream already handles missing filesystem and attempts to create it on error
          return Task.FromResult<Stream>(new Rest.Model.FlushingStream(_restApi, filesystemName, relativePath));
       }
 
@@ -147,22 +151,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       public Task<ITransaction> OpenTransactionAsync()
       {
          return Task.FromResult(EmptyTransaction.Instance);
-      }
-
-      private async Task DeleteAsync(string fullPath, CancellationToken cancellationToken)
-      {
-         GenericValidation.CheckBlobFullPath(fullPath);
-         var info = new PathInformation(fullPath);
-
-         Properties properties = await _client.GetPropertiesAsync(info.Filesystem, info.Path, cancellationToken);
-
-         if(properties.IsDirectory)
-         {
-            await _client.DeleteDirectoryAsync(info.Filesystem, info.Path, true, cancellationToken);
-            return;
-         }
-
-         await _client.DeleteFileAsync(info.Filesystem, info.Path, cancellationToken);
       }
 
       private async Task<Properties> TryGetPropertiesAsync(string filesystem, string path, CancellationToken cancellationToken)
