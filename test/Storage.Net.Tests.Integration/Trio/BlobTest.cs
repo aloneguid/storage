@@ -479,8 +479,7 @@ namespace Storage.Net.Tests.Integration.Blobs
          return StoragePath.Combine(
             _blobPrefix,
             subfolder,
-            prefix,
-            Guid.NewGuid().ToString() + extension);
+            (prefix ?? "") + Guid.NewGuid().ToString() + extension);
       }
 
       class TestDocument

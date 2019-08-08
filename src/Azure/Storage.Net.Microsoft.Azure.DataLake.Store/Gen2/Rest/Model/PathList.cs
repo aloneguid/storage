@@ -6,5 +6,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
    {
       [JsonProperty("paths")]
       public Path[] Paths { get; set; }
+
+      public override string ToString() => $"{Paths?.Length ?? 0}";
    }
 }

@@ -21,46 +21,71 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
       public async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options, CancellationToken cancellationToken)
       {
-         var container = new List<Blob>();
-
-         await ListAsync(container, options.FolderPath, options, cancellationToken).ConfigureAwait(false);
-
-         return container;
-      }
-
-
-      private async Task ListAsync(List<Blob> container, string path, ListOptions options, CancellationToken cancellationToken)
-      {
-         var batch = new List<Blob>();
-
-         if(StoragePath.IsRootPath(path))
+         if(StoragePath.IsRootPath(options.FolderPath))
          {
-            batch.AddRange(await ListFilesystemsAsync().ConfigureAwait(false));
+            //only filesystems are in the root path
+            var result = new List<Blob>(await ListFilesystemsAsync(options, cancellationToken).ConfigureAwait(false));
+
+            if(options.Recurse)
+            {
+               foreach(Blob folder in result.Where(b => b.IsFolder).ToList())
+               {
+                  int? maxResults = options.MaxResults == null
+                     ? null
+                     : (int?)(options.MaxResults.Value - result.Count);
+
+                  result.AddRange(await ListPathAsync(folder, maxResults, options, cancellationToken).ConfigureAwait(false));
+               }
+            }
+
+            return result;
          }
          else
          {
-            string fs = StoragePath.GetRootFolder(path);
-
-            PathList list = await _api.ListPathAsync(fs, StoragePath.RemoveRootFolder(path), recursive: false).ConfigureAwait(false);
-
-            batch.AddRange(list.Paths.Select(p => LConvert.ToBlob(fs, p)));
-         }
-
-         container.AddRange(batch);
-
-         if(options.Recurse)
-         {
-            await Task.WhenAll(batch.Where(b => b.IsFolder).Select(f => ListAsync(container, f, options, cancellationToken)));
+            return await ListPathAsync(options.FolderPath, options.MaxResults, options, cancellationToken).ConfigureAwait(false);
          }
       }
 
-      private async Task<IReadOnlyCollection<Blob>> ListFilesystemsAsync()
+      private async Task<IReadOnlyCollection<Blob>> ListFilesystemsAsync(ListOptions options, CancellationToken cancellationToken)
       {
+         //todo: paging
+
          FilesystemList filesystems = await _api.ListFilesystemsAsync().ConfigureAwait(false);
 
-         return filesystems.Filesystems
-            .Select(LConvert.ToBlob)
-            .ToList();
+         IEnumerable<Blob> result = filesystems.Filesystems
+            .Select(LConvert.ToBlob);
+
+         if(options.BrowseFilter != null)
+            result = result.Where(fs => options.BrowseFilter == null || options.BrowseFilter(fs));
+
+         if(options.MaxResults != null)
+            result = result.Take(options.MaxResults.Value);
+
+         return result.ToList();
+      }
+
+      private async Task<IReadOnlyCollection<Blob>> ListPathAsync(string path, int? maxResults, ListOptions options, CancellationToken cancellationToken)
+      {
+         //get filesystem name and folder path
+         string[] parts = StoragePath.Split(path);
+
+         string fs = parts[0];
+         string relativePath = StoragePath.Combine(parts.Skip(1));
+
+         PathList list = await _api.ListPathAsync(fs, relativePath, recursive: options.Recurse).ConfigureAwait(false);
+
+         IEnumerable<Blob> result = list.Paths.Select(p => LConvert.ToBlob(fs, p));
+
+         if(options.FilePrefix != null)
+            result = result.Where(b => b.IsFolder || b.Name.StartsWith(options.FilePrefix));
+
+         if(options.BrowseFilter != null)
+            result = result.Where(b => options.BrowseFilter(b));
+
+         if(maxResults != null)
+            result = result.Take(maxResults.Value);
+
+         return result.ToList();
       }
    }
 }

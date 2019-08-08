@@ -28,5 +28,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
 
       [JsonProperty("permissions")]
       public string Permissions { get; set; }
+
+      public override string ToString() => $"{(IsDirectory? "dir" : "file")} {Name}";
    }
 }
