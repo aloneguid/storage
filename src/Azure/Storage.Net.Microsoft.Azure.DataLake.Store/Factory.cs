@@ -93,19 +93,11 @@ namespace Storage.Net
       /// </summary>
       /// <param name="factory">Factory reference</param>
       /// <param name="accountName">Data Lake account name</param>
-      /// <param name="listBatchSize">Batch size for list operation for this storage connection. If not set defaults to 5000.</param>
       /// <returns></returns>
       public static IBlobStorage AzureDataLakeGen2StoreByManagedIdentity(this IBlobStorageFactory factory,
-         string accountName,
-         int listBatchSize = 5000)
+         string accountName)
       {
-         if(accountName == null)
-            throw new ArgumentNullException(nameof(accountName));
-
-         var client = AzureDataLakeStoreGen2BlobStorageProvider.CreateByManagedIdentity(accountName);
-         client.ListBatchSize = listBatchSize;
-
-         return client;
+         return AzureDataLakeStoreGen2BlobStorageProvider.CreateByManagedIdentity(accountName);
       }
    }
 }

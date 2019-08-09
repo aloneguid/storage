@@ -250,7 +250,7 @@ If filesystem doesn't exist, we will try to create it for you, if the account pr
 
 You can authenticate in the ways described below. To use connection strings, don't forget to call `StorageFactory.Modules.UseAzureDataLake()` somewhere when your program starts.
 
-##### Using *shared key authentication*
+##### Using **Shared Key Authentication**
 
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(
@@ -265,14 +265,14 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
    "azure.datalake.gen2://account=...;key=...");
 ```
 
-##### Using *service principal*
+##### Using **Service Principal**
 
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen2StoreByClientSecret(
    accountName,
    tenantId,
    principalId,
-   principalSecret)
+   principalSecret);
 ```
 
 or
@@ -282,6 +282,19 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
    "azure.datalake.gen2://account=...;tenantId=...;principalId=...;principalSecret=...;listBatchSize=...");
 ```
 
+##### Using **Managed Service Identity**
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen2StoreByManagedIdentity(
+   accountName);
+```
+
+or
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
+   "azure.datalake.gen2://account=...;msi");
+```
 
 
 

@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Refit;
 
@@ -27,10 +28,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
 
       public static IDataLakeApi CreateApiWithServicePrincipal(string accountName, string tenantId, string clientId, string clientSecret)
       {
-         string baseUrl = $"https://{accountName}.dfs.core.windows.net";
-
          return RestService.For<IDataLakeApi>(
             new HttpClient(new ActiveDirectoryHttpClientHandler(accountName, tenantId, clientId, clientSecret))
+            {
+               BaseAddress = GetBaseAddress(accountName)
+            });
+      }
+
+      public static IDataLakeApi CreateApiWithManagedIdentity(string accountName)
+      {
+         return RestService.For<IDataLakeApi>(
+            new HttpClient(new ManagedIdentityHttpClientHandler())
             {
                BaseAddress = GetBaseAddress(accountName)
             });
@@ -159,6 +167,22 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
 
             AuthenticationResult authenticationResult = await _context.AcquireTokenAsync(Resource, _credential);
             var authHeader = new AuthenticationHeaderValue("Bearer", authenticationResult.AccessToken);
+            request.Headers.Authorization = authHeader;
+            return await base.SendAsync(request, cancellationToken);
+         }
+      }
+
+      private class ManagedIdentityHttpClientHandler : HttpClientHandler
+      {
+         private const string Resource = "https://storage.azure.com/";
+         private readonly AzureServiceTokenProvider _tokenProvider = new AzureServiceTokenProvider();
+
+         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+         {
+            //todo: same as above, auth every time is really slow
+
+            string token = await _tokenProvider.GetAccessTokenAsync(Resource);
+            var authHeader = new AuthenticationHeaderValue("Bearer", token);
             request.Headers.Authorization = authHeader;
             return await base.SendAsync(request, cancellationToken);
          }

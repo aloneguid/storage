@@ -46,5 +46,13 @@ namespace Storage.Net.Tests
 
          Assert.Equal("aws.s3://key1=value1;key2=value2", cs.ToString());
       }
+
+      [Fact]
+      public void Parameter_with_no_value()
+      {
+         var cs = new StorageConnectionString("local://account=my;msi");
+
+         Assert.True(cs.Parameters.ContainsKey("msi"));
+      }
    }
 }

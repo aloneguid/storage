@@ -36,6 +36,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store
          {
             connectionString.GetRequired("account", true, out string accountName);
 
+            if(connectionString.Parameters.ContainsKey("msi"))
+            {
+               return AzureDataLakeStoreGen2BlobStorageProvider.CreateByManagedIdentity(accountName);
+            }
+
             string key = connectionString.Get("key");
 
             if(!string.IsNullOrWhiteSpace(key))

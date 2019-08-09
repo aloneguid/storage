@@ -60,7 +60,8 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          if(accountName == null)
             throw new ArgumentNullException(nameof(accountName));
 
-         return new AzureDataLakeStoreGen2BlobStorageProvider(DataLakeGen2Client.Create(accountName));
+         return new AzureDataLakeStoreGen2BlobStorageProvider(
+            DataLakeApiFactory.CreateApiWithManagedIdentity(accountName));
       }
 
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
