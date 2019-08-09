@@ -9,18 +9,30 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Refit;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
 {
    static class DataLakeApiFactory
    {
-      public static IDataLakeApi CreateApi(string accountName, string sharedKey)
+      public static IDataLakeApi CreateApiWithSharedKey(string accountName, string sharedKey)
       {
          string baseUrl = $"https://{accountName}.dfs.core.windows.net";
 
          return RestService.For<IDataLakeApi>(
             new HttpClient(new SharedSignatureHttpClientHandler(accountName, sharedKey))
+            {
+               BaseAddress = new Uri(baseUrl)
+            });
+      }
+
+      public static IDataLakeApi CreateApiWithServicePrincipal(string accountName, string tenantId, string clientId, string clientSecret)
+      {
+         string baseUrl = $"https://{accountName}.dfs.core.windows.net";
+
+         return RestService.For<IDataLakeApi>(
+            new HttpClient(new ActiveDirectoryHttpClientHandler(accountName, tenantId, clientId, clientSecret))
             {
                BaseAddress = new Uri(baseUrl)
             });
@@ -122,6 +134,31 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
             }
 
             return base.SendAsync(request, cancellationToken);
+         }
+      }
+
+      private class ActiveDirectoryHttpClientHandler : HttpClientHandler
+      {
+         private const string Resource = "https://storage.azure.com/";
+         private readonly AuthenticationContext _context;
+         private readonly ClientCredential _credential;
+
+         public ActiveDirectoryHttpClientHandler(string accountName,
+            string tenantId,
+            string clientId,
+            string clientSecret)
+         {
+            string authority = $"https://login.microsoftonline.com/{tenantId}";
+            _credential = new ClientCredential(clientId, clientSecret);
+            _context = new AuthenticationContext(authority);
+         }
+
+         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+         {
+            AuthenticationResult authenticationResult = await _context.AcquireTokenAsync(Resource, _credential);
+            var authHeader = new AuthenticationHeaderValue("Bearer", authenticationResult.AccessToken);
+            request.Headers.Authorization = authHeader;
+            return await base.SendAsync(request, cancellationToken);
          }
       }
    }

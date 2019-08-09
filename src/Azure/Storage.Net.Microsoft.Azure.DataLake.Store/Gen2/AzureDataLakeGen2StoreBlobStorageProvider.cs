@@ -34,27 +34,26 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             throw new ArgumentNullException(nameof(sharedAccessKey));
 
          return new AzureDataLakeStoreGen2BlobStorageProvider(
-            DataLakeApiFactory.CreateApi(accountName, sharedAccessKey));
+            DataLakeApiFactory.CreateApiWithSharedKey(accountName, sharedAccessKey));
       }
 
-      public static AzureDataLakeStoreGen2BlobStorageProvider CreateByClientSecret(string accountName,
-         NetworkCredential credential)
+      public static AzureDataLakeStoreGen2BlobStorageProvider CreateByClientSecret(
+         string accountName,
+         string tenantId,
+         string clientId,
+         string clientSecret)
       {
-         if(credential == null)
-            throw new ArgumentNullException(nameof(credential));
+         if(accountName is null)
+            throw new ArgumentNullException(nameof(accountName));
+         if(tenantId is null)
+            throw new ArgumentNullException(nameof(tenantId));
+         if(clientId is null)
+            throw new ArgumentNullException(nameof(clientId));
+         if(clientSecret is null)
+            throw new ArgumentNullException(nameof(clientSecret));
 
-         if(string.IsNullOrEmpty(credential.Domain))
-            throw new ArgumentException("Tenant ID (Domain in NetworkCredential) part is required");
-
-         if(string.IsNullOrEmpty(credential.UserName))
-            throw new ArgumentException("Principal ID (Username in NetworkCredential) part is required");
-
-         if(string.IsNullOrEmpty(credential.Password))
-            throw new ArgumentException("Principal Secret (Password in NetworkCredential) part is required");
-
-         //return new AzureDataLakeStoreGen2BlobStorageProvider(
-         //   DataLakeGen2Client.Create(accountName, credential.Domain, credential.UserName, credential.Password), null);
-         throw new NotImplementedException();
+         return new AzureDataLakeStoreGen2BlobStorageProvider(
+            DataLakeApiFactory.CreateApiWithServicePrincipal(accountName, tenantId, clientId, clientSecret));
       }
 
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)

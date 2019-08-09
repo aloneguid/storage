@@ -24,6 +24,7 @@ namespace Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL
          var clientCredential = new ClientCredential(_clientId, _clientSecret);
          var authenticationContext = new AuthenticationContext(_authority);
          AuthenticationResult authenticationResult = await authenticationContext.AcquireTokenAsync(Resource, clientCredential);
+
          return new AuthenticationHeaderValue("Bearer", authenticationResult.AccessToken);
       }
    }
