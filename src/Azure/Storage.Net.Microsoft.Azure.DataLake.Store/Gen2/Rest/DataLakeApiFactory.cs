@@ -18,12 +18,10 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
    {
       public static IDataLakeApi CreateApiWithSharedKey(string accountName, string sharedKey)
       {
-         string baseUrl = $"https://{accountName}.dfs.core.windows.net";
-
          return RestService.For<IDataLakeApi>(
             new HttpClient(new SharedSignatureHttpClientHandler(accountName, sharedKey))
             {
-               BaseAddress = new Uri(baseUrl)
+               BaseAddress = GetBaseAddress(accountName)
             });
       }
 
@@ -34,9 +32,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          return RestService.For<IDataLakeApi>(
             new HttpClient(new ActiveDirectoryHttpClientHandler(accountName, tenantId, clientId, clientSecret))
             {
-               BaseAddress = new Uri(baseUrl)
+               BaseAddress = GetBaseAddress(accountName)
             });
       }
+
+      private static Uri GetBaseAddress(string accountName) => new Uri($"https://{accountName}.dfs.core.windows.net");
 
       private static string GenerateSignature(
          string httpVerb,
