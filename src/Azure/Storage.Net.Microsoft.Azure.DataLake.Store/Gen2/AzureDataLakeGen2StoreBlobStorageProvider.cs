@@ -9,6 +9,7 @@ using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model;
 using Refit;
+using NetBox.Extensions;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
@@ -20,8 +21,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       {
          _restApi = restApi;
       }
-
-      public int ListBatchSize { get; set; } = 5000;
 
       public static AzureDataLakeStoreGen2BlobStorageProvider CreateBySharedAccessKey(string accountName,
          string sharedAccessKey)
@@ -64,6 +63,8 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             DataLakeApiFactory.CreateApiWithManagedIdentity(accountName));
       }
 
+      private Stream EmptyStream => new MemoryStream(new byte[0]);
+
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
          var fullPathsList = fullPaths.ToList();
@@ -84,7 +85,24 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          if(options == null)
             options = new ListOptions();
 
-         return await new DirectoryBrowser(_restApi).ListAsync(options, cancellationToken).ConfigureAwait(false);
+         IReadOnlyCollection<Blob> result = await new DirectoryBrowser(_restApi).ListAsync(options, cancellationToken).ConfigureAwait(false);
+
+         if(options.IncludeAttributes)
+         {
+            result = await Task.WhenAll(result.Select(b => GetWithMetadata(b, cancellationToken)));
+         }
+
+         return result;
+      }
+
+      private async Task<Blob> GetWithMetadata(Blob blob, CancellationToken cancellationToken)
+      {
+         if(blob.IsFile)
+         {
+            return await GetBlobAsync(blob, cancellationToken).ConfigureAwait(false);
+         }
+
+         return blob;
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
@@ -167,7 +185,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
          try
          {
-            pp = await GetPathPropertiesAsync(fs, rp, "getStatus").ConfigureAwait(false);
+            pp = await GetPathPropertiesAsync(fs, rp, "getProperties").ConfigureAwait(false);
          }
          catch(ApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
@@ -179,7 +197,19 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
       {
-         throw new NotSupportedException("ADLS Gen2 doesn't support file metadata");
+         return Task.WhenAll(blobs.Select(b => SetBlobAsync(b, cancellationToken)));
+      }
+
+      private async Task SetBlobAsync(Blob blob, CancellationToken cancellationToken)
+      {
+         GenericValidation.CheckBlobFullPath(blob);
+         DecomposePath(blob, out string fs, out string rp);
+
+         string properties = string.Join(",", blob.Metadata.Select(kv => $"{kv.Key}={kv.Value.Base64Encode()}"));
+
+         await _restApi.UpdatePathAsync(fs, rp, "setProperties",
+            properties: properties,
+            body: EmptyStream);
       }
 
       public void Dispose()

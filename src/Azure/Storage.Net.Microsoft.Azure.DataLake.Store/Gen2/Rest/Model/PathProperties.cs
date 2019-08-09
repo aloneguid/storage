@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Refit;
+using NetBox.Extensions;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
 {
@@ -12,12 +13,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
    /// </summary>
    class PathProperties
    {
+      private static readonly char[] MetadataPairsSeparator = new[] { ',' };
+      private static readonly char[] MetadataPairSeparator = new[] { '=' };
+
       public long? Length { get; internal set; }
 
       public DateTimeOffset? LastModified { get; internal set; }
       public string ETag { get; private set; }
       public string ContentType { get; }
       public string ResourceType { get; }
+
+      public Dictionary<string, string> UserMetadata { get; }
 
       public PathProperties(ApiResponse<string> refitResponse)
       {
@@ -29,6 +35,15 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
 
          ContentType = GetHeader(refitResponse, "Content-Type");
          ResourceType = GetHeader(refitResponse, "x-ms-resource-type");
+
+         string um = GetHeader(refitResponse, "x-ms-properties");
+         if(um != null)
+         {
+            UserMetadata = um
+               .Split(MetadataPairsSeparator, StringSplitOptions.RemoveEmptyEntries)
+               .Select(pair => pair.Split(MetadataPairSeparator, 2))
+               .ToDictionary(a => a[0], a => a[1].Base64Decode());
+         }
       }
 
       private static string GetHeader(ApiResponse<string> refitResponse, string name)

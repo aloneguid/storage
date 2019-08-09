@@ -81,6 +81,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
       /// <param name="position"></param>
       /// <param name="retainUncommittedData"></param>
       /// <param name="close"></param>
+      /// <param name="properties">Optional. User-defined properties to be stored with the file or directory, in the format of a comma-separated list of name and value pairs "n1=v1, n2=v2, ...", where each value is a base64 encoded string. Note that the string may only contain ASCII characters in the ISO-8859-1 character set. Valid only for the setProperties operation. If the file or directory exists, any properties not included in the list will be removed. All properties are removed if the header is omitted. To merge new and existing properties, first get all existing properties and the current E-Tag, then make a conditional request with the E-Tag and include values for all properties.</param>
       /// <param name="timeoutSeconds"></param>
       /// <param name="body"></param>
       /// <returns></returns>
@@ -92,6 +93,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          long? position = null,
          bool? retainUncommittedData = null,
          bool? close = null,
+         [Header("x-ms-properties")] string properties = null,
          [AliasAs("timeout")] int? timeoutSeconds = null,
          [Body] Stream body = null);
 

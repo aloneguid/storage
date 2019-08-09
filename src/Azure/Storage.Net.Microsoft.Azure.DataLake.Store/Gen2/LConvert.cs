@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using NetBox.Extensions;
 using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model;
 
@@ -37,6 +38,9 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             Size = pp.Length,
             LastModificationTime = pp.LastModified
          };
+
+         if(pp.UserMetadata != null)
+            result.Metadata.MergeRange(pp.UserMetadata);
 
          return result;
       }

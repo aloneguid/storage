@@ -120,8 +120,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
 
          protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
          {
+            const string apiVersion = "2018-11-09";
             string dateHeader = DateTime.Now.ToString("R");
-            string canonicalisedHeaders = $"x-ms-date:{dateHeader}\nx-ms-version:2018-11-09";
+
+            request.Headers.Add("x-ms-date", dateHeader);
+            request.Headers.Add("x-ms-version", apiVersion);
+
+            string canonicalisedHeaders = string.Join("\n", request.Headers
+               .Where(h => h.Key.StartsWith("x-ms-"))
+               .OrderBy(h => h.Key)
+               .Select(h => $"{h.Key}:{h.Value.First()}"));
+
             string canonicalisedResource = CreateCanonicalisedResource(request);
 
             string signature = DataLakeApiFactory.GenerateSignature(
@@ -130,9 +139,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
                range: request.Headers?.Range?.ToString(),
                canonicalisedHeaders: canonicalisedHeaders,
                canonicalisedResource: canonicalisedResource);
-
-            request.Headers.Add("x-ms-date", dateHeader);
-            request.Headers.Add("x-ms-version", "2018-11-09");
 
             using(var sha256 = new HMACSHA256(Convert.FromBase64String(_sharedKey)))
             {
