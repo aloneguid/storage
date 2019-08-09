@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Storage.Net.Tests.Integration.Azure
 {
-   [Trait("Category", "Other")]
+   [Trait("Category", "Blobs")]
    public class LeakyAdlsGen2StorageTest
    {
       private readonly ITestSettings _settings;

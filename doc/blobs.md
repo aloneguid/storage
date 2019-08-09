@@ -240,14 +240,46 @@ the last parameter *listBatchSize* is optional and defaults to `5000`.
 
 ### Gen 2
 
-Gen 2 is the new generation of the storage API, however only works if your ADLS was created with Gen 2 support.
+Gen 2 is the new generation of the storage API, and you should always prefer it to Gen 1 accounts when you can. Both Gen 1 and Gen 2 providers are located in the same NuGet package.
 
-> todo
+Gen 2 provider is 100% compatible with hierarchical namespaces. When you use blob path, the first part of the path is filesystem name, i.e. `storage.WriteTextAsync("filesystem/folder/subfolder/.../file.extension`. Apparently you cannot create files in the root folder, they always need to be prefixed with filesystem name.
 
-You can also use connection strings:
+If filesystem doesn't exist, we will try to create it for you, if the account provided has enough permissions to do so.
+
+#### Authentication
+
+You can authenticate in the ways described below. To use connection strings, don't forget to call `StorageFactory.Modules.UseAzureDataLake()` somewhere when your program starts.
+
+##### Using *shared key authentication*
 
 ```csharp
-IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.datalake.gen2://account=...;key=...");
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(
+   accountName,
+   sharedKey);
+```
+
+or
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
+   "azure.datalake.gen2://account=...;key=...");
+```
+
+##### Using *service principal*
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen2StoreByClientSecret(
+   accountName,
+   tenantId,
+   principalId,
+   principalSecret)
+```
+
+or
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
+   "azure.datalake.gen2://account=...;tenantId=...;principalId=...;principalSecret=...;listBatchSize=...");
 ```
 
 

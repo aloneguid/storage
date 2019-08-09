@@ -48,7 +48,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 
    public class AdlsGen2Fixture : BlobFixture
    {
-      public AdlsGen2Fixture() : base("test")
+      public AdlsGen2Fixture() : base("integration")
       {
 
       }

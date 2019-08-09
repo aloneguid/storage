@@ -285,7 +285,7 @@ namespace Storage.Net.Tests.Integration.Blobs
       [Fact]
       public async Task Write_with_openwrite_succeeds()
       {
-         string id = RandomBlobPath(subfolder: "whatsit", extension: ".txt");
+         string id = RandomBlobPath();
          byte[] data = Encoding.UTF8.GetBytes("oh my");
 
          using(Stream dest = await _storage.OpenWriteAsync(id))
@@ -439,8 +439,6 @@ namespace Storage.Net.Tests.Integration.Blobs
          blob.Metadata["user"] = "ivan";
          blob.Metadata["fun"] = "no";
          await _storage.WriteTextAsync(blob, "test2");
-
-         await _storage.WriteTextAsync(StoragePath.Combine(RandomBlobPath(), Guid.NewGuid().ToString()), "subfolder");
 
          try
          {

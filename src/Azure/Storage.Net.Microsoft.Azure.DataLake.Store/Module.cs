@@ -46,7 +46,13 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store
             }
             else
             {
-               return null;
+               //connect with service principal
+
+               connectionString.GetRequired("tenantId", true, out string tenantId);
+               connectionString.GetRequired("principalId", true, out string principalId);
+               connectionString.GetRequired("principalSecret", true, out string principalSecret);
+
+               return AzureDataLakeStoreGen2BlobStorageProvider.CreateByClientSecret(accountName, tenantId, principalId, principalSecret);
             }
 
          }

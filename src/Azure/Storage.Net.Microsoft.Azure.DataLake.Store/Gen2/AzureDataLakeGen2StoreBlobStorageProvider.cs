@@ -6,7 +6,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Storage.Net.Blobs;
-using Storage.Net.Microsoft.Azure.DataLakeGen2.Store.Gen2.BLL;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model;
 using Refit;
