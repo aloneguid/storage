@@ -3,8 +3,6 @@
       <TargetFramework>netcoreapp2.1</TargetFramework>
       <VersionPrefix>3.5.0-alpha-4</VersionPrefix>
       <AssemblyName>Storage.Net.Tests</AssemblyName>
-      <AssemblyOriginatorKeyFile>../../src/storage.snk</AssemblyOriginatorKeyFile>
-      <SignAssembly>true</SignAssembly>
       <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
       <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
       <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>

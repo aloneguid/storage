@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
    <PropertyGroup>
       <TargetFrameworks>netstandard2.0</TargetFrameworks>
-      <AssemblyOriginatorKeyFile>../../storage.snk</AssemblyOriginatorKeyFile>
-      <SignAssembly>false</SignAssembly>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
       <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
       <RepositoryType>GitHub</RepositoryType>
