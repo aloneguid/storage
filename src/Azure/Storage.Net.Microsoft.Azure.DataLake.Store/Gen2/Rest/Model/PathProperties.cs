@@ -33,10 +33,10 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
 
          // for full set of headers see https://docs.microsoft.com/en-gb/rest/api/storageservices/datalakestoragegen2/path/getproperties#response
 
-         ContentType = GetHeader(refitResponse, "Content-Type");
-         ResourceType = GetHeader(refitResponse, "x-ms-resource-type");
+         ContentType = refitResponse.GetHeader("Content-Type");
+         ResourceType = refitResponse.GetHeader("x-ms-resource-type");
 
-         string um = GetHeader(refitResponse, "x-ms-properties");
+         string um = refitResponse.GetHeader("x-ms-properties");
          if(um != null)
          {
             UserMetadata = um
@@ -44,14 +44,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
                .Select(pair => pair.Split(MetadataPairSeparator, 2))
                .ToDictionary(a => a[0], a => a[1].Base64Decode());
          }
-      }
-
-      private static string GetHeader(ApiResponse<string> refitResponse, string name)
-      {
-         if(!refitResponse.Headers.TryGetValues(name, out IEnumerable<string> values))
-            return null;
-
-         return values.First();
       }
    }
 }

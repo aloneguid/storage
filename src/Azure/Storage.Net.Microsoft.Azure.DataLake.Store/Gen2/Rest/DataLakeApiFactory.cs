@@ -17,6 +17,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
 {
    static class DataLakeApiFactory
    {
+      const string ApiVersion = "2018-11-09";
+      const string DateHeaderName = "x-ms-date";
+      const string VersionHeaderName = "x-ms-version";
+
+
       public static IDataLakeApi CreateApiWithSharedKey(string accountName, string sharedKey)
       {
          return RestService.For<IDataLakeApi>(
@@ -120,11 +125,10 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
 
          protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
          {
-            const string apiVersion = "2018-11-09";
             string dateHeader = DateTime.Now.ToString("R");
 
-            request.Headers.Add("x-ms-date", dateHeader);
-            request.Headers.Add("x-ms-version", apiVersion);
+            request.Headers.Add(DateHeaderName, dateHeader);
+            request.Headers.Add(VersionHeaderName, ApiVersion);
 
             string canonicalisedHeaders = string.Join("\n", request.Headers
                .Where(h => h.Key.StartsWith("x-ms-"))
@@ -174,6 +178,9 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
             AuthenticationResult authenticationResult = await _context.AcquireTokenAsync(Resource, _credential);
             var authHeader = new AuthenticationHeaderValue("Bearer", authenticationResult.AccessToken);
             request.Headers.Authorization = authHeader;
+
+            request.Headers.Add(VersionHeaderName, ApiVersion);
+
             return await base.SendAsync(request, cancellationToken);
          }
       }

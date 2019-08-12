@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Storage.Net.Blobs;
+using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2;
+using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model;
 using Xunit;
 
 namespace Storage.Net.Tests.Integration.Azure
@@ -11,15 +13,17 @@ namespace Storage.Net.Tests.Integration.Azure
    public class LeakyAdlsGen2StorageTest
    {
       private readonly ITestSettings _settings;
-      private readonly IBlobStorage _storage;
+      private readonly IAzureDataLakeGen2BlobStorage _storage;
 
       public LeakyAdlsGen2StorageTest()
       {
          _settings = Settings.Instance;
 
-         _storage = StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(
+         _storage = (IAzureDataLakeGen2BlobStorage)StorageFactory.Blobs.AzureDataLakeGen2StoreByClientSecret(
             _settings.AzureDataLakeGen2Name,
-            _settings.AzureDataLakeGen2Key);
+            _settings.AzureDataLakeGen2TenantId,
+            _settings.AzureDataLakeGen2PrincipalId,
+            _settings.AzureDataLakeGen2PrincipalSecret);
       }
 
       [Fact]
@@ -42,6 +46,17 @@ namespace Storage.Net.Tests.Integration.Azure
 
          //trigger any operation
          await authInstance.ListAsync();
+      }
+
+      [Fact]
+      public async Task AclSmoke()
+      {
+         string path = StoragePath.Combine("test", "perm.txt");
+
+         //write something
+         //await _storage.WriteTextAsync(path, "perm?");
+
+         AccessControl ac = await _storage.GetAccessControlAsync(path);
       }
    }
 }

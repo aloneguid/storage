@@ -10,10 +10,11 @@ using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model;
 using Refit;
 using NetBox.Extensions;
+using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 {
-   class AzureDataLakeStoreGen2BlobStorageProvider : IBlobStorage
+   class AzureDataLakeStoreGen2BlobStorageProvider : IAzureDataLakeGen2BlobStorage
    {
       private readonly IDataLakeApi _restApi;
 
@@ -226,12 +227,40 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          string filesystem,
          string path,
          string action = null,
-         string upn = null,
+         bool? upn = null,
          int? timeoutSeconds = null)
       {
          ApiResponse<string> response = await _restApi.GetPathPropertiesAsync(filesystem, path, action, upn, timeoutSeconds);
          await response.EnsureSuccessStatusCodeAsync();
          return new PathProperties(response);
       }
+
+      #region [ ADLS Specific ]
+
+      public async Task SetAclAsync(string fullPath)
+      {
+         GenericValidation.CheckBlobFullPath(fullPath);
+         DecomposePath(fullPath, out string fs, out string rp);
+
+         await _restApi.UpdatePathAsync(fs, rp, "setAccessControl",
+            body: EmptyStream);
+      }
+
+      public async Task<AccessControl> GetAccessControlAsync(string fullPath)
+      {
+         GenericValidation.CheckBlobFullPath(fullPath);
+         DecomposePath(fullPath, out string fs, out string rp);
+
+         ApiResponse<string> response = await _restApi.GetPathPropertiesAsync(fs, rp, "getAccessControl").ConfigureAwait(false);
+         await response.EnsureSuccessStatusCodeAsync().ConfigureAwait(false);
+
+         return new AccessControl(
+            response.GetHeader("x-ms-owner"),
+            response.GetHeader("x-ms-group"),
+            response.GetHeader("x-ms-permissions"),
+            response.GetHeader("x-ms-acl"));
+      }
+
+      #endregion
    }
 }

@@ -82,6 +82,10 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
       /// <param name="retainUncommittedData"></param>
       /// <param name="close"></param>
       /// <param name="properties">Optional. User-defined properties to be stored with the file or directory, in the format of a comma-separated list of name and value pairs "n1=v1, n2=v2, ...", where each value is a base64 encoded string. Note that the string may only contain ASCII characters in the ISO-8859-1 character set. Valid only for the setProperties operation. If the file or directory exists, any properties not included in the list will be removed. All properties are removed if the header is omitted. To merge new and existing properties, first get all existing properties and the current E-Tag, then make a conditional request with the E-Tag and include values for all properties.</param>
+      /// <param name="owner">Optional and valid only for the setAccessControl operation. Sets the owner of the file or directory.</param>
+      /// <param name="group">Optional and valid only for the setAccessControl operation. Sets the owning group of the file or directory.</param>
+      /// <param name="permissions">Optional and only valid if Hierarchical Namespace is enabled for the account. Sets POSIX access permissions for the file owner, the file owning group, and others. Each class may be granted read, write, or execute permission. The sticky bit is also supported. Both symbolic (rwxrw-rw-) and 4-digit octal notation (e.g. 0766) are supported. Invalid in conjunction with x-ms-acl.</param>
+      /// <param name="acl">Optional and valid only for the setAccessControl operation. Sets POSIX access control rights on files and directories. The value is a comma-separated list of access control entries that fully replaces the existing access control list (ACL). Each access control entry (ACE) consists of a scope, a type, a user or group identifier, and permissions in the format "[scope:][type]:[id]:[permissions]". The scope must be "default" to indicate the ACE belongs to the default ACL for a directory; otherwise scope is implicit and the ACE belongs to the access ACL. There are four ACE types: "user" grants rights to the owner or a named user, "group" grants rights to the owning group or a named group, "mask" restricts rights granted to named users and the members of groups, and "other" grants rights to all users not found in any of the other entries. The user or group identifier is omitted for entries of type "mask" and "other". The user or group identifier is also omitted for the owner and owning group. The permission field is a 3-character sequence where the first character is 'r' to grant read access, the second character is 'w' to grant write access, and the third character is 'x' to grant execute permission. If access is not granted, the '-' character is used to denote that the permission is denied. For example, the following ACL grants read, write, and execute rights to the file owner and john.doe@contoso, the read right to the owning group, and nothing to everyone else: "user::rwx,user:john.doe@contoso:rwx,group::r--,other::---,mask=rwx". Invalid in conjunction with x-ms-permissions.</param>
       /// <param name="timeoutSeconds"></param>
       /// <param name="body"></param>
       /// <returns></returns>
@@ -94,6 +98,10 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          bool? retainUncommittedData = null,
          bool? close = null,
          [Header("x-ms-properties")] string properties = null,
+         [Header("x-ms-owner")] string owner = null,
+         [Header("x-ms-group")] string group = null,
+         [Header("x-ms-permissions")] string permissions = null,
+         [Header("x-ms-acl")] string acl = null,
          [AliasAs("timeout")] int? timeoutSeconds = null,
          [Body] Stream body = null);
 
@@ -145,7 +153,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          string filesystem,
          string path,
          string action = null,
-         string upn = null,
+         bool? upn = null,
          [AliasAs("timeout")] int? timeoutSeconds = null);
 
       #endregion
