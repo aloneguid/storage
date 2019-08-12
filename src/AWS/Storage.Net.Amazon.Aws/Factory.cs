@@ -48,14 +48,16 @@ namespace Storage.Net
       /// <param name="secretAccessKey">Secret access key</param>
       /// <param name="bucketName">Bucket name</param>
       /// <param name="regionEndpoint">Optionally set region endpoint. When not specified defaults to EU West</param>
+      /// <param name="skipBucketCreation">Directive to skip the creation of the S3 bucket if one does not exist</param>
       /// <returns>A reference to the created storage</returns>
       public static IBlobStorage AmazonS3BlobStorage(this IBlobStorageFactory factory,
          string accessKeyId,
          string secretAccessKey,
          string bucketName,
-         RegionEndpoint regionEndpoint = null)
+         RegionEndpoint regionEndpoint = null,
+         bool skipBucketCreation = false)
       {
-         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, bucketName, regionEndpoint);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, bucketName, regionEndpoint, skipBucketCreation);
       }
 
       /// <summary>
