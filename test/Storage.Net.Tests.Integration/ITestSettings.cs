@@ -29,6 +29,9 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.DataLakeGen2.PrincipalSecret")]
       string AzureDataLakeGen2PrincipalSecret { get; }
 
+      [Option(Alias = "Azure.DataLakeGen2.TestAdObjectId")]
+      string AzureDataLakeGen2TestObjectId { get; }
+
       [Option(Alias = "Azure.Storage.QueueName", DefaultValue = "local")]
       string AzureStorageQueueName { get; }
 

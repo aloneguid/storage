@@ -237,13 +237,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
 
       #region [ ADLS Specific ]
 
-      public async Task SetAclAsync(string fullPath)
+      public async Task SetAccessControlAsync(string fullPath, AccessControl accessControl)
       {
+         if(accessControl is null)
+            throw new ArgumentNullException(nameof(accessControl));
+
          GenericValidation.CheckBlobFullPath(fullPath);
          DecomposePath(fullPath, out string fs, out string rp);
 
          await _restApi.UpdatePathAsync(fs, rp, "setAccessControl",
-            body: EmptyStream);
+            body: EmptyStream,
+            acl: accessControl.ToString());
       }
 
       public async Task<AccessControl> GetAccessControlAsync(string fullPath)

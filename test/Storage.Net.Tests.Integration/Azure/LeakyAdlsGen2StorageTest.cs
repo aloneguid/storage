@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Storage.Net.Blobs;
@@ -49,14 +50,28 @@ namespace Storage.Net.Tests.Integration.Azure
       }
 
       [Fact]
-      public async Task AclSmoke()
+      public async Task Acl_assign_permisssions_to_file_for_user()
       {
-         string path = StoragePath.Combine("test", "perm.txt");
+         string path = StoragePath.Combine("test", Guid.NewGuid().ToString());
+         string userId = _settings.AzureDataLakeGen2TestObjectId;
 
          //write something
-         //await _storage.WriteTextAsync(path, "perm?");
+         await _storage.WriteTextAsync(path, "perm?");
 
-         AccessControl ac = await _storage.GetAccessControlAsync(path);
+         //check that user has no permissions
+         AccessControl access = await _storage.GetAccessControlAsync(path);
+         Assert.True(!access.Acl.Any(e => e.ObjectId == userId));
+
+         //assign user a write permission
+         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
+         await _storage.SetAccessControlAsync(path, access);
+
+         //check user has permissions now
+         access = await _storage.GetAccessControlAsync(path);
+         AclEntry userAcl = access.Acl.First(e => e.ObjectId == userId);
+         Assert.False(userAcl.CanRead);
+         Assert.True(userAcl.CanWrite);
+         Assert.False(userAcl.CanExecute);
       }
    }
 }

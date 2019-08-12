@@ -296,6 +296,30 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
    "azure.datalake.gen2://account=...;msi");
 ```
 
+#### Permissions Management
 
+ADLS Gen 2 [supports](https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-access-control) RBAC and [POSIX](https://www.usenix.org/legacy/publications/library/proceedings/usenix03/tech/freenix03/full_papers/gruenbacher/gruenbacher_html/main.html) like permissions on both file and folder level. Storage.Net fully supports permissions management on those and exposes simplified easy-to-use API to drive them.
 
+Because permission management is ADLS Gen 2 specific feature, you cannot use `IBlobStorage` interface, however you can cast it to `IAzureDataLakeGen2BlobStorage` which in turn implements `IBlobStorage` as well.
 
+In order to get permissions for an object located on a specific path, you can call the API:
+
+```csharp
+IBlobStorage genericStorage = StorageFactory.Blobs.AzureDataLakeGen2StoreByClientSecret(name, key);
+IAzureDataLakeGen2BlobStorage gen2Storage = (IAzureDataLakeGen2BlobStorage)genericStorage;
+
+//get permissions
+AccessControl access = await _storage.GetAccessControlAsync(path);
+```
+
+`AccessControl` is a self explanatory structure that contains information about owning user, owning group, their permissions, and any custom ACL entries assigned to this object.
+
+In order to set permissions, you need to call `SetAccessControlAsync` passing back modified `AccessControl` structure. Let's say I'd like to add *write* access to a user with ID `6b157067-78b0-4478-ba7b-ade5c66f1a9a` (Active Directory Object ID). I'd write code like this (using the structure we've just got back from `GetAccessControlAsync`):
+
+```csharp
+// add user to custom ACL
+access.Acl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
+
+//update the ACL on Gen 2 storage
+await _storage.SetAccessControlAsync(path, access);
+```

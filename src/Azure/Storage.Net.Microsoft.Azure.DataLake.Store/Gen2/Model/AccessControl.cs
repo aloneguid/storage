@@ -5,7 +5,8 @@ using System.Text;
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
 {
    /// <summary>
-   /// Access control description for Azure Data Lake Gen 2 objects
+   /// Access control description for Azure Data Lake Gen 2 objects.
+   /// Both permissions and ACLs are represented in POSIX format.
    /// </summary>
    public class AccessControl
    {
@@ -22,6 +23,8 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
          OwnerGroupId = group;
          RawPermissions = permissions;
          RawAcl = acl;
+
+         ParseAcl(acl);
       }
 
       /// <summary>
@@ -43,5 +46,80 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
       /// POSIX access control rights on files and directories. The value is a comma-separated list of access control entries that fully replaces the existing access control list (ACL). Each access control entry (ACE) consists of a scope, a type, a user or group identifier, and permissions in the format "[scope:][type]:[id]:[permissions]". The scope must be "default" to indicate the ACE belongs to the default ACL for a directory; otherwise scope is implicit and the ACE belongs to the access ACL. There are four ACE types: "user" grants rights to the owner or a named user, "group" grants rights to the owning group or a named group, "mask" restricts rights granted to named users and the members of groups, and "other" grants rights to all users not found in any of the other entries. The user or group identifier is omitted for entries of type "mask" and "other". The user or group identifier is also omitted for the owner and owning group. The permission field is a 3-character sequence where the first character is 'r' to grant read access, the second character is 'w' to grant write access, and the third character is 'x' to grant execute permission. If access is not granted, the '-' character is used to denote that the permission is denied. For example, the following ACL grants read, write, and execute rights to the file owner and john.doe@contoso, the read right to the owning group, and nothing to everyone else: "user::rwx,user:john.doe@contoso:rwx,group::r--,other::---,mask=rwx". Invalid in conjunction with x-ms-permissions.
       /// </summary>
       public string RawAcl { get; }
+
+      /// <summary>
+      /// Parsed Access Control List
+      /// </summary>
+      public IList<AclEntry> Acl { get; } = new List<AclEntry>();
+
+      /// <summary>
+      /// Owning user permissions
+      /// </summary>
+      public AclEntry OwningUserPermissions { get; private set; }
+
+      /// <summary>
+      /// Owning group permissions
+      /// </summary>
+      public AclEntry OwningGroupPermissions { get; private set; }
+
+      private void ParseAcl(string acl)
+      {
+         //and example of a real acl string:
+         //user::rw-,user:6b157067-78b0-4478-ba7b-ade5c66f1a9a:rwx,group::r--,mask::rwx,other::---
+
+         Acl.Clear();
+
+         if(acl == null)
+            return;
+
+         foreach(string textForm in acl.Split(','))
+         {
+            var entry = new AclEntry(textForm);
+
+            if(entry.ObjectId == null)
+            {
+               //special entry
+               if(entry.Type == "user")
+               {
+                  OwningUserPermissions = entry;
+               }
+               else if(entry.Type == "group")
+               {
+                  OwningGroupPermissions = entry;
+               }
+               
+               //ignore other special objects as they're not important
+            }
+            else
+            {
+               //push ID'd objects to the rest of the ACL
+               Acl.Add(entry);
+            }
+         }
+      }
+
+      /// <summary>
+      /// Builds Gen 2 compatible permission string that can be used to set permissions in x-ms-acl
+      /// </summary>
+      /// <returns></returns>
+      public override string ToString()
+      {
+         //and example of a real acl string:
+         //user::rw-,user:6b157067-78b0-4478-ba7b-ade5c66f1a9a:rwx,group::r--,mask::rwx,other::---
+
+         var sb = new StringBuilder();
+
+         sb.Append(OwningUserPermissions);
+         sb.Append(',');
+         sb.Append(OwningGroupPermissions);
+
+         foreach(AclEntry extraEntry in Acl)
+         {
+            sb.Append(',');
+            sb.Append(extraEntry);
+         }
+
+         return sb.ToString();
+      }
    }
 }
