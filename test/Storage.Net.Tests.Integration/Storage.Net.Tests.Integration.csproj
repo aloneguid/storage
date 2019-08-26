@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Databricks.Dbfs\Storage.Net.Microsoft.Azure.Databricks.Dbfs.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.DataLake.Store\Storage.Net.Microsoft.Azure.DataLake.Store.csproj" />
     <ProjectReference Include="..\..\src\General\Storage.Net.Ftp\Storage.Net.Ftp.csproj" />
+    <ProjectReference Include="..\..\src\Storage.Net.SFtp\Storage.Net.SFtp.csproj" />
     <ProjectReference Include="..\..\src\Storage.Net\Storage.Net.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.EventHub\Storage.Net.Microsoft.Azure.EventHub.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.KeyVault\Storage.Net.Microsoft.Azure.KeyVault.csproj" />

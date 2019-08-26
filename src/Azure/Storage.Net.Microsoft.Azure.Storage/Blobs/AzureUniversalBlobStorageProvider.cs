@@ -548,6 +548,11 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          return (container, relativePath);
       }
 
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         throw new NotImplementedException();
+      }
+
       #endregion
    }
 }

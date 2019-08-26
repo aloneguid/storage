@@ -281,6 +281,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             response.GetHeader("x-ms-acl"));
       }
 
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         throw new NotImplementedException();
+      }
+
       #endregion
    }
 }

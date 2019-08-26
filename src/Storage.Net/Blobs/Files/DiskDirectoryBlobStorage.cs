@@ -334,5 +334,11 @@ namespace Storage.Net.Blobs.Files
       {
          return Task.FromResult(EmptyTransaction.Instance);
       }
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         File.Move(fromPath, toPath);
+         return Task.CompletedTask;
+      }
    }
 }

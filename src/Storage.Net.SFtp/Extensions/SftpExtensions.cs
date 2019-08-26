@@ -17,8 +17,8 @@ namespace Storage.Net.SFtp.Extensions
       }
 
       public static Blob ToBlobId(this SftpFile file)
-         => (file.IsDirectory || file.IsRegularFile)
-         ? new Blob(file.FullName, file.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File) { Size = file.Length, LastModificationTime = file.LastWriteTime }
-         : null;
+      => (file.IsDirectory || file.IsRegularFile || file.OwnerCanRead)
+      ? new Blob(file.FullName, file.IsDirectory ? BlobItemKind.Folder : BlobItemKind.File) { Size = file.Length, LastModificationTime = file.LastWriteTime }
+      : null;
    }
 }

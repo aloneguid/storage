@@ -72,6 +72,11 @@ namespace Storage.Net.Blobs
       Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default);
 
       /// <summary>
+      /// Moves a blob, with provider specific semantics. Copies in the same context, server or container.
+      /// </summary>
+      Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default);
+
+      /// <summary>
       /// Starts a new transaction
       /// </summary>
       /// <returns></returns>

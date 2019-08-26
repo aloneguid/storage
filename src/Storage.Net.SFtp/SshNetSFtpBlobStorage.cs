@@ -82,9 +82,11 @@ namespace Storage.Net.SFtp
             var files = new List<Blob>();
             foreach (var fullPath in fullPaths.GroupBy(g => StoragePath.GetParent(g)))
             {
+               var fullPathNormalized = StoragePath.Normalize(fullPath.SingleOrDefault(), true);
+
                if(cancellationToken.IsCancellationRequested) break;
                var listing = await sftpClient.ListDirectoryAsync(fullPath.Key);
-               files.AddRange(listing.Where(l => (l.IsDirectory || l.IsRegularFile) && fullPaths.Contains(l.FullName)).Select(SftpExtensions.ToBlobId));
+               files.AddRange(listing.Where(l => (l.IsDirectory || l.IsRegularFile) && fullPathNormalized == l.FullName).Select(SftpExtensions.ToBlobId));
             }
             return files;
          }
@@ -94,34 +96,40 @@ namespace Storage.Net.SFtp
       {
          options = options ?? new ListOptions();
          _logger.LogTrace("Listing folder contents: {0}", options.FolderPath);
+         var directoryContents = Enumerable.Empty<SftpFile>();
          using(var sftpClient = CreateClient())
          {
-            var directoryContents = await sftpClient.ListDirectoryAsync(options.FolderPath);
-            var listResults = directoryContents
-               .Where(dc => dc.FullName.StartsWith(options.FilePrefix) && (dc.IsDirectory || dc.IsRegularFile) && !cancellationToken.IsCancellationRequested)
-               .Take(options.MaxResults ?? int.MaxValue)
-               .Select(SftpExtensions.ToBlobId)
-               .Where(options.BrowseFilter)
-               .Select(blob =>
-               {
-                  _logger.LogInformation("{0}\t{#,###:1}", blob.FullPath, blob.Size);
-                  return blob;
-               })
-               .ToList();
-            _logger.LogInformation("{0} Total Resources", listResults.Count());
-            return listResults;
+            directoryContents = await sftpClient.ListDirectoryAsync(options.FolderPath);
          }
+         var listResults = directoryContents
+            .Where(dc => (options.FilePrefix == null || dc.FullName.StartsWith(options.FilePrefix)) && 
+            (dc.IsDirectory || dc.IsRegularFile || dc.OwnerCanRead) && 
+            !cancellationToken.IsCancellationRequested && 
+            (dc.Name != "." && dc.Name != ".."))
+            .Take(options.MaxResults ?? int.MaxValue)
+            .Select(SftpExtensions.ToBlobId)
+            .Where(options.BrowseFilter != null ? options.BrowseFilter : (filter) => true)
+            .Select(blob =>
+            {
+               _logger.LogInformation("{0}\t{#,###:1}", blob.FullPath, blob.Size);
+               return blob;
+            })
+            .ToList();
+         _logger.LogInformation("{0} Total Resources", listResults.Count());         
+         return listResults;
       }
 
-      public Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default(CancellationToken))
+      public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default(CancellationToken))
       {
+         byte[] fileBytes;
          using(var sftpClient = CreateClient())
          {
-            return Task.FromResult<Stream>(Policy.Handle<Exception>().Retry(MaxRetryCount, (e, t) =>
+            fileBytes = await Task.FromResult<byte[]>(Policy.Handle<Exception>().Retry(MaxRetryCount, (e, t) =>
             {
                _logger.LogError(e, "Try: {0} - Failed opening resource {1} for reading", t, fullPath);
-            }).Execute(() => sftpClient.OpenRead(fullPath)));
+            }).Execute(() => sftpClient.ReadAllBytes(fullPath)));
          }
+         return new MemoryStream(fileBytes);
       }
 
       public Task<ITransaction> OpenTransactionAsync() => Task.FromResult(EmptyTransaction.Instance);
@@ -138,5 +146,15 @@ namespace Storage.Net.SFtp
       }
 
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default(CancellationToken)) => throw new NotSupportedException();
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default(CancellationToken))
+      {
+         _logger.LogInformation("Moving blob from {0} to {1}", fromPath, toPath);
+         using(var sftpClient = CreateClient())
+         {
+            sftpClient.RenameFile(StoragePath.Normalize(fromPath), StoragePath.Normalize(toPath));
+         }
+         return Task.CompletedTask;
+      }
    }
 }
