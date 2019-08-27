@@ -158,9 +158,31 @@ namespace Storage.Net.Ftp
          return results;
       }
 
-      public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+      public async Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
       {
-         throw new NotSupportedException();
+         foreach(Blob blob in blobs)
+         {
+            if(blob.IsFolder)
+            {
+               using(FtpClient client = await GetClientAsync().ConfigureAwait(false))
+               {
+                  await client.CreateDirectoryAsync(blob.FullPath);
+               }
+            }
+            else if(blob.IsFile)
+            {
+               using(FtpClient client = await GetClientAsync().ConfigureAwait(false))
+               {
+                  var file = await client.OpenWriteAsync(blob.FullPath);
+                  file.Close();
+               }
+            }
+            else
+            {
+               continue;
+            }
+
+         }
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)

@@ -100,5 +100,13 @@ namespace Storage.Net.Tests.Integration.General
          await storage.MoveBlobAsync(fromPath, toPath);
          Assert.True(await storage.ExistsAsync(toPath));
       }
+
+      [Fact]
+      public async void CreateContainerTest()
+      {
+         var storage = GetBlobStorage();
+         await storage.SetBlobAsync(new Blob("new", BlobItemKind.Folder));
+         StorageFactory.Blobs.FromConnectionString
+      }
    }
 }
