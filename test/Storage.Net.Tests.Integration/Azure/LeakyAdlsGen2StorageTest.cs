@@ -63,7 +63,7 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.True(!access.Acl.Any(e => e.ObjectId == userId));
 
          //assign user a write permission
-         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
+         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, false, true, false));
          await _storage.SetAccessControlAsync(path, access);
 
          //check user has permissions now
@@ -72,6 +72,61 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.False(userAcl.CanRead);
          Assert.True(userAcl.CanWrite);
          Assert.False(userAcl.CanExecute);
+         Assert.False(userAcl.IsDefault);
+      }
+
+      [Fact]
+      public async Task Acl_assign_non_default_permisssions_to_directory_for_user()
+      {
+         string directoryPath = StoragePath.Combine("test", "aclnondefault");
+         string filePath = StoragePath.Combine(directoryPath, Guid.NewGuid().ToString());
+         string userId = _settings.AzureDataLakeGen2TestObjectId;
+
+         //write something
+         await _storage.WriteTextAsync(filePath, "perm?");
+
+         //check that user has no permissions
+         AccessControl access = await _storage.GetAccessControlAsync(directoryPath);
+         Assert.True(!access.Acl.Any(e => e.ObjectId == userId));
+
+         //assign user a write permission
+         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, false, true, false));
+         await _storage.SetAccessControlAsync(directoryPath, access);
+
+         //check user has permissions now
+         access = await _storage.GetAccessControlAsync(directoryPath);
+         AclEntry userAcl = access.Acl.First(e => e.ObjectId == userId);
+         Assert.False(userAcl.CanRead);
+         Assert.True(userAcl.CanWrite);
+         Assert.False(userAcl.CanExecute);
+         Assert.False(userAcl.IsDefault);
+      }
+
+      [Fact]
+      public async Task Acl_assign_default_permisssions_to_directory_for_user()
+      {
+         string directoryPath = StoragePath.Combine("test", "acldefault");
+         string filePath = StoragePath.Combine(directoryPath, Guid.NewGuid().ToString());
+         string userId = _settings.AzureDataLakeGen2TestObjectId;
+
+         //write something
+         await _storage.WriteTextAsync(filePath, "perm?");
+
+         //check that user has no permissions
+         AccessControl access = await _storage.GetAccessControlAsync(directoryPath);
+         Assert.True(!access.Acl.Any(e => e.ObjectId == userId));
+
+         //assign user a write permission
+         access.Acl.Add(new AclEntry(ObjectType.User, userId, true, false, true, false));
+         await _storage.SetAccessControlAsync(directoryPath, access);
+
+         //check user has permissions now
+         access = await _storage.GetAccessControlAsync(directoryPath);
+         AclEntry userAcl = access.Acl.First(e => e.ObjectId == userId);
+         Assert.False(userAcl.CanRead);
+         Assert.True(userAcl.CanWrite);
+         Assert.False(userAcl.CanExecute);
+         Assert.True(userAcl.IsDefault);
       }
    }
 }
