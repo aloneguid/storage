@@ -173,8 +173,6 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
 
          protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
          {
-            //todo: authenticating _every_time_ is slow, bearer token needs to be cached
-
             AuthenticationResult authenticationResult = await _context.AcquireTokenAsync(Resource, _credential);
             var authHeader = new AuthenticationHeaderValue("Bearer", authenticationResult.AccessToken);
             request.Headers.Authorization = authHeader;
