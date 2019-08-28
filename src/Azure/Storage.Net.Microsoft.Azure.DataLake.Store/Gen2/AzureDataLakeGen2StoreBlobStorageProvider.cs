@@ -281,6 +281,22 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             response.GetHeader("x-ms-acl"));
       }
 
+      public Task CreateFilesystemAsync(string filesystem)
+      {
+         return _restApi.CreateFilesystemAsync(filesystem);
+      }
+
+      public Task DeleteFilesystemAsync(string filesystem)
+      {
+         return _restApi.DeleteFilesystemAsync(filesystem);
+      }
+
+      public async Task<IEnumerable<string>> ListFilesystemsAsync()
+      {
+         FilesystemList list = await _restApi.ListFilesystemsAsync().ConfigureAwait(false);
+         return list.Filesystems.Select(x => x.Name);
+      }
+
       #endregion
    }
 }
