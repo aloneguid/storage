@@ -147,30 +147,7 @@ namespace Storage.Net.SFtp
 
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default(CancellationToken))
       {
-         foreach(Blob blob in blobs)
-         {
-            if(blob.IsFolder)
-            {
-               using(var sftpClient = CreateClient())
-               {
-                  sftpClient.CreateDirectory(blob.FullPath);
-               }
-            }
-            else if(blob.IsFile)
-            {
-               using(var sftpClient = CreateClient())
-               {
-                  var file = sftpClient.Create(blob.FullPath);
-                  file.Close();
-               }
-            }
-            else
-            {
-               continue;
-            }
-          
-         }
-         return Task.CompletedTask;
+         throw new NotSupportedException();
       }
 
       public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default(CancellationToken))

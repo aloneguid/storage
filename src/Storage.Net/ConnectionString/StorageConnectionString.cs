@@ -120,7 +120,6 @@ namespace Storage.Net.ConnectionString
             {
                first = false;
             }
-            else
             {
                sb.Append(PartsSeparators);
                first = false;

@@ -160,29 +160,7 @@ namespace Storage.Net.Ftp
 
       public async Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
       {
-         foreach(Blob blob in blobs)
-         {
-            if(blob.IsFolder)
-            {
-               using(FtpClient client = await GetClientAsync().ConfigureAwait(false))
-               {
-                  await client.CreateDirectoryAsync(blob.FullPath);
-               }
-            }
-            else if(blob.IsFile)
-            {
-               using(FtpClient client = await GetClientAsync().ConfigureAwait(false))
-               {
-                  var file = await client.OpenWriteAsync(blob.FullPath);
-                  file.Close();
-               }
-            }
-            else
-            {
-               continue;
-            }
-
-         }
+         throw new NotSupportedException();
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
