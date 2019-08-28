@@ -54,5 +54,11 @@ namespace Storage.Net.Tests
 
          Assert.True(cs.Parameters.ContainsKey("msi"));
       }
+
+      [Fact]
+      public void AzureStorageConnectionString_()
+      {
+         var cs = new StorageConnectionString("DefaultEndpointsProtocol=https;AccountName=isolineltd;AccountKey=blablabla;EndpointSuffix=core.windows.net");
+      }
    }
 }

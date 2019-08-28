@@ -286,7 +286,7 @@ or
 
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
-   "azure.datalake.gen2://account=...;tenantId=...;principalId=...;principalSecret=...;listBatchSize=...");
+   "azure.datalake.gen2://account=...;tenantId=...;principalId=...;principalSecret=...");
 ```
 
 ##### Using **Managed Service Identity**
