@@ -6,6 +6,7 @@ This page lists messaging providers available in Storage.Net
 
 - [In-Memory](#inmemory)
 - [Local Disk](#local-disk)
+- [Azure Storage Queue](#azure-storage-queue)
 - [Azure Service Bus](#azure-service-bus)
 - [Amazon Simple Queue](#amazon-simple-queue)
 
@@ -57,6 +58,20 @@ To construct from a connection string, use:
 IMessagePublisher publisher = StorageFactory.Messages.PublisherFromConnectionString("disk://path=the_path");
 
 IMessageReceiver receiver = StorageFactory.Messages.ReceiverFromConnectionString("disk://path=the_path");
+```
+
+### Azure Storage Queue
+
+```csharp
+IMessagePublisher publisher = StorageFactory.Messages.AzureStorageQueuePublisher();
+
+IMessageReceiver receiver = StorageFactory.Messages.AzureStorageQueueReceiver();
+```
+
+```csharp
+IMessagePublisher publisher = StorageFactory.Messages.PublisherFromConnectionString("azure.queue://account=...;key=...;queue=...");
+
+IMessageReceiver receiver = StorageFactory.Messages.ReceiverFromConnectionString("azure.queue://account=..;key=...;queue=...");
 ```
 
 ### Azure Service Bus
