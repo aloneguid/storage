@@ -168,7 +168,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          {
             string authority = $"https://login.microsoftonline.com/{tenantId}";
             _credential = new ClientCredential(clientId, clientSecret);
-            _context = new AuthenticationContext(authority);
+            _context = new AuthenticationContext(authority, new TokenCache());
          }
 
          protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
