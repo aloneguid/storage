@@ -158,7 +158,7 @@ namespace Storage.Net.Ftp
          return results;
       }
 
-      public async Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+      public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
       {
          throw new NotSupportedException();
       }
