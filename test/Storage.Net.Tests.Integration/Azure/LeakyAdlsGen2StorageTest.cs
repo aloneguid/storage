@@ -61,7 +61,7 @@ namespace Storage.Net.Tests.Integration.Azure
 
          //check that user has no permissions
          AccessControl access = await _storage.GetAccessControlAsync(path);
-         Assert.True(access.Acl.All(e => e.ObjectId != userId));
+         Assert.DoesNotContain(access.Acl, x => x.ObjectId == userId);
 
          //assign user a write permission
          access.Acl.Add(new AclEntry(ObjectType.User, userId, false, false, true, false));
@@ -88,7 +88,7 @@ namespace Storage.Net.Tests.Integration.Azure
 
          //check that user has no permissions
          AccessControl access = await _storage.GetAccessControlAsync(directoryPath);
-         Assert.True(access.Acl.All(e => e.ObjectId != userId));
+         Assert.DoesNotContain(access.Acl, x => x.ObjectId == userId);
 
          //assign user a write permission
          access.Acl.Add(new AclEntry(ObjectType.User, userId, false, false, true, false));
@@ -115,7 +115,7 @@ namespace Storage.Net.Tests.Integration.Azure
 
          //check that user has no permissions
          AccessControl access = await _storage.GetAccessControlAsync(directoryPath);
-         Assert.True(access.Acl.All(e => e.ObjectId != userId));
+         Assert.DoesNotContain(access.Acl, x => x.ObjectId == userId);
 
          //assign user a write permission
          access.Acl.Add(new AclEntry(ObjectType.User, userId, true, false, true, false));
@@ -128,6 +128,20 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.True(userAcl.CanWrite);
          Assert.False(userAcl.CanExecute);
          Assert.True(userAcl.IsDefault);
+      }
+
+      [Fact]
+      public async Task Creates_deletes_and_lists_a_filesystem()
+      {
+         const string filesystem = "filesystemtest";
+
+         Assert.DoesNotContain(await _storage.ListFilesystemsAsync(), x => x == filesystem);
+
+         await _storage.CreateFilesystemAsync(filesystem);
+         Assert.Contains(await _storage.ListFilesystemsAsync(), x => x == filesystem);
+
+         await _storage.DeleteFilesystemAsync(filesystem);
+         Assert.DoesNotContain(await _storage.ListFilesystemsAsync(), x => x == filesystem);
       }
 
       public async Task InitializeAsync()

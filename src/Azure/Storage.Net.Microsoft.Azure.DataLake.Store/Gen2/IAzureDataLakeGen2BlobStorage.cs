@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model;
@@ -26,5 +24,25 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       /// <param name="fullPath"></param>
       /// <returns></returns>
       Task<AccessControl> GetAccessControlAsync(string fullPath);
+
+      /// <summary>
+      /// Creates a filesystem
+      /// </summary>
+      /// <param name="filesystem"></param>
+      /// <returns></returns>
+      Task CreateFilesystemAsync(string filesystem);
+
+      /// <summary>
+      /// Deletes a filesystem
+      /// </summary>
+      /// <param name="filesystem"></param>
+      /// <returns></returns>
+      Task DeleteFilesystemAsync(string filesystem);
+
+      /// <summary>
+      /// Lists filesystems
+      /// </summary>
+      /// <returns></returns>
+      Task<IEnumerable<string>> ListFilesystemsAsync();
    }
 }
