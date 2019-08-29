@@ -32,6 +32,15 @@ namespace Storage.Net.Messaging
       Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default);
 
       /// <summary>
+      /// Peeks messages from the queue, without changing their visibility or removing from the queue.
+      /// </summary>
+      /// <param name="maxMessages">Maximum number of messages to peek.</param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      /// <exception cref="NotSupportedException">Thrown when peeking is not supported by the current provider</exception>
+      Task<IReadOnlyCollection<QueueMessage>> PeekMessagesAsync(int maxMessages, CancellationToken cancellationToken = default);
+
+      /// <summary>
       /// Starts automatic message pumping trying to use native features as much as possible. Message pump stops when you dispose the instance.
       /// Disposing the instance will also stop message pump for you.
       /// </summary>

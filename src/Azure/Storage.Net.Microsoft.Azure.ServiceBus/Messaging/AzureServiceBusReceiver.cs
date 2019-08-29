@@ -143,5 +143,6 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
          return new MessageReceiver(connectionString, entityName, mode);
       }
 
+      public Task<IReadOnlyCollection<QueueMessage>> PeekMessagesAsync(int maxMessages, CancellationToken cancellationToken = default) => throw new NotSupportedException();
    }
 }
