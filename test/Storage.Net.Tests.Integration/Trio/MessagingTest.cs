@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using NetBox.Generator;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Storage.Net.Tests.Integration.Messaging
 {
@@ -93,6 +94,16 @@ namespace Storage.Net.Tests.Integration.Messaging
          Assert.True(received != null, "no message received with tag " + tag);
          Assert.Equal(content, received.StringContent);
          Assert.Equal("v1", received.Properties["one"]);
+      }
+
+      [Fact]
+      public async Task Peek_SendTwoMessages_Peeked()
+      {
+         await _fixture.PutMessageAsync(QueueMessage.FromText("test peeek"));
+
+         IReadOnlyCollection<QueueMessage> messages = await _fixture.Receiver.PeekMessagesAsync(10);
+
+         Assert.True(messages.Count > 0);
       }
 
       [Fact]

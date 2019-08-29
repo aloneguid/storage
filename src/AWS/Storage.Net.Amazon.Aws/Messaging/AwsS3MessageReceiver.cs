@@ -57,6 +57,21 @@ namespace Storage.Net.Amazon.Aws.Messaging
          return messages.Messages.Select(Converter.ToQueueMessage).ToList();
       }
 
+      public override async Task<IReadOnlyCollection<QueueMessage>> PeekMessagesAsync(int maxMessages, CancellationToken cancellationToken = default)
+      {
+         var request = new ReceiveMessageRequest(_queueUrl)
+         {
+            MessageAttributeNames = new List<string> { ".*" },
+            MaxNumberOfMessages = maxMessages,
+
+            //AWS doesn't have peek method, however setting visibility timeout to minimum (1 second!) we can simulate that
+            VisibilityTimeout = 1
+         };
+
+         ReceiveMessageResponse messages = await _client.ReceiveMessageAsync(request, cancellationToken).ConfigureAwait(false);
+         return messages.Messages.Select(Converter.ToQueueMessage).ToList();
+      }
+
       public override Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default)
       {
          throw new NotSupportedException();
