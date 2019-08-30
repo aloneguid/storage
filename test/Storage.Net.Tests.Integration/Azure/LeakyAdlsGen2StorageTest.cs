@@ -50,6 +50,14 @@ namespace Storage.Net.Tests.Integration.Azure
          await authInstance.ListAsync();
       }
 
+      /*[Fact]
+      public async Task Resolution_get_upn_from_objectId()
+      {
+         string upn = await _storage.AclObjectIdToUpnAsync(_settings.AzureDataLakeGen2TestObjectId);
+
+         Assert.NotNull(upn);
+      }*/
+
       [Fact]
       public async Task Acl_assign_permisssions_to_file_for_user()
       {
@@ -64,7 +72,7 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.DoesNotContain(access.Acl, x => x.ObjectId == userId);
 
          //assign user a write permission
-         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, false, true, false));
+         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
          await _storage.SetAccessControlAsync(path, access);
 
          //check user has permissions now
@@ -73,7 +81,6 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.False(userAcl.CanRead);
          Assert.True(userAcl.CanWrite);
          Assert.False(userAcl.CanExecute);
-         Assert.False(userAcl.IsDefault);
       }
 
       [Fact]
@@ -91,7 +98,7 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.DoesNotContain(access.Acl, x => x.ObjectId == userId);
 
          //assign user a write permission
-         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, false, true, false));
+         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
          await _storage.SetAccessControlAsync(directoryPath, access);
 
          //check user has permissions now
@@ -100,7 +107,6 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.False(userAcl.CanRead);
          Assert.True(userAcl.CanWrite);
          Assert.False(userAcl.CanExecute);
-         Assert.False(userAcl.IsDefault);
       }
 
       [Fact]
@@ -118,16 +124,15 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.DoesNotContain(access.Acl, x => x.ObjectId == userId);
 
          //assign user a write permission
-         access.Acl.Add(new AclEntry(ObjectType.User, userId, true, false, true, false));
+         access.DefaultAcl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
          await _storage.SetAccessControlAsync(directoryPath, access);
 
          //check user has permissions now
          access = await _storage.GetAccessControlAsync(directoryPath);
-         AclEntry userAcl = access.Acl.First(e => e.ObjectId == userId);
+         AclEntry userAcl = access.DefaultAcl.First(e => e.ObjectId == userId);
          Assert.False(userAcl.CanRead);
          Assert.True(userAcl.CanWrite);
          Assert.False(userAcl.CanExecute);
-         Assert.True(userAcl.IsDefault);
       }
 
       [Fact]

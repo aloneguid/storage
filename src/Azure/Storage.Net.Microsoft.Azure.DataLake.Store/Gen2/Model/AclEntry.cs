@@ -19,13 +19,12 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
 
          string[] parts = textForm.Split(':');
 
-         IsDefault = parts[0] == "default";
-         Type = parts.Skip(IsDefault ? 1 : 0).First();
+         Type = parts[0];
 
-         string objectId = parts.Skip(IsDefault ? 2 : 1).First();
+         string objectId = parts[1];
          ObjectId = objectId.Length == 0 ? null : objectId;
 
-         string rwx = parts.Skip(IsDefault ? 3 : 2).First();
+         string rwx = parts[2];
          if(rwx.Length != 3)
             throw new ArgumentException($"must have exactly 3 characters, but value is [{textForm}]", nameof(textForm));
 
@@ -39,24 +38,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
       /// </summary>
       /// <param name="objectType">Object type, should be "user" or "group"</param>
       /// <param name="objectId"></param>
-      /// <param name="isDefault"></param>
       /// <param name="canRead"></param>
       /// <param name="canWrite"></param>
       /// <param name="canExecute"></param>
-      public AclEntry(ObjectType objectType, string objectId, bool isDefault, bool canRead, bool canWrite, bool canExecute)
+      public AclEntry(ObjectType objectType, string objectId, bool canRead, bool canWrite, bool canExecute)
       {
          Type = objectType.ToString().ToLower();   //todo: make it right
          ObjectId = objectId ?? throw new ArgumentNullException(nameof(objectId));
-         IsDefault = isDefault;
          CanRead = canRead;
          CanWrite = canWrite;
          CanExecute = canExecute;
       }
-
-      /// <summary>
-      ///  For a directory, when default = true, new children added will be associated with this permission by default
-      /// </summary>
-      public bool IsDefault { get; }
 
       //there supposed to be a scope field, but I didn't see one in the result
 
@@ -89,7 +81,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
       /// Converts to POSIX format
       /// </summary>
       /// <returns></returns>
-      public override string ToString() => $"{(IsDefault ? "default:" : string.Empty)}{Type}:{ObjectId}:{ToChar("r", CanRead)}{ToChar("w", CanWrite)}{ToChar("x", CanExecute)}";
+      public override string ToString() => $"{Type}:{ObjectId}:{ToChar("r", CanRead)}{ToChar("w", CanWrite)}{ToChar("x", CanExecute)}";
 
       private static string ToChar(string name, bool value)
       {

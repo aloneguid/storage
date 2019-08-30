@@ -51,8 +51,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          if(clientSecret is null)
             throw new ArgumentNullException(nameof(clientSecret));
 
-         return new AzureDataLakeStoreGen2BlobStorageProvider(
+         var provider = new AzureDataLakeStoreGen2BlobStorageProvider(
             DataLakeApiFactory.CreateApiWithServicePrincipal(accountName, tenantId, clientId, clientSecret));
+         provider.Graph = new GraphService(tenantId, clientId, clientSecret);
+
+         return provider;
       }
 
       public static AzureDataLakeStoreGen2BlobStorageProvider CreateByManagedIdentity(string accountName)
@@ -65,6 +68,8 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       }
 
       private Stream EmptyStream => new MemoryStream(new byte[0]);
+
+      internal GraphService Graph { get; set; }
 
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
@@ -295,6 +300,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       {
          FilesystemList list = await _restApi.ListFilesystemsAsync().ConfigureAwait(false);
          return list.Filesystems.Select(x => x.Name);
+      }
+
+      public async Task<string> AclObjectIdToUpnAsync(string objectId)
+      {
+         if(objectId is null)
+            throw new ArgumentNullException(nameof(objectId));
+
+         if(Graph == null)
+            throw new ApplicationException("graph service is not available with current authentication type");
+
+         return await Graph.GetUpnById(objectId);
       }
 
       #endregion

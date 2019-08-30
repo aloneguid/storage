@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -20,6 +21,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store
       private readonly string _tenantId;
       private readonly string _clientId;
       private readonly string _clientSecret;
+      private readonly GraphServiceClient _client;
 
       /// <summary>
       /// 
@@ -32,17 +34,25 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store
          _tenantId = tenantId;
          _clientId = clientId;
          _clientSecret = clientSecret;
+         _client = new GraphServiceClient(new DelegateAuthenticationProvider(AuthenticateGraph));
       }
 
       /// <summary>
       /// 
       /// </summary>
       /// <returns></returns>
-      public async Task DoAsync()
+      public async Task<string> GetUpnById(string objectId)
       {
-         var client = new GraphServiceClient(new DelegateAuthenticationProvider(AuthenticateGraph));
+         try
+         {
+            User user = await _client.Users[objectId].Request().GetAsync();
 
-         User r = await client.Me.Request().GetAsync();
+            return user.UserPrincipalName;
+         }
+         catch(ServiceException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+         {
+            return null;
+         }
       }
 
       private async Task AuthenticateGraph(HttpRequestMessage request)

@@ -44,5 +44,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       /// </summary>
       /// <returns></returns>
       Task<IEnumerable<string>> ListFilesystemsAsync();
+
+      //Task<string> AclObjectIdToUpnAsync(string objectId);
    }
 }
