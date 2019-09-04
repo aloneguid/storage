@@ -2,15 +2,14 @@
 
    <PropertyGroup>
       <TargetFramework>netstandard2.0</TargetFramework>
-      <AssemblyOriginatorKeyFile>../../storage.snk</AssemblyOriginatorKeyFile>
-      <SignAssembly>true</SignAssembly>
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
+      <Description>FTP bindings for Storage.Net</Description>
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="FluentFTP" Version="27.0.0" />
+      <PackageReference Include="FluentFTP" Version="27.0.2" />
       <PackageReference Include="Polly" Version="7.1.0" />
    </ItemGroup>
 

@@ -27,7 +27,7 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }
 
-   public class AzureDataLakeStorageFixture : BlobFixture
+   public class AdlsGen1Fixture : BlobFixture
    {
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
@@ -39,57 +39,29 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }
 
-   public class AzureDataLakeTest : BlobTest, IClassFixture<AzureDataLakeStorageFixture>
+   public class AdlsGen1Test : BlobTest, IClassFixture<AdlsGen1Fixture>
    {
-      public AzureDataLakeTest(AzureDataLakeStorageFixture fixture) : base(fixture)
+      public AdlsGen1Test(AdlsGen1Fixture fixture) : base(fixture)
       {
       }
    }
-
-   /*public class AzureDataLakeGen2ClientSecretStorageFixture : BlobFixture
-   {
-      public AzureDataLakeGen2ClientSecretStorageFixture() : base("test/")
-      {
-
-      }
-
-      protected override IBlobStorage CreateStorage(ITestSettings settings)
-      {
-         return StorageFactory.Blobs.AzureDataLakeGen2StoreByClientSecret(
-            settings.AzureDataLakeGen2Name,
-            settings.AzureDataLakeGen2TenantId,
-            settings.AzureDataLakeGen2PrincipalId,
-            settings.AzureDataLakeGen2PrincipalSecret);
-      }
-   }
-
-   public class AzureDataLakeGen2ClientSecretTest : BlobTest, IClassFixture<AzureDataLakeGen2ClientSecretStorageFixture>
-   {
-      public AzureDataLakeGen2ClientSecretTest(AzureDataLakeGen2ClientSecretStorageFixture fixture) : base(fixture)
-      {
-      }
-   }*/
 
    public class AdlsGen2Fixture : BlobFixture
    {
-      public AdlsGen2Fixture() : base("test/")
+      public AdlsGen2Fixture() : base("integration")
       {
 
       }
 
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
-         return StorageFactory.Blobs.AzureBlobStorage(
-            settings.AzureDataLakeGen2Name, 
-            settings.AzureDataLakeGen2Key);
+         return StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(settings.AzureDataLakeGen2Name, settings.AzureDataLakeGen2Key);
       }
    }
 
-   public class AdlsGen2Test : BlobTest,
-      IClassFixture<AdlsGen2Fixture>
+   public class AdlsGen2Test : BlobTest, IClassFixture<AdlsGen2Fixture>
    {
-      public AdlsGen2Test(AdlsGen2Fixture fixture) :
-         base(fixture)
+      public AdlsGen2Test(AdlsGen2Fixture fixture) : base(fixture)
       {
       }
    }

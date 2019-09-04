@@ -23,7 +23,7 @@ namespace Storage.Net
       /// </summary>
       public static IModulesFactory UseAzureStorage(this IModulesFactory factory)
       {
-         return factory.Use(new AzureStorageModule());
+         return factory.Use(new Module());
       }
 
       /// <summary>

@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Storage.Net.Tests.Integration.Azure
 {
-   [Trait("Category", "Other")]
+   [Trait("Category", "Blobs")]
    public class LeakyAzureBlobStorageTest
    {
       private readonly IAzureBlobStorage _native;

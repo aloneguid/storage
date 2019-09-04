@@ -12,13 +12,14 @@ using System.Threading.Tasks;
 using System.Threading;
 using Storage.Net.Streaming;
 using NetBox.Extensions;
+using System.Net;
 
 namespace Storage.Net.Amazon.Aws.Blobs
 {
    /// <summary>
    /// Amazon S3 storage adapter for blobs
    /// </summary>
-   class AwsS3BlobStorageProvider : IBlobStorage, IAwsS3BlobStorage
+   class AwsS3BlobStorage : IBlobStorage, IAwsS3BlobStorage
    {
       private const int ListChunkSize = 10;
       private readonly string _bucketName;
@@ -37,31 +38,29 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorageProvider"/> for a given region endpoint, and will assume the runnning AWS ECS Task role credentials or Lambda role credentials />
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint, and will assume the running AWS ECS Task role credentials or Lambda role credentials 
       /// </summary>
-      public AwsS3BlobStorageProvider(string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
       {
-
          _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
          _client = new AmazonS3Client(regionEndpoint);
          _skipBucketCreation = skipBucketCreation;
          _fileTransferUtility = new TransferUtility(_client);
-
       }
 
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorageProvider"/> for a given region endpoint/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint
       /// </summary>
-      public AwsS3BlobStorageProvider(string accessKeyId, string secretAccessKey, string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
          : this(accessKeyId, secretAccessKey, bucketName, new AmazonS3Config { RegionEndpoint = regionEndpoint ?? RegionEndpoint.EUWest1 }, skipBucketCreation)
       {
       }
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorageProvider"/> for an S3-compatible storage provider hosted on an alternative service URL/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for an S3-compatible storage provider hosted on an alternative service URL
       /// </summary>
-      public AwsS3BlobStorageProvider(string accessKeyId, string secretAccessKey, string bucketName, string serviceUrl, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, string serviceUrl, bool skipBucketCreation = false)
          : this(accessKeyId, secretAccessKey, bucketName, new AmazonS3Config
          {
             RegionEndpoint = RegionEndpoint.USEast1,
@@ -71,9 +70,9 @@ namespace Storage.Net.Amazon.Aws.Blobs
       }
 
       /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorageProvider"/> for a given S3 client configuration/>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given S3 client configuration
       /// </summary>
-      public AwsS3BlobStorageProvider(string accessKeyId, string secretAccessKey, string bucketName, AmazonS3Config clientConfig, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, AmazonS3Config clientConfig, bool skipBucketCreation = false)
       {
          if (accessKeyId == null) throw new ArgumentNullException(nameof(accessKeyId));
          if (secretAccessKey == null) throw new ArgumentNullException(nameof(secretAccessKey));
@@ -98,6 +97,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
             catch (AmazonS3Exception ex) when (ex.ErrorCode == "BucketAlreadyOwnedByYou")
             {
                //ignore this error as bucket already exists
+               _initialised = true;
             }
          }
 
@@ -123,7 +123,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
          if(options.IncludeAttributes)
          {
-            foreach(IEnumerable<Blob> page in blobs.Chunk(ListChunkSize))
+            foreach(IEnumerable<Blob> page in blobs.Where(b => !b.IsFolder).Chunk(ListChunkSize))
             {
                await Converter.AppendMetadataAsync(client, _bucketName, page, cancellationToken).ConfigureAwait(false);
             }
@@ -187,64 +187,47 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
-         return await Task.WhenAll(fullPaths.Select(ExistsAsync));
+         AmazonS3Client client = await GetClientAsync().ConfigureAwait(false);
+
+         return await Task.WhenAll(fullPaths.Select(fullPath => ExistsAsync(client, fullPath, cancellationToken))).ConfigureAwait(false);
       }
 
-      private async Task<bool> ExistsAsync(string fullPath)
+      private async Task<bool> ExistsAsync(AmazonS3Client client, string fullPath, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
 
          try
          {
             fullPath = StoragePath.Normalize(fullPath, false);
-            using (GetObjectResponse response = await GetObjectAsync(fullPath).ConfigureAwait(false))
-            {
-               if (response == null) return false;
-            }
+            await client.GetObjectMetadataAsync(_bucketName, fullPath, cancellationToken).ConfigureAwait(false);
+            return true;
          }
-         catch (StorageException ex)
+         catch(AmazonS3Exception ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
-            if (ex.ErrorCode == ErrorCode.NotFound) return false;
+            
          }
 
-         return true;
+         return false;
       }
 
       public async Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
-         Blob[] blobs = await Task.WhenAll(fullPaths.Select(GetBlobAsync)).ConfigureAwait(false);
-
-         await Converter.AppendMetadataAsync(
-            await GetClientAsync().ConfigureAwait(false),
-            _bucketName,
-            blobs,
-            cancellationToken).ConfigureAwait(false);
-
-         return blobs;
+         return await Task.WhenAll(fullPaths.Select(GetBlobAsync)).ConfigureAwait(false);
       }
 
       private async Task<Blob> GetBlobAsync(string fullPath)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
+         fullPath = StoragePath.Normalize(fullPath, false);
+
+         AmazonS3Client client = await GetClientAsync().ConfigureAwait(false);
 
          try
          {
-            fullPath = StoragePath.Normalize(fullPath, false);
-            using (GetObjectResponse obj = await GetObjectAsync(fullPath).ConfigureAwait(false))
-            {
-               //ETag contains actual MD5 hash, not sure why!
-
-               if(obj != null)
-               {
-                  var r = new Blob(fullPath);
-                  r.MD5 = obj.ETag.Trim('\"');
-                  r.Size = obj.ContentLength;
-                  r.LastModificationTime = obj.LastModified.ToUniversalTime();
-                  return r;
-               }
-            }
+            GetObjectMetadataResponse meta = await client.GetObjectMetadataAsync(_bucketName, fullPath).ConfigureAwait(false);
+            return meta.ToBlob(fullPath);
          }
-         catch (StorageException ex) when (ex.ErrorCode == ErrorCode.NotFound)
+         catch(AmazonS3Exception ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
             //if blob is not found, don't return any information
          }

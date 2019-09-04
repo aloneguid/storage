@@ -193,7 +193,7 @@ namespace Storage.Net.Tests.Integration.Blobs
          Assert.Equal(id1, files.First().FullPath);
       }
 
-      [Fact]
+      //[Fact]
       public async Task List_large_number_of_results()
       {
          const int count = 500;
@@ -218,15 +218,17 @@ namespace Storage.Net.Tests.Integration.Blobs
       {
          try
          {
-            await _storage.WriteTextAsync("/sub/one.txt", "test");
-            await _storage.WriteTextAsync("/sub/sub/two.txt", "test");
+            string sub = RandomBlobPath() + "/";
 
-            IReadOnlyCollection<Blob> subItems = await _storage.ListAsync(recurse: false, folderPath: "sub");
+            await _storage.WriteTextAsync(sub + "one.txt", "test");
+            await _storage.WriteTextAsync(sub + "sub/two.txt", "test");
+
+            IReadOnlyCollection<Blob> subItems = await _storage.ListAsync(recurse: false, folderPath: sub);
             Assert.Equal(2, subItems.Count);
 
 
-            Assert.Contains(new Blob("/sub/one.txt"), subItems);
-            Assert.Contains(new Blob("/sub/sub", BlobItemKind.Folder), subItems);
+            Assert.Contains(new Blob(sub + "one.txt"), subItems);
+            Assert.Contains(new Blob(sub + "sub", BlobItemKind.Folder), subItems);
          }
          catch(NotSupportedException)
          {
@@ -263,6 +265,33 @@ namespace Storage.Net.Tests.Integration.Blobs
 
          Assert.Null(meta);
       }
+
+      [Fact]
+      public async Task GetBlob_Root_doesnt_exist_returns_null()
+      {
+         string id = "/" + Guid.NewGuid().ToString();
+         //string id = "test";
+
+         Assert.Null(await _storage.GetBlobAsync(id));
+      }
+
+      [Fact]
+      public async Task GetBlob_Root_valid_returns_some()
+      {
+         string id = RandomBlobPath();
+
+         string root = StoragePath.Split(id)[0];
+
+         try
+         {
+            Blob rb = await _storage.GetBlobAsync(root);
+         }
+         catch(NotSupportedException)
+         {
+
+         }
+      }
+
 
       [Fact]
       public async Task Open_doesnt_exist_returns_null()
@@ -359,9 +388,14 @@ namespace Storage.Net.Tests.Integration.Blobs
          blob.Metadata["fun"] = "no";
 
          await _storage.WriteTextAsync(blob, "test");
+         Blob blob2 = await _storage.GetBlobAsync(blob);
+         Assert.True(blob2.Size > 0);
+
          try
          {
             await _storage.SetBlobAsync(blob);
+            blob2 = await _storage.GetBlobAsync(blob);
+            Assert.True(blob2.Size > 0);
          }
          catch(NotSupportedException)
          {
@@ -369,7 +403,7 @@ namespace Storage.Net.Tests.Integration.Blobs
          }
 
          //test
-         Blob blob2 = await _storage.GetBlobAsync(blob);
+         blob2 = await _storage.GetBlobAsync(blob);
          Assert.NotNull(blob2.Metadata);
          Assert.Equal("ivan", blob2.Metadata["user"]);
          Assert.Equal("no", blob2.Metadata["fun"]);
@@ -472,11 +506,12 @@ namespace Storage.Net.Tests.Integration.Blobs
          Assert.Equal(hash, hash2);
       }
 
-      private string RandomBlobPath(string prefix = null)
+      private string RandomBlobPath(string prefix = null, string subfolder = null, string extension = "")
       {
-         return _blobPrefix +
-            (prefix == null ? string.Empty : prefix) +
-            Guid.NewGuid().ToString();
+         return StoragePath.Combine(
+            _blobPrefix,
+            subfolder,
+            (prefix ?? "") + Guid.NewGuid().ToString() + extension);
       }
 
       class TestDocument

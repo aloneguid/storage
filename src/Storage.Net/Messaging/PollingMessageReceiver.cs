@@ -125,5 +125,16 @@ namespace Storage.Net.Messaging
       /// See interface
       /// </summary>
       public Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+      /// <summary>
+      /// see interface
+      /// </summary>
+      /// <param name="maxMessages"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      public virtual Task<IReadOnlyCollection<QueueMessage>> PeekMessagesAsync(int maxMessages, CancellationToken cancellationToken = default)
+      {
+         throw new NotSupportedException();
+      }
    }
 }

@@ -12,8 +12,6 @@
       <FileVersion>2.6.204.0</FileVersion>
       <AssemblyVersion>2.0.0.0</AssemblyVersion>
       <Description>Provides Storage.Net integration with Azure Service Fabric. This library implements Reliable Storage as Blobs and Messages.</Description>
-      <AssemblyOriginatorKeyFile>../../storage.snk</AssemblyOriginatorKeyFile>
-      <SignAssembly>true</SignAssembly>
       <RuntimeIdentifier>win7-x64</RuntimeIdentifier>
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

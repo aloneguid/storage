@@ -5,8 +5,6 @@
       <AssemblyTitle>Storage.Net.Microsoft.Azure.ServiceBus</AssemblyTitle>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
-      <AssemblyOriginatorKeyFile>../../storage.snk</AssemblyOriginatorKeyFile>
-      <SignAssembly>true</SignAssembly>
       <PackageId>Storage.Net.Microsoft.Azure.ServiceBus</PackageId>
       <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>

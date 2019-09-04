@@ -160,12 +160,14 @@ namespace Storage.Net.Blobs.Files
 
       private static string EncodePathPart(string path)
       {
-         return path.UrlEncode();
+         return path;
+         //return path.UrlEncode();
       }
 
       private static string DecodePathPart(string path)
       {
-         return path.UrlDecode();
+         return path;
+         //return path.UrlDecode();
       }
 
       /// <summary>

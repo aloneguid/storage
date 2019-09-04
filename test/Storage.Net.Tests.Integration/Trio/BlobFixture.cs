@@ -76,7 +76,13 @@ namespace Storage.Net.Tests.Integration.Blobs
 
          if(_testDir != null)
          {
-            Directory.Delete(_testDir, true);
+            try
+            {
+               Directory.Delete(_testDir, true);
+            }
+            catch(DirectoryNotFoundException)
+            {
+            }
             _testDir = null;
          }
       }

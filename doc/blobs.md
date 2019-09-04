@@ -10,6 +10,9 @@ This page lists blob storage providers available in Storage.Net
 - [FTP](#ftp)
 - [Microsoft Azure Blob Storage](#microsoft-azure-blob-storage)
 - [Amazon S3 Storage](#amazon-s3-storage)
+- [Azure Data Lake Store](#azure-data-lake-store)
+  - [Gen 1](#gen-1) 
+  - [Gen 2](#gen-2) 
 
 ### In-Memory
 
@@ -176,8 +179,8 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("aws.s3://keyId
 ```
 
 where:
-- **keyId** is access key ID.
-- **key** is secret access key.
+- **keyId** is (optional) access key ID.
+- **key** is (optional) secret access key.
 - **bucket** is bucket name.
 - **region** is an optional value and defaults to `EU West 1` if not specified. At the moment of this wring the following regions are supported. However as we are using the official AWS SDK, when region information changes, storage.net gets automatically updated.
   - `us-east-1`
@@ -202,12 +205,128 @@ where:
   - `cn-northwest-1`
   - `ca-central-1`
 
+If **keyId** and **key** are omitted, the AWS SDK's default approach to credential resolution will be used. For example: if running in Lambda, it will assume the Lambda execution role; if there are credentials configured in ~/.aws, it will use those; etc.  See [AWS SDK Documentation](https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/net-dg-config-creds.html) for more details.
+
+#### Performance & Memory Consumption
+
+By default, `S3 SDK` is *extremely ineffective* and I have no idea why. Can it be that .NET developers are not paying enough attention to good quality code or Amazon is just not good in programming? In particular, SDK doesn't deal very well with streaming. When you stream with S3 SDK, it **accumulates data in memory and only uploads it on flush!**. Whoever designed it this way has probably never built real software. Unfortunately, S3 has a limitation that data length needs to be known beforehand in order to create a file. See issues [here](https://github.com/aws/aws-sdk-net/issues/1095) and [here](https://github.com/aws/aws-sdk-net/issues/1073) for more information.
+
+If you ever wonder why your application is slow, say thanks to Amazon engineers.
+
+
 #### Native Operations
 
-Native operations are exposed via [IAwsS3BlobStorageNativeOperations](../src/AWS/Storage.Net.Amazon.Aws/Blobs/IAwsS3BlobStorageNativeOperations.cs) interface.
+Native operations are exposed via [IAwsS3BlobStorageNativeOperations](../src/AWS/Storage.Net.Amazon.Aws/Blobs/IAwsS3BlobStorage.cs) interface.
 
+## Azure Data Lake Store
 
+In order to use, reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.DataLake.Store.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.DataLake.Store/) package first. Both **Gen1** and **Gen2** storage accounts are supported.
 
+### Gen 1
 
+To create using a factory method, use the following signature:
 
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen1StoreByClientSecret(
+         string accountName,
+         string tenantId,
+         string principalId,
+         string principalSecret,
+         int listBatchSize = 5000)
+```
 
+The last parameter *listBatchSize* indicates how to query storage for list operations - by default a batch of 5k items will be used. Note that the larger the batch size, the more data you will receive in the request. This speeds up list operations, however may result in HTTP time-out the slower your internet connection is. This feature is not available in the standard .NET SDK and was implemented from scratch.
+
+You can also use connection strings:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.datalake.gen1://account=...;tenantId=...;principalId=...;principalSecret=...;listBatchSize=...");
+```
+
+the last parameter *listBatchSize* is optional and defaults to `5000`.
+
+### Gen 2
+
+Gen 2 is the new generation of the storage API, and you should always prefer it to Gen 1 accounts when you can. Both Gen 1 and Gen 2 providers are located in the same NuGet package.
+
+Gen 2 provider is 100% compatible with hierarchical namespaces. When you use blob path, the first part of the path is filesystem name, i.e. `storage.WriteTextAsync("filesystem/folder/subfolder/.../file.extension`. Apparently you cannot create files in the root folder, they always need to be prefixed with filesystem name.
+
+If filesystem doesn't exist, we will try to create it for you, if the account provided has enough permissions to do so.
+
+#### Authentication
+
+You can authenticate in the ways described below. To use connection strings, don't forget to call `StorageFactory.Modules.UseAzureDataLake()` somewhere when your program starts.
+
+##### Using **Shared Key Authentication**
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(
+   accountName,
+   sharedKey);
+```
+
+or
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
+   "azure.datalake.gen2://account=...;key=...");
+```
+
+##### Using **Service Principal**
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen2StoreByClientSecret(
+   accountName,
+   tenantId,
+   principalId,
+   principalSecret);
+```
+
+or
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
+   "azure.datalake.gen2://account=...;tenantId=...;principalId=...;principalSecret=...");
+```
+
+##### Using **Managed Service Identity**
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen2StoreByManagedIdentity(
+   accountName);
+```
+
+or
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
+   "azure.datalake.gen2://account=...;msi");
+```
+
+#### Permissions Management
+
+ADLS Gen 2 [supports](https://docs.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-access-control) RBAC and [POSIX](https://www.usenix.org/legacy/publications/library/proceedings/usenix03/tech/freenix03/full_papers/gruenbacher/gruenbacher_html/main.html) like permissions on both file and folder level. Storage.Net fully supports permissions management on those and exposes simplified easy-to-use API to drive them.
+
+Because permission management is ADLS Gen 2 specific feature, you cannot use `IBlobStorage` interface, however you can cast it to `IAzureDataLakeGen2BlobStorage` which in turn implements `IBlobStorage` as well.
+
+In order to get permissions for an object located on a specific path, you can call the API:
+
+```csharp
+IBlobStorage genericStorage = StorageFactory.Blobs.AzureDataLakeGen2StoreByClientSecret(name, key);
+IAzureDataLakeGen2BlobStorage gen2Storage = (IAzureDataLakeGen2BlobStorage)genericStorage;
+
+//get permissions
+AccessControl access = await _storage.GetAccessControlAsync(path);
+```
+
+`AccessControl` is a self explanatory structure that contains information about owning user, owning group, their permissions, and any custom ACL entries assigned to this object.
+
+In order to set permissions, you need to call `SetAccessControlAsync` passing back modified `AccessControl` structure. Let's say I'd like to add *write* access to a user with ID `6b157067-78b0-4478-ba7b-ade5c66f1a9a` (Active Directory Object ID). I'd write code like this (using the structure we've just got back from `GetAccessControlAsync`):
+
+```csharp
+// add user to custom ACL
+access.Acl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
+
+//update the ACL on Gen 2 storage
+await _storage.SetAccessControlAsync(path, access);
+```

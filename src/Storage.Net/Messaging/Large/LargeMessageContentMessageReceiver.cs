@@ -77,5 +77,6 @@ namespace Storage.Net.Messaging.Large
 
       public Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default) =>
          _parentReceiver.KeepAliveAsync(message, timeToLive, cancellationToken);
+      public Task<IReadOnlyCollection<QueueMessage>> PeekMessagesAsync(int maxMessages, CancellationToken cancellationToken = default) => throw new NotSupportedException();
    }
 }
