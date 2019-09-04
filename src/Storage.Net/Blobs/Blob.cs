@@ -69,6 +69,24 @@ namespace Storage.Net.Blobs
       public Dictionary<string, string> Metadata { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
       /// <summary>
+      /// Tries to add properties in pairs when value is not null
+      /// </summary>
+      /// <param name="keyValues"></param>
+      public void TryAddProperties(params string[] keyValues)
+      {
+         for(int i = 0; i < keyValues.Length; i += 2)
+         {
+            string key = keyValues[i];
+            string value = keyValues[i + 1];
+
+            if(value != null)
+            {
+               Properties[key] = value;
+            }
+         }
+      }
+
+      /// <summary>
       /// Create a new instance
       /// </summary>
       /// <param name="fullPath"></param>

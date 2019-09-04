@@ -24,23 +24,45 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          if(go.Metadata?.Count > 0)
             blob.Metadata.AddRange(go.Metadata);
 
-         if(go.ContentType != null)
-            blob.Properties["ContentType"] = go.ContentType;
+         blob.TryAddProperties(
+            "ContentType", go.ContentType,
+            "CacheControl", go.CacheControl,
+            "ComponentControl", go.ComponentCount.ToString(),
+            "ContentDisposition", go.ContentDisposition,
+            "ContentEncoding", go.ContentEncoding,
+            "ContentLanguage", go.ContentLanguage,
+            "ContentType", go.ContentType,
+            "Crc32", go.Crc32c,
+            "ETag", go.ETag,
+            "EventBaseHold", go.EventBasedHold.ToString(),
+            "Generation", go.Generation.ToString());
+         //todo: more to come
 
          return blob;
       }
 
-      public static async Task<IReadOnlyCollection<Blob>> ToBlobsAsync(PagedAsyncEnumerable<Objects, Object> pae)
+      public static async Task<IReadOnlyCollection<Blob>> ToBlobsAsync(PagedAsyncEnumerable<Objects, Object> pae, ListOptions options)
       {
          var result = new List<Blob>();
 
          using(IAsyncEnumerator<Object> enumerator = pae.GetEnumerator())
          {
-            while(await enumerator.MoveNext())
+            while(await enumerator.MoveNext().ConfigureAwait(false))
             {
                Object go = enumerator.Current;
 
-               result.Add(ToBlob(go));
+               Blob blob = ToBlob(go);
+
+               if(options.FilePrefix != null && !blob.Name.StartsWith(options.FilePrefix))
+                  continue;
+
+               if(options.BrowseFilter != null && !options.BrowseFilter(blob))
+                  continue;
+
+               result.Add(blob);
+
+               if(options.MaxResults != null && result.Count >= options.MaxResults.Value)
+                  break;
             }
          }
 
