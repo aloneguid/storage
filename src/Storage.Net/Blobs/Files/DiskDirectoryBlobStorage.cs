@@ -76,14 +76,21 @@ namespace Storage.Net.Blobs.Files
          fullPath = fullPath.Trim(StoragePath.PathSeparator);
          fullPath = StoragePath.PathSeparatorString + fullPath;
 
-         var blobId = new Blob(fullPath, kind);
+         var blob = new Blob(fullPath, kind);
+
+         var fi = new FileInfo(fullPath);
+         blob.TryAddProperties(
+            "IsReadOnly", fi.IsReadOnly.ToString(),
+            "LastAccessTimeUtc", fi.LastAccessTimeUtc.ToString(),
+            "LastWriteTimeUtc", fi.LastWriteTimeUtc.ToString(),
+            "Attributes", fi.Attributes.ToString());
 
          if(includeMeta)
          {
-            EnrichWithMetadata(blobId);
+            EnrichWithMetadata(blob);
          }
 
-         return blobId;
+         return blob;
       }
 
       private string GetFolder(string path, bool createIfNotExists)
