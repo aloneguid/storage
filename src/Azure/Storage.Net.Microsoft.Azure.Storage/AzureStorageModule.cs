@@ -12,6 +12,7 @@ namespace Storage.Net.Microsoft.Azure.Storage
    class Module : IExternalModule, IConnectionFactory
    {
       private const string BlobPrefix = "azure.blob";
+      private const string FilesPrefix = "azure.file";
       public const string AccountParam = "account";
       public const string KeyParam = "key";
 
@@ -32,6 +33,13 @@ namespace Storage.Net.Microsoft.Azure.Storage
 
                return AzureUniversalBlobStorageProvider.CreateFromAccountNameAndKey(accountName, key);
             }
+         }
+         else if(connectionString.Prefix == FilesPrefix)
+         {
+            connectionString.GetRequired(AccountParam, true, out string accountName);
+            connectionString.GetRequired(KeyParam, true, out string key);
+
+            return AzureFilesBlobStorage.CreateFromAccountNameAndKey(accountName, key);
          }
          else
          {
