@@ -10,12 +10,19 @@ namespace Storage.Net.KeyValue
    /// </summary>
    public sealed class Value : IDictionary<string, object>, IEquatable<Value>
    {
-      private readonly Dictionary<string, object> _keyToValue = new Dictionary<string, object>(); 
+      private readonly Dictionary<string, object> _keyToValue = new Dictionary<string, object>();
+
+      /// <summary>
+      /// Creates a new instance from partition key, row key and ETag
+      /// </summary>
+      public Value(string partitionKey, string rowKey, string etag) : this(new Key(partitionKey, rowKey, etag))
+      {
+      }
 
       /// <summary>
       /// Creates a new instance from partition key and row key
       /// </summary>
-      public Value(string partitionKey, string rowKey) : this(new Key(partitionKey, rowKey))
+      public Value(string partitionKey, string rowKey) : this(partitionKey, rowKey, null)
       {
       }
 
@@ -36,21 +43,29 @@ namespace Storage.Net.KeyValue
       /// <summary>
       /// Partition key
       /// </summary>
-      public string PartitionKey { get { return Id.PartitionKey; }}
+      public string PartitionKey { get { return Id.PartitionKey; } }
 
       /// <summary>
       /// Row key
       /// </summary>
-      public string RowKey { get { return Id.RowKey; }}
+      public string RowKey { get { return Id.RowKey; } }
+
+      /// <summary>
+      /// ETag
+      /// </summary>
+      public string ETag { get { return Id.ETag; } set { Id.ETag = value; } }
 
       /// <summary>
       /// Checks row equality
       /// </summary>
       public bool Equals(Value other)
       {
-         if(ReferenceEquals(other, null)) return false;
-         if(ReferenceEquals(other, this)) return true;
-         if(GetType() != other.GetType()) return false;
+         if(ReferenceEquals(other, null))
+            return false;
+         if(ReferenceEquals(other, this))
+            return true;
+         if(GetType() != other.GetType())
+            return false;
 
          return other.Id.PartitionKey == Id.PartitionKey && other.Id.RowKey == Id.RowKey;
       }
@@ -177,7 +192,8 @@ namespace Storage.Net.KeyValue
       {
          get
          {
-            if (!_keyToValue.TryGetValue(key, out object value)) return null;
+            if(!_keyToValue.TryGetValue(key, out object value))
+               return null;
             return value;
          }
          set { Add(key, value); }
@@ -206,10 +222,12 @@ namespace Storage.Net.KeyValue
       /// </summary>
       /// <param name="rowKey">When specified, the clone receives this value for the Row Key</param>
       /// <param name="partitionKey">When speified, the clone receives this value for the Partition Key</param>
+      /// <param name="etag"></param>
       /// <returns></returns>
-      public Value Clone(string rowKey = null, string partitionKey = null)
+      public Value Clone(string rowKey = null, string partitionKey = null, string etag = null)
       {
-         var clone = new Value(partitionKey ?? PartitionKey, rowKey ?? RowKey);
+         var clone = new Value(partitionKey ?? PartitionKey, rowKey ?? RowKey, ETag ?? etag);
+
          foreach(KeyValuePair<string, object> pair in _keyToValue)
          {
             clone._keyToValue[pair.Key] = pair.Value;
@@ -231,7 +249,8 @@ namespace Storage.Net.KeyValue
       /// </summary>
       public static bool AreDistinct(IEnumerable<Value> rows)
       {
-         if (rows == null) return true;
+         if(rows == null)
+            return true;
 
          IEnumerable<IGrouping<Key, Value>> groups = rows.GroupBy(r => r.Id);
          IEnumerable<int> counts = groups.Select(g => g.Count());
@@ -245,17 +264,17 @@ namespace Storage.Net.KeyValue
       {
          Value masterRow = null;
 
-         foreach (Value row in rows)
+         foreach(Value row in rows)
          {
-            if (masterRow == null)
+            if(masterRow == null)
             {
                masterRow = row;
             }
             else
             {
-               foreach (KeyValuePair<string, object> cell in row)
+               foreach(KeyValuePair<string, object> cell in row)
                {
-                  if (!masterRow.ContainsKey(cell.Key))
+                  if(!masterRow.ContainsKey(cell.Key))
                   {
                      masterRow[cell.Key] = cell.Value;
                   }

@@ -6,23 +6,33 @@
    public enum ErrorCode
    {
       /// <summary>
-      /// Unknown error code
+      /// Unknown error code.
       /// </summary>
       Unknown,
 
       /// <summary>
-      /// Resource not found
+      /// Resource not found.
       /// </summary>
       NotFound,
 
       /// <summary>
-      /// Operation failed because a key already exists
+      /// Operation failed because a key already exists.
       /// </summary>
       DuplicateKey,
 
       /// <summary>
-      /// A conflict
+      /// Failed the precondition.
       /// </summary>
-      Conflict
+      PreconditionFailed,
+
+      /// <summary>
+      /// A conflict.
+      /// </summary>
+      Conflict,
+
+      /// <summary>
+      /// A bad request.
+      /// </summary>
+      BadRequest
    }
 }

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos.Table;
 using NetBox.Extensions;
 using Storage.Net.KeyValue;
+using System.Net;
 using AzSE = Microsoft.Azure.Cosmos.Table.StorageException;
 using IAzTableEntity = Microsoft.Azure.Cosmos.Table.ITableEntity;
 using MeSE = Storage.Net.StorageException;
@@ -369,18 +370,26 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          }
          catch(AzSE ex)
          {
-            if(ex.RequestInformation.HttpStatusCode == 409)
+            switch(ex.RequestInformation.HttpStatusCode)
             {
-               throw new MeSE(ErrorCode.DuplicateKey, ex);
-            }
+               case (int)HttpStatusCode.Conflict:
+                  throw new MeSE(ErrorCode.DuplicateKey, ex);
 
-            throw new MeSE(ex.Message, ex);
+               case (int)HttpStatusCode.PreconditionFailed:
+                  throw new MeSE(ErrorCode.PreconditionFailed, ex);
+
+               case (int)HttpStatusCode.BadRequest:
+                  throw new MeSE(ErrorCode.BadRequest, ex);
+
+               default:
+                  throw new MeSE(ex.Message, ex);
+            }
          }
       }
 
       private static Value ToTableRow(DynamicTableEntity az)
       {
-         var result = new Value(az.PartitionKey, az.RowKey);
+         var result = new Value(az.PartitionKey, az.RowKey, az.ETag);
          foreach(KeyValuePair<string, EntityProperty> pair in az.Properties)
          {
             switch(pair.Value.PropertyType)

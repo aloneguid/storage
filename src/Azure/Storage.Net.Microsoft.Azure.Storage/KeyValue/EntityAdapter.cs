@@ -28,22 +28,22 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
       {
          _row = row;
 
-         Init(row?.Id, true);
+         Init(row?.Id);
       }
 
       public EntityAdapter(Key rowId)
       {
-         Init(rowId, true);
+         Init(rowId);
       }
 
-      private void Init(Key rowId, bool useConcurencyKey)
+      private void Init(Key rowId)
       {
-         if (rowId == null)
+         if(rowId == null)
             throw new ArgumentNullException("rowId");
 
          PartitionKey = ToInternalId(rowId.PartitionKey);
          RowKey = ToInternalId(rowId.RowKey);
-         ETag = "*";
+         ETag = rowId.ETag;
       }
 
       public void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
@@ -56,9 +56,9 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
          //Azure Lib calls this when it wants to transform this entity to a writeable one
 
          var dic = new Dictionary<string, EntityProperty>();
-         foreach (KeyValuePair<string, object> cell in _row)
+         foreach(KeyValuePair<string, object> cell in _row)
          {
-            if (cell.Value == null)
+            if(cell.Value == null)
             {
                continue;
             }
@@ -66,7 +66,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.KeyValue
             EntityProperty ep;
             Type t = cell.Value.GetType();
 
-            if (!_typeToEntityPropertyFunc.TryGetValue(t, out Func<object, EntityProperty> factoryMethod))
+            if(!_typeToEntityPropertyFunc.TryGetValue(t, out Func<object, EntityProperty> factoryMethod))
             {
                ep = EntityProperty.GeneratePropertyForString(cell.Value.ToString());
             }

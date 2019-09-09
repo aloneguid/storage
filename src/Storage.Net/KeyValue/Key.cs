@@ -12,12 +12,24 @@ namespace Storage.Net.KeyValue
       /// </summary>
       /// <param name="partitionKey">Partition key</param>
       /// <param name="rowKey">Row key</param>
-      public Key(string partitionKey, string rowKey)
+      public Key(string partitionKey, string rowKey) : this(partitionKey, rowKey, "*")
       {
-         if(partitionKey == null) throw new ArgumentNullException(nameof(partitionKey));
+      }
+
+      /// <summary>
+      /// Constructs an instance of <see cref="Key"/>
+      /// </summary>
+      /// <param name="partitionKey">Partition key</param>
+      /// <param name="rowKey">Row key</param>
+      /// <param name="etag">ETag</param>
+      public Key(string partitionKey, string rowKey, string etag)
+      {
+         if(partitionKey == null)
+            throw new ArgumentNullException(nameof(partitionKey));
 
          PartitionKey = partitionKey;
          RowKey = rowKey;
+         ETag = etag;
       }
 
       /// <summary>
@@ -31,15 +43,23 @@ namespace Storage.Net.KeyValue
       public string RowKey { get; private set; }
 
       /// <summary>
+      /// ETag
+      /// </summary>
+      public string ETag { get; set; }
+
+      /// <summary>
       /// Equals
       /// </summary>
       public bool Equals(Key other)
       {
-         if (ReferenceEquals(other, null)) return false;
-         if (ReferenceEquals(other, this)) return true;
-         if (other.GetType() != GetType()) return false;
+         if(ReferenceEquals(other, null))
+            return false;
+         if(ReferenceEquals(other, this))
+            return true;
+         if(other.GetType() != GetType())
+            return false;
 
-         return other.PartitionKey == PartitionKey && other.RowKey == RowKey;
+         return other.PartitionKey == PartitionKey && other.RowKey == RowKey && other.ETag == ETag;
       }
 
       /// <summary>
