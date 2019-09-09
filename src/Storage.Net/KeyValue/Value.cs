@@ -222,7 +222,7 @@ namespace Storage.Net.KeyValue
       /// </summary>
       /// <param name="rowKey">When specified, the clone receives this value for the Row Key</param>
       /// <param name="partitionKey">When speified, the clone receives this value for the Partition Key</param>
-      /// <param name="etag"></param>
+      /// <param name="etag">When specified, the clone receives this value for the ETag</param>
       /// <returns></returns>
       public Value Clone(string rowKey = null, string partitionKey = null, string etag = null)
       {
