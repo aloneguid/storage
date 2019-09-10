@@ -15,6 +15,7 @@ using Storage.Net.Streaming;
 using Google;
 using System.Net;
 using System.Linq;
+using Google.Apis.Storage.v1;
 
 namespace Storage.Net.Gcp.CloudStorage.Blobs
 {
@@ -25,7 +26,7 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
       private readonly StorageClient _client;
       private readonly string _bucketName;
 
-      protected override bool CanListHierarchy => true;
+      protected override bool CanListHierarchy => false;
 
       public GoogleCloudStorageBlobStorage(string bucketName, GoogleCredential credential = null, EncryptionKey encryptionKey = null) : base()
       {
@@ -34,6 +35,37 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
       }
 
       protected override async Task<IReadOnlyCollection<Blob>> ListAtAsync(string path, ListOptions options, CancellationToken cancellationToken)
+      {
+         ObjectsResource.ListRequest request = _client.Service.Objects.List(_bucketName);
+         request.Prefix = StoragePath.IsRootPath(path) ? null : (path + "/");
+         request.Delimiter = "/";
+
+         var page = new List<Blob>();
+         do
+         {
+            Objects serviceObjects = await request.ExecuteAsync().ConfigureAwait(false);
+
+            if(serviceObjects.Items != null)
+            {
+               page.AddRange(GConvert.ToBlobs(serviceObjects.Items, options));
+            }
+
+            if(serviceObjects.Prefixes != null)
+            {
+               //the only info we have about prefixes is it's name
+               page.AddRange(serviceObjects.Prefixes.Select(p => new Blob(p, BlobItemKind.Folder)));
+            }
+
+
+            request.PageToken = serviceObjects.NextPageToken;
+         }
+         while(request.PageToken != null);
+
+         return page;
+      }
+
+
+      private async Task<IReadOnlyCollection<Blob>> LegacyListAtAsync(string path, ListOptions options, CancellationToken cancellationToken)
       {
          PagedAsyncEnumerable<Objects, Object> objects = _client.ListObjectsAsync(
             _bucketName,
@@ -81,7 +113,14 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
             IReadOnlyCollection<Blob> childObjects = await ListAsync(new ListOptions { Recurse = true }, cancellationToken).ConfigureAwait(false);
             foreach(Blob blob in childObjects)
             {
-               await _client.DeleteObjectAsync(_bucketName, blob, cancellationToken: cancellationToken).ConfigureAwait(false);
+               try
+               {
+                  await _client.DeleteObjectAsync(_bucketName, blob, cancellationToken: cancellationToken).ConfigureAwait(false);
+               }
+               catch(GoogleApiException exc) when(exc.HttpStatusCode == HttpStatusCode.NotFound)
+               {
+
+               }
             }
          }
       }

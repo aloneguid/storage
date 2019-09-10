@@ -7,6 +7,7 @@ using Storage.Net.Blobs;
 using NetBox.Extensions;
 using Google.Api.Gax;
 using System.Threading.Tasks;
+using System.Collections;
 
 namespace Storage.Net.Gcp.CloudStorage.Blobs
 {
@@ -39,6 +40,24 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          //todo: more to come
 
          return blob;
+      }
+
+      public static IEnumerable<Blob> ToBlobs(IEnumerable<Object> objects, ListOptions options)
+      {
+         foreach(Object obj in objects)
+         {
+            Blob item = ToBlob(obj);
+
+            if(options.FilePrefix != null && !item.Name.StartsWith(options.FilePrefix))
+               continue;
+
+            if(options.BrowseFilter != null && !options.BrowseFilter(item))
+               continue;
+
+            yield return item;
+         }
+
+         yield break;
       }
 
       public static async Task<IReadOnlyCollection<Blob>> ToBlobsAsync(PagedAsyncEnumerable<Objects, Object> pae, ListOptions options)
