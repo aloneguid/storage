@@ -10,6 +10,7 @@ using Microsoft.Azure.Storage.Auth;
 using Microsoft.Azure.Storage.File;
 using Storage.Net.Blobs;
 using Storage.Net.Streaming;
+using AzStorageException = Microsoft.Azure.Storage.StorageException;
 
 namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 {
@@ -37,14 +38,47 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          return new AzureFilesBlobStorage(account.CreateCloudFileClient());
       }
 
-      public override async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
+      protected override async Task<IReadOnlyCollection<Blob>> ListAtAsync(
+         string path, ListOptions options, CancellationToken cancellationToken)
       {
-         if(options == null) options = new ListOptions();
-         var result = new List<Blob>();
+         if(StoragePath.IsRootPath(path))
+         {
+            //list file shares
 
-         (CloudFileShare share, string path) = await GetPathPartsAsync(options.FolderPath);
+            ShareResultSegment shares = await _client.ListSharesSegmentedAsync(null, cancellationToken).ConfigureAwait(false);
 
-         return result;
+            return shares.Results.Select(AzConvert.ToBlob).ToList();
+         }
+         else
+         {
+            var chunk = new List<Blob>();
+
+            CloudFileDirectory dir = await GetDirectoryReferenceAsync(path, cancellationToken).ConfigureAwait(false);
+
+            FileContinuationToken token = null;
+            do
+            {
+               try
+               {
+                  FileResultSegment segment = await dir.ListFilesAndDirectoriesSegmentedAsync(options.FilePrefix, token, cancellationToken).ConfigureAwait(false);
+
+                  token = segment.ContinuationToken;
+
+                  chunk.AddRange(segment.Results.Select(r => AzConvert.ToBlob(path, r)));
+               }
+               catch(AzStorageException ex) when(ex.RequestInformation.ErrorCode == "ShareNotFound")
+               {
+                  break;
+               }
+               catch(AzStorageException ex) when(ex.RequestInformation.ErrorCode == "ResourceNotFound")
+               {
+                  break;
+               }
+            }
+            while(token != null);
+
+            return chunk;
+         }
       }
 
       public override async Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
@@ -60,16 +94,88 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          });
       }
 
+      public override async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
+      {
+         CloudFile file = await GetFileReferenceAsync(fullPath, true, cancellationToken).ConfigureAwait(false);
+
+         try
+         {
+            return await file.OpenReadAsync(cancellationToken).ConfigureAwait(false);
+         }
+         catch(AzStorageException ex) when(ex.RequestInformation.ErrorCode == "ResourceNotFound")
+         {
+            return null;
+         }
+      }
+
+      protected override async Task<Blob> GetBlobAsync(string fullPath, CancellationToken cancellationToken)
+      {
+         CloudFile file = await GetFileReferenceAsync(fullPath, false, cancellationToken).ConfigureAwait(false);
+
+         try
+         {
+            await file.FetchAttributesAsync(cancellationToken).ConfigureAwait(false);
+
+            return AzConvert.ToBlob(StoragePath.GetParent(fullPath), file);
+         }
+         catch(AzStorageException ex) when(ex.RequestInformation.ErrorCode == "ShareNotFound")
+         {
+            return null;
+         }
+         catch(AzStorageException ex) when(ex.RequestInformation.ErrorCode == "ResourceNotFound")
+         {
+            return null;
+         }
+      }
+
       protected override async Task DeleteSingleAsync(string fullPath, CancellationToken cancellationToken)
       {
-         CloudFile file = await GetFileReferenceAsync(fullPath, cancellationToken: cancellationToken).ConfigureAwait(false);
+         CloudFile file = await GetFileReferenceAsync(fullPath, false, cancellationToken).ConfigureAwait(false);
 
-         await file.DeleteIfExistsAsync(cancellationToken).ConfigureAwait(false);
+         try
+         {
+            await file.DeleteAsync(cancellationToken).ConfigureAwait(false);
+         }
+         catch(AzStorageException ex) when(ex.RequestInformation.ErrorCode == "ResourceNotFound")
+         {
+            //this may be a folder
+
+            CloudFileDirectory dir = await GetDirectoryReferenceAsync(fullPath, cancellationToken).ConfigureAwait(false);
+            if(await dir.ExistsAsync().ConfigureAwait(false))
+            {
+               await DeleteDirectoryAsync(dir, cancellationToken).ConfigureAwait(false);
+            }
+         }
+      }
+
+      private async Task DeleteDirectoryAsync(CloudFileDirectory dir, CancellationToken cancellationToken)
+      {
+         FileContinuationToken token = null;
+
+         do
+         {
+            FileResultSegment chunk = await dir.ListFilesAndDirectoriesSegmentedAsync(token, cancellationToken).ConfigureAwait(false);
+
+            foreach(IListFileItem item in chunk.Results)
+            {
+               if(item is CloudFile file)
+               {
+                  await file.DeleteIfExistsAsync(cancellationToken).ConfigureAwait(false);
+               }
+               else if(item is CloudFileDirectory subdir)
+               {
+                  await DeleteDirectoryAsync(subdir, cancellationToken);
+               }
+            }
+
+            token = chunk.ContinuationToken;
+         }
+         while(token != null);
       }
 
       protected override async Task<bool> ExistsAsync(string fullPath, CancellationToken cancellationToken)
       {
-         CloudFile file = await GetFileReferenceAsync(fullPath, cancellationToken: cancellationToken).ConfigureAwait(false);
+         CloudFile file = await GetFileReferenceAsync(fullPath, false, cancellationToken).ConfigureAwait(false);
 
          if(file == null)
             return false;
@@ -77,27 +183,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          return await file.ExistsAsync().ConfigureAwait(false);
       }
 
-      private async Task<(CloudFileShare, string)> GetPathPartsAsync(string fullPath, bool createShare = false, CancellationToken cancellationToken = default)
-      {
-         string[] parts = StoragePath.Split(fullPath);
-
-         if(parts.Length == 0)
-            return (null, null);
-
-         string shareName = parts[0];
-
-         CloudFileShare share = _client.GetShareReference(shareName);
-         if(createShare)
-            await share.CreateIfNotExistsAsync(cancellationToken).ConfigureAwait(false);
-
-         string path = parts.Length == 1
-            ? StoragePath.RootFolderPath
-            : StoragePath.Combine(parts.Skip(1));
-
-         return (share, path);
-      }
-
-      private async Task<CloudFile> GetFileReferenceAsync(string fullPath, bool createParents = false, CancellationToken cancellationToken = default)
+      private async Task<CloudFile> GetFileReferenceAsync(string fullPath, bool createParents, CancellationToken cancellationToken)
       {
          string[] parts = StoragePath.Split(fullPath);
          if(parts.Length == 0)
@@ -120,6 +206,26 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
             await dir.CreateIfNotExistsAsync().ConfigureAwait(false);
 
          return dir.GetFileReference(parts[parts.Length - 1]);
+      }
+
+      private Task<CloudFileDirectory> GetDirectoryReferenceAsync(string fullPath, CancellationToken cancellationToken)
+      {
+         string[] parts = StoragePath.Split(fullPath);
+         if(parts.Length == 0)
+            return null;
+
+         string shareName = parts[0];
+
+         CloudFileShare share = _client.GetShareReference(shareName);
+
+         CloudFileDirectory dir = share.GetRootDirectoryReference();
+         for(int i = 1; i < parts.Length; i++)
+         {
+            string sub = parts[i];
+            dir = dir.GetDirectoryReference(sub);
+         }
+
+         return Task.FromResult(dir);
       }
    }
 }

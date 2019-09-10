@@ -16,7 +16,49 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// Lists blobs
       /// </summary>
-      public virtual Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
+      public virtual async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
+      {
+         var result = new List<Blob>();
+         if(options == null) options = new ListOptions();
+
+         await ListStepAsync(options.FolderPath, options, result, cancellationToken).ConfigureAwait(false);
+
+         if(options.MaxResults != null && result.Count > options.MaxResults.Value)
+         {
+            result = result.Take(options.MaxResults.Value).ToList();
+         }
+
+         return result;
+      }
+
+      private async Task ListStepAsync(string path, ListOptions options, List<Blob> container, CancellationToken cancellationToken)
+      {
+         IReadOnlyCollection<Blob> chunk = await ListAtAsync(path, options, cancellationToken).ConfigureAwait(false);
+
+         if(options.BrowseFilter != null)
+         {
+            container.AddRange(chunk.Where(b => options.BrowseFilter(b)));
+         }
+         else
+         {
+            container.AddRange(chunk);
+         }
+
+         if(options.MaxResults != null && container.Count >= options.MaxResults.Value)
+            return;
+
+         if(options.Recurse)
+         {
+            await Task.WhenAll(
+               chunk.Where(c => c.IsFolder).ToList()
+               .Select(c => ListStepAsync(c.FullPath, options, container, cancellationToken))).ConfigureAwait(false);
+         }
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      protected virtual Task<IReadOnlyCollection<Blob>> ListAtAsync(string path, ListOptions options, CancellationToken cancellationToken)
       {
          throw new NotSupportedException();
       }
@@ -56,7 +98,15 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// 
       /// </summary>
-      public Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+      public async Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
+      {
+         return await Task.WhenAll(fullPaths.Select(fp => GetBlobAsync(fp, cancellationToken))).ConfigureAwait(false);
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      protected virtual Task<Blob> GetBlobAsync(string fullPath, CancellationToken cancellationToken) => throw new NotSupportedException();
 
       /// <summary>
       /// 
