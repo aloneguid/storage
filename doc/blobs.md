@@ -9,6 +9,7 @@ This page lists blob storage providers available in Storage.Net
 - [Zip File](#zip-file)
 - [FTP](#ftp)
 - [Microsoft Azure Blob Storage](#microsoft-azure-blob-storage)
+- [Microsoft Azure File Shares](#microsoft-azure-file-shares)
 - [Amazon S3 Storage](#amazon-s3-storage)
 - [Azure Data Lake Store](#azure-data-lake-store)
   - [Gen 1](#gen-1) 
@@ -150,6 +151,22 @@ Where the first parameter is blob id and the second is lease duration. The `Blob
 `AcquireBlobLeaseAsync` also has an option to wait for the lease to be returned (third optional argument) which when set to true causes this library to try to acquire a lease every second until it's released, and re-lease it.
 
 It also exposes `RenewLeaseAsync()` method to renew the lease explicitly, and `LeasedBlob` property that returns a native `CloudBlockBlob` that is leased if you need to explicitly call any methods not supported by this wrapper.
+
+### Microsoft Azure File Shares
+
+In order to use Microsoft Azure blob storage you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.Storage.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage/) package first. The provider wraps around the standard Microsoft Storage SDK.
+
+To create file share by storage name and key:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureFiles(accountName, accountKey);
+```
+
+or connection string:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.file://account=account_name;key=secret_value");
+```
 
 ### Amazon S3 Storage
 

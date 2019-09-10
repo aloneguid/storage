@@ -23,26 +23,33 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             Size = path.ContentLength,
             LastModificationTime = path.LastModified
          };
-         blob.Properties["ETag"] = path.ETag;
-         blob.Properties["Owner"] = path.Owner;
-         blob.Properties["Group"] = path.Group;
-         blob.Properties["Permissions"] = path.Permissions;
+
+         blob.TryAddProperties(
+            "ETag", path.ETag,
+            "Owner", path.Owner,
+            "Group", path.Group,
+            "Permissions", path.Permissions);
 
          return blob;
       }
 
-      public static Blob ToBlob(string fullPath, PathProperties pp)
+      public static Blob ToBlob(string fullPath, PathProperties path)
       {
-         var result = new Blob(fullPath)
+         var blob = new Blob(fullPath)
          {
-            Size = pp.Length,
-            LastModificationTime = pp.LastModified
+            Size = path.Length,
+            LastModificationTime = path.LastModified
          };
 
-         if(pp.UserMetadata != null)
-            result.Metadata.MergeRange(pp.UserMetadata);
+         blob.TryAddProperties(
+            "ETag", path.ETag,
+            "ContentType", path.ContentType,
+            "ResourceType", path.ResourceType);
 
-         return result;
+         if(path.UserMetadata != null)
+            blob.Metadata.MergeRange(path.UserMetadata);
+
+         return blob;
       }
    }
 }
