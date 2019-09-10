@@ -9,7 +9,11 @@
      <WarningsAsErrors />
   </PropertyGroup>
 
-  <ItemGroup>
+   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+      <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+   </PropertyGroup>
+
+   <ItemGroup>
     <PackageReference Include="Google.Cloud.Storage.V1" Version="2.3.0" />
     <PackageReference Include="NetBox" Version="2.3.5" />
   </ItemGroup>
