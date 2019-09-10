@@ -18,6 +18,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
    {
       private readonly CloudFileClient _client;
 
+      protected override bool CanListHierarchy => false;
+
       public AzureFilesBlobStorage(CloudFileClient client)
       {
          _client = client ?? throw new ArgumentNullException(nameof(client));

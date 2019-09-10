@@ -14,6 +14,11 @@ namespace Storage.Net.Blobs
    public abstract class GenericBlobStorage : IBlobStorage
    {
       /// <summary>
+      /// Return true if storage can list hierarchy in one call
+      /// </summary>
+      protected abstract bool CanListHierarchy { get; }
+
+      /// <summary>
       /// Lists blobs
       /// </summary>
       public virtual async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
@@ -47,7 +52,7 @@ namespace Storage.Net.Blobs
          if(options.MaxResults != null && container.Count >= options.MaxResults.Value)
             return;
 
-         if(options.Recurse)
+         if(!CanListHierarchy && options.Recurse)
          {
             await Task.WhenAll(
                chunk.Where(c => c.IsFolder).ToList()

@@ -18,24 +18,23 @@ using System.Linq;
 
 namespace Storage.Net.Gcp.CloudStorage.Blobs
 {
-   class GoogleCloudStorageBlobStorage : IBlobStorage
+   class GoogleCloudStorageBlobStorage : GenericBlobStorage
    {
       //for intro see https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-csharp
 
       private readonly StorageClient _client;
       private readonly string _bucketName;
 
-      public GoogleCloudStorageBlobStorage(string bucketName, GoogleCredential credential = null, EncryptionKey encryptionKey = null)
+      protected override bool CanListHierarchy => true;
+
+      public GoogleCloudStorageBlobStorage(string bucketName, GoogleCredential credential = null, EncryptionKey encryptionKey = null) : base()
       {
          _client = StorageClient.Create(credential, encryptionKey);
          this._bucketName = bucketName;
       }
 
-      public async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
+      protected override async Task<IReadOnlyCollection<Blob>> ListAtAsync(string path, ListOptions options, CancellationToken cancellationToken)
       {
-         if(options == null)
-            options = new ListOptions();
-
          PagedAsyncEnumerable<Objects, Object> objects = _client.ListObjectsAsync(
             _bucketName,
             StoragePath.IsRootPath(options.FolderPath) ? null : options.FolderPath,
@@ -47,14 +46,28 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          return await GConvert.ToBlobsAsync(objects, options);
       }
 
-      public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
+      protected override async Task<Blob> GetBlobAsync(string fullPath, CancellationToken cancellationToken)
       {
-         GenericValidation.CheckBlobFullPaths(fullPaths);
+         fullPath = StoragePath.Normalize(fullPath);
 
-         await Task.WhenAll(fullPaths.Select(fp => DeleteAsync(fp, cancellationToken)));
+         try
+         {
+            Object obj = await _client.GetObjectAsync(_bucketName, fullPath,
+               new GetObjectOptions
+               {
+                  //todo  
+               },
+               cancellationToken).ConfigureAwait(false);
+
+            return GConvert.ToBlob(obj);
+         }
+         catch(GoogleApiException ex) when(ex.HttpStatusCode == HttpStatusCode.NotFound)
+         {
+            return null;
+         }
       }
 
-      private async Task DeleteAsync(string fullPath, CancellationToken cancellationToken)
+      protected override async Task DeleteSingleAsync(string fullPath, CancellationToken cancellationToken)
       {
          try
          {
@@ -64,19 +77,19 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          {
             //when not found, just ignore
 
-            //todo: this may be a folder though
+            //try delete everything recursively
+            IReadOnlyCollection<Blob> childObjects = await ListAsync(new ListOptions { Recurse = true }, cancellationToken).ConfigureAwait(false);
+            foreach(Blob blob in childObjects)
+            {
+               await _client.DeleteObjectAsync(_bucketName, blob, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
          }
       }
 
-      public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
+      protected override async Task<bool> ExistsAsync(string fullPath, CancellationToken cancellationToken)
       {
-         GenericValidation.CheckBlobFullPaths(fullPaths);
+         GenericValidation.CheckBlobFullPath(fullPath);
 
-         return await Task.WhenAll(fullPaths.Select(fp => ExistsAsync(fp, cancellationToken))).ConfigureAwait(false);
-      }
-
-      private async Task<bool> ExistsAsync(string fullPath, CancellationToken cancellationToken)
-      {
          try
          {
             await _client.GetObjectAsync(
@@ -92,12 +105,8 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          }
       }
 
-      public Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-      
 
-      public Task<ITransaction> OpenTransactionAsync() => EmptyTransaction.TaskInstance;
-
-      public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
+      public override Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
       {
          if(append)
             throw new NotSupportedException();
@@ -117,7 +126,7 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          }));
       }
 
-      public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
+      public override async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
          fullPath = StoragePath.Normalize(fullPath, false);
@@ -135,14 +144,6 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          }
          ms.Position = 0;
          return ms;
-      }
-
-
-      public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-
-      public void Dispose()
-      {
-
       }
    }
 }

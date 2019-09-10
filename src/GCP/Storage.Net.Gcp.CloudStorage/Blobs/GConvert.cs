@@ -17,7 +17,7 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          var blob = new Blob(go.Name)
          {
             LastModificationTime = go.Updated,
-            MD5 = go.Md5Hash,
+            MD5 = go.Md5Hash.Base64DecodeAsBytes().ToHexString(),
             Size = (long?)go.Size,
          };
 
