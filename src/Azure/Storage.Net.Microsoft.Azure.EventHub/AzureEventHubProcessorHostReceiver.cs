@@ -45,6 +45,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
 
       public Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
       public Task<ITransaction> OpenTransactionAsync() => Task.FromResult(EmptyTransaction.Instance);
+      public Task<IReadOnlyCollection<QueueMessage>> PeekMessagesAsync(int maxMessages, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
       public Task StartMessagePumpAsync(
          Func<IReadOnlyCollection<QueueMessage>, CancellationToken, Task> onMessageAsync,

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
@@ -53,6 +52,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
       public IList<AclEntry> Acl { get; } = new List<AclEntry>();
 
       /// <summary>
+      /// Parsed Access Control list for defeault entries
+      /// </summary>
+      public IList<AclEntry> DefaultAcl { get; } = new List<AclEntry>();
+
+      /// <summary>
       /// Owning user permissions
       /// </summary>
       public AclEntry OwningUserPermissions { get; private set; }
@@ -74,9 +78,13 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
 
          foreach(string textForm in acl.Split(','))
          {
-            var entry = new AclEntry(textForm);
+            bool isDefault = textForm.StartsWith("default:");
 
-            if(entry.ObjectId == null)
+            string processForm = isDefault ? textForm.Substring(8) : textForm;
+
+            var entry = new AclEntry(processForm);
+
+            if(entry.Identity == null)
             {
                //special entry
                if(entry.Type == "user")
@@ -87,13 +95,16 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
                {
                   OwningGroupPermissions = entry;
                }
-               
+
                //ignore other special objects as they're not important
             }
             else
             {
                //push ID'd objects to the rest of the ACL
-               Acl.Add(entry);
+               if(isDefault)
+                  DefaultAcl.Add(entry);
+               else
+                  Acl.Add(entry);
             }
          }
       }
@@ -116,6 +127,12 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
          foreach(AclEntry extraEntry in Acl)
          {
             sb.Append(',');
+            sb.Append(extraEntry);
+         }
+
+         foreach(AclEntry extraEntry in DefaultAcl)
+         {
+            sb.Append(",default:");
             sb.Append(extraEntry);
          }
 

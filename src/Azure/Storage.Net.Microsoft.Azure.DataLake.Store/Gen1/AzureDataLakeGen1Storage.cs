@@ -10,10 +10,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Microsoft.Azure.DataLake.Store;
+using Microsoft.Azure.DataLake.Store.Acl;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
 {
-   class AzureDataLakeGen1Storage : IBlobStorage
+   class AzureDataLakeGen1Storage : IAzureDataLakeGen1BlobStorage
    {
       private readonly string _accountName;
       private readonly string _domain;
@@ -172,6 +173,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
             return null;
          }
       }
+
+      #region [ Security ]
+
+      public async Task GetAccessControlAsync(string fullPath)
+      {
+         AdlsClient client = await GetAdlsClientAsync();
+
+         AclStatus acl = await client.GetAclStatusAsync(fullPath, UserGroupRepresentation.ObjectID);
+      }
+
+      #endregion
 
       private async Task<AdlsClient> GetAdlsClientAsync()
       {

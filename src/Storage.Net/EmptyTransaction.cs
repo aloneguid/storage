@@ -15,6 +15,11 @@ namespace Storage.Net
       public static ITransaction Instance => _instance;
 
       /// <summary>
+      /// Returns empty transaction instance
+      /// </summary>
+      public static Task<ITransaction> TaskInstance => Task.FromResult(Instance);
+
+      /// <summary>
       /// Doesn't do anything
       /// </summary>
       /// <returns></returns>

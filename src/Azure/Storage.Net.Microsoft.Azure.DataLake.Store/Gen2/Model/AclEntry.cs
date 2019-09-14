@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
 {
@@ -19,11 +18,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
             throw new ArgumentNullException(nameof(textForm));
 
          string[] parts = textForm.Split(':');
-         if(parts.Length != 3)
-            throw new ArgumentException($"must have exactly 3 parts, but value is [{textForm}]", nameof(textForm));
 
          Type = parts[0];
-         ObjectId = parts[1].Length == 0 ? null : parts[1];
+
+         string objectId = parts[1];
+         Identity = objectId.Length == 0 ? null : objectId;
 
          string rwx = parts[2];
          if(rwx.Length != 3)
@@ -38,14 +37,14 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
       /// Creates a new access control entry
       /// </summary>
       /// <param name="objectType">Object type, should be "user" or "group"</param>
-      /// <param name="objectId"></param>
+      /// <param name="identity"></param>
       /// <param name="canRead"></param>
       /// <param name="canWrite"></param>
       /// <param name="canExecute"></param>
-      public AclEntry(ObjectType objectType, string objectId, bool canRead, bool canWrite, bool canExecute)
+      public AclEntry(ObjectType objectType, string identity, bool canRead, bool canWrite, bool canExecute)
       {
          Type = objectType.ToString().ToLower();   //todo: make it right
-         ObjectId = objectId ?? throw new ArgumentNullException(nameof(objectId));
+         Identity = identity ?? throw new ArgumentNullException(nameof(identity));
          CanRead = canRead;
          CanWrite = canWrite;
          CanExecute = canExecute;
@@ -59,9 +58,9 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
       public string Type { get; }
 
       /// <summary>
-      /// Object ID. When not present contains null.
+      /// Object ID or UPN when present.
       /// </summary>
-      public string ObjectId { get; }
+      public string Identity { get; }
 
       /// <summary>
       /// Read allowed ('r' flag)
@@ -82,7 +81,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model
       /// Converts to POSIX format
       /// </summary>
       /// <returns></returns>
-      public override string ToString() => $"{Type}:{ObjectId}:{ToChar("r", CanRead)}{ToChar("w", CanWrite)}{ToChar("x", CanExecute)}";
+      public override string ToString() => $"{Type}:{Identity}:{ToChar("r", CanRead)}{ToChar("w", CanWrite)}{ToChar("x", CanExecute)}";
 
       private static string ToChar(string name, bool value)
       {

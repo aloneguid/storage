@@ -275,6 +275,23 @@ namespace Storage.Net.Tests.Integration.Blobs
          Assert.Null(await _storage.GetBlobAsync(id));
       }
 
+      [Fact]
+      public async Task GetBlob_Root_valid_returns_some()
+      {
+         string id = RandomBlobPath();
+
+         string root = StoragePath.Split(id)[0];
+
+         try
+         {
+            Blob rb = await _storage.GetBlobAsync(root);
+         }
+         catch(NotSupportedException)
+         {
+
+         }
+      }
+
 
       [Fact]
       public async Task Open_doesnt_exist_returns_null()

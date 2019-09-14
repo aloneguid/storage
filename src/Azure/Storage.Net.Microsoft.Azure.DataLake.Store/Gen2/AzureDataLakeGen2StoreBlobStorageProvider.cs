@@ -51,8 +51,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          if(clientSecret is null)
             throw new ArgumentNullException(nameof(clientSecret));
 
-         return new AzureDataLakeStoreGen2BlobStorageProvider(
+         var provider = new AzureDataLakeStoreGen2BlobStorageProvider(
             DataLakeApiFactory.CreateApiWithServicePrincipal(accountName, tenantId, clientId, clientSecret));
+         //provider.Graph = new GraphService(tenantId, clientId, clientSecret);
+
+         return provider;
       }
 
       public static AzureDataLakeStoreGen2BlobStorageProvider CreateByManagedIdentity(string accountName)
@@ -266,12 +269,12 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             acl: accessControl.ToString());
       }
 
-      public async Task<AccessControl> GetAccessControlAsync(string fullPath)
+      public async Task<AccessControl> GetAccessControlAsync(string fullPath, bool getUpn)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
          DecomposePath(fullPath, out string fs, out string rp);
 
-         ApiResponse<string> response = await _restApi.GetPathPropertiesAsync(fs, rp, "getAccessControl").ConfigureAwait(false);
+         ApiResponse<string> response = await _restApi.GetPathPropertiesAsync(fs, rp, "getAccessControl", upn: getUpn).ConfigureAwait(false);
          await response.EnsureSuccessStatusCodeAsync().ConfigureAwait(false);
 
          return new AccessControl(
@@ -279,6 +282,22 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             response.GetHeader("x-ms-group"),
             response.GetHeader("x-ms-permissions"),
             response.GetHeader("x-ms-acl"));
+      }
+
+      public Task CreateFilesystemAsync(string filesystem)
+      {
+         return _restApi.CreateFilesystemAsync(filesystem);
+      }
+
+      public Task DeleteFilesystemAsync(string filesystem)
+      {
+         return _restApi.DeleteFilesystemAsync(filesystem);
+      }
+
+      public async Task<IEnumerable<string>> ListFilesystemsAsync()
+      {
+         FilesystemList list = await _restApi.ListFilesystemsAsync().ConfigureAwait(false);
+         return list.Filesystems.Select(x => x.Name);
       }
 
       public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)

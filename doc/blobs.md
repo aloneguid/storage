@@ -9,10 +9,12 @@ This page lists blob storage providers available in Storage.Net
 - [Zip File](#zip-file)
 - [FTP](#ftp)
 - [Microsoft Azure Blob Storage](#microsoft-azure-blob-storage)
+- [Microsoft Azure File Shares](#microsoft-azure-file-shares)
 - [Amazon S3 Storage](#amazon-s3-storage)
 - [Azure Data Lake Store](#azure-data-lake-store)
   - [Gen 1](#gen-1) 
   - [Gen 2](#gen-2) 
+- [Google Cloud Storage](#google-cloud-storage)
 
 ### In-Memory
 
@@ -151,6 +153,22 @@ Where the first parameter is blob id and the second is lease duration. The `Blob
 
 It also exposes `RenewLeaseAsync()` method to renew the lease explicitly, and `LeasedBlob` property that returns a native `CloudBlockBlob` that is leased if you need to explicitly call any methods not supported by this wrapper.
 
+### Microsoft Azure File Shares
+
+In order to use Microsoft Azure blob storage you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.Storage.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage/) package first. The provider wraps around the standard Microsoft Storage SDK.
+
+To create file share by storage name and key:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureFiles(accountName, accountKey);
+```
+
+or connection string:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.file://account=account_name;key=secret_value");
+```
+
 ### Amazon S3 Storage
 
 In order to use Microsoft Azure blob storage you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Amazon.Aws.svg)](https://www.nuget.org/packages/Storage.Net.Amazon.Aws/) package first. The provider wraps around the standard AWS SDK which is updated regularry.
@@ -286,7 +304,7 @@ or
 
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.FromConnectionString(
-   "azure.datalake.gen2://account=...;tenantId=...;principalId=...;principalSecret=...;listBatchSize=...");
+   "azure.datalake.gen2://account=...;tenantId=...;principalId=...;principalSecret=...");
 ```
 
 ##### Using **Managed Service Identity**
@@ -330,3 +348,56 @@ access.Acl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
 //update the ACL on Gen 2 storage
 await _storage.SetAccessControlAsync(path, access);
 ```
+
+### Google Cloud Storage
+
+In order to use [Google Cloud Storage](https://cloud.google.com/storage/) reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Gcp.CloudStorage.svg)](https://www.nuget.org/packages/Storage.Net.Gcp.CloudStorage) package first.
+
+You definitely want to use Storage.Net for working with Google Storage, as it solves quite a few issues which are hard to beat with raw SDK:
+
+- Listing of files and folders
+- Recursive and non-recursive listing
+- Upload and download operations are continuing to be optimised
+
+You can initialise it in one of few ways:
+
+#### Credentials stored in an environment variable
+
+As described [here](https://cloud.google.com/storage/docs/reference/libraries#setting_up_authentication)
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.GoogleCloudStorageFromEnvironmentVariable(string bucketName);
+```
+
+#### Credentials stored in an external file
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.GoogleCloudStorageFromEnvironmentVariable(string bucketName, string credentialsFilePath);
+```
+
+#### Credentials passed in a string
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.GoogleCloudStorageFromEnvironmentVariable(
+   string bucketName,
+   string credentialsJsonString,
+   bool isBase64EncodedString = false);
+```
+
+This method is fairly interesting, as it allows you to pass credential file content as a string. The last parameter says whether the string is base64 encoded or not, which is handy if credentials are stored in some sort of config file.
+
+#### From connecting string
+
+First, don't forget to initialise the module:
+
+```csharp
+StorageFactory.Modules.UseGoogleCloudStorage();
+```
+
+Then, use the string:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("google.storage://bucket=...;cred=...");
+```
+
+Where **cred** is a *BASE64* encoded credential string.

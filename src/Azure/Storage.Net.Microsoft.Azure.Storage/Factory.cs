@@ -67,6 +67,20 @@ namespace Storage.Net
       }
 
       /// <summary>
+      /// Creates a blob storage implementation based on Microsoft Azure Files.
+      /// </summary>
+      /// <param name="factory">Reference to factory</param>
+      /// <param name="accountName">Storage Account name</param>
+      /// <param name="key">Storage Account key</param>
+      /// <returns>Generic blob storage interface</returns>
+      public static IBlobStorage AzureFiles(this IBlobStorageFactory factory,
+         string accountName,
+         string key)
+      {
+         return AzureFilesBlobStorage.CreateFromAccountNameAndKey(accountName, key);
+      }
+
+      /// <summary>
       /// Creates a blob storage implementation based on Microsoft Azure Blob Storage using development storage.
       /// </summary>
       /// <param name="factory">Reference to factory</param>

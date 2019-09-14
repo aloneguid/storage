@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model;
@@ -16,7 +14,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       /// Sets permissions on an object
       /// </summary>
       /// <param name="fullPath"></param>
-      /// <param name="accessControl">Access control rules. A good idea whould be to retreive them using <see cref="GetAccessControlAsync(string)"/>, modify, and send back via this method.</param>
+      /// <param name="accessControl">Access control rules. A good idea whould be to retreive them using <see cref="GetAccessControlAsync(string, bool)"/>, modify, and send back via this method.</param>
       /// <returns></returns>
       Task SetAccessControlAsync(string fullPath, AccessControl accessControl);
 
@@ -24,7 +22,28 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       /// Gets permissions from an object
       /// </summary>
       /// <param name="fullPath"></param>
+      /// <param name="getUpn">When true, the call will return UPNs instead of object IDs when querying for permissions</param>
       /// <returns></returns>
-      Task<AccessControl> GetAccessControlAsync(string fullPath);
+      Task<AccessControl> GetAccessControlAsync(string fullPath, bool getUpn = false);
+
+      /// <summary>
+      /// Creates a filesystem
+      /// </summary>
+      /// <param name="filesystem"></param>
+      /// <returns></returns>
+      Task CreateFilesystemAsync(string filesystem);
+
+      /// <summary>
+      /// Deletes a filesystem
+      /// </summary>
+      /// <param name="filesystem"></param>
+      /// <returns></returns>
+      Task DeleteFilesystemAsync(string filesystem);
+
+      /// <summary>
+      /// Lists filesystems
+      /// </summary>
+      /// <returns></returns>
+      Task<IEnumerable<string>> ListFilesystemsAsync();
    }
 }

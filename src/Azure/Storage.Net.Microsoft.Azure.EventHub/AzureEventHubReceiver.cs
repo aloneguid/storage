@@ -201,5 +201,6 @@ namespace Storage.Net.Microsoft.Azure.EventHub
       /// Event Hubs don't have a concept of keeping alive, ignored.
       /// </summary>
       public Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
+      public Task<IReadOnlyCollection<QueueMessage>> PeekMessagesAsync(int maxMessages, CancellationToken cancellationToken = default) => throw new NotSupportedException();
    }
 }

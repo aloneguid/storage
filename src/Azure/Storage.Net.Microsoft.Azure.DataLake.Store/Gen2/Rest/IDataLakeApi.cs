@@ -29,6 +29,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
          string filesystem,
          [AliasAs("timeout")] int? timeoutSeconds = null);
 
+      [Delete("/{filesystem}?resource=filesystem")]
+      Task DeleteFilesystemAsync(
+         string filesystem,
+         [AliasAs("timeout")] int? timeoutSeconds = null);
+
       [Head("/{filesystem}?resource=filesystem")]
       Task<ApiResponse<string>> GetFilesystemProperties(
          string filesystem,

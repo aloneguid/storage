@@ -11,11 +11,16 @@ namespace Storage.Net.Microsoft.Azure.Storage
 {
    class Module : IExternalModule, IConnectionFactory
    {
+      private const string BlobPrefix = "azure.blob";
+      private const string FilesPrefix = "azure.file";
+      public const string AccountParam = "account";
+      public const string KeyParam = "key";
+
       public IConnectionFactory ConnectionFactory => this;
 
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == Constants.AzureBlobConnectionPrefix)
+         if(connectionString.Prefix == BlobPrefix)
          {
             if(bool.TryParse(connectionString.Get(Constants.UseDevelopmentStorage), out bool useDevelopment) && useDevelopment)
             {
@@ -23,10 +28,28 @@ namespace Storage.Net.Microsoft.Azure.Storage
             }
             else
             {
-               connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
-               connectionString.GetRequired(Constants.KeyParam, true, out string key);
+               connectionString.GetRequired(AccountParam, true, out string accountName);
+               connectionString.GetRequired(KeyParam, true, out string key);
 
                return AzureUniversalBlobStorageProvider.CreateFromAccountNameAndKey(accountName, key);
+            }
+         }
+         else if(connectionString.Prefix == FilesPrefix)
+         {
+            connectionString.GetRequired(AccountParam, true, out string accountName);
+            connectionString.GetRequired(KeyParam, true, out string key);
+
+            return AzureFilesBlobStorage.CreateFromAccountNameAndKey(accountName, key);
+         }
+         else
+         {
+            //try to re-parse native connection string
+            var newcs = new StorageConnectionString(BlobPrefix + "://" + connectionString.Prefix);
+
+            if(newcs.Parameters.TryGetValue("AccountName", out string accountName) &&
+               newcs.Parameters.TryGetValue("AccountKey", out string accountKey))
+            {
+               return AzureUniversalBlobStorageProvider.CreateFromAccountNameAndKey(accountName, accountKey);
             }
          }
 
@@ -44,8 +67,8 @@ namespace Storage.Net.Microsoft.Azure.Storage
             }
             else
             {
-               connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
-               connectionString.GetRequired(Constants.KeyParam, true, out string key);
+               connectionString.GetRequired(AccountParam, true, out string accountName);
+               connectionString.GetRequired(KeyParam, true, out string key);
 
                return new AzureTableStorageKeyValueStorage(accountName, key);
             }
@@ -67,8 +90,8 @@ namespace Storage.Net.Microsoft.Azure.Storage
             }
             else
             {
-               connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
-               connectionString.GetRequired(Constants.KeyParam, true, out string key);
+               connectionString.GetRequired(AccountParam, true, out string accountName);
+               connectionString.GetRequired(KeyParam, true, out string key);
 
                return new AzureStorageQueuePublisher(accountName, key, queueName);
             }
@@ -103,8 +126,8 @@ namespace Storage.Net.Microsoft.Azure.Storage
             }
             else
             {
-               connectionString.GetRequired(Constants.AccountParam, true, out string accountName);
-               connectionString.GetRequired(Constants.KeyParam, true, out string key);
+               connectionString.GetRequired(AccountParam, true, out string accountName);
+               connectionString.GetRequired(KeyParam, true, out string key);
 
                return new AzureStorageQueueReceiver(accountName, key, queueName, invisibility, polling);
             }

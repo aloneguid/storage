@@ -31,9 +31,9 @@ namespace Storage.Net.Blobs
          ListOptions options,
          CancellationToken cancellationToken = default)
       {
-         IEnumerable<Blob> all = await blobStorage.ListAsync(options, cancellationToken);
+         IReadOnlyCollection<Blob> all = await blobStorage.ListAsync(options, cancellationToken);
 
-         return all.Where(i => i.Kind == BlobItemKind.File).ToList();
+         return all.Where(i => i.IsFile).ToList();
       }
 
       /// <summary>

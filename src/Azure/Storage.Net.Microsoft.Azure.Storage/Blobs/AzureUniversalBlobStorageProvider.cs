@@ -140,14 +140,23 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          if(container == null)
             return null;
 
-         CloudBlob blob = container.GetBlobReference(StoragePath.Normalize(path, false));
-         if(!(await blob.ExistsAsync().ConfigureAwait(false)))
-            return null;
+         if(string.IsNullOrEmpty(path))
+         {
+            //looks like it's a container reference
+            await container.FetchAttributesAsync().ConfigureAwait(false);
+            return AzConvert.ToBlob(container);
+         }
+         else
+         {
+            CloudBlob blob = container.GetBlobReference(StoragePath.Normalize(path, false));
+            if(!(await blob.ExistsAsync().ConfigureAwait(false)))
+               return null;
 
-         var r = new Blob(fullPath);
-         await blob.FetchAttributesAsync().ConfigureAwait(false);
-         AttachBlobMeta(r, blob);
-         return r;
+            var r = new Blob(fullPath);
+            await blob.FetchAttributesAsync().ConfigureAwait(false);
+            AttachBlobMeta(r, blob);
+            return r;
+         }
       }
 
       internal static void AttachBlobMeta(Blob destination, CloudBlob source)
@@ -157,13 +166,39 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          destination.Size = source.Properties.Length;
          destination.LastModificationTime = source.Properties.LastModified;
 
-         /*meta.Properties["BlobType"] = blob.BlobType.ToString();
-         meta.Properties["IsDeleted"] = blob.IsDeleted;
-         meta.Properties["IsSnapshot"] = blob.IsSnapshot;
-         meta.Properties["ContentDisposition"] = blob.Properties.ContentDisposition;
-         meta.Properties["ContentEncoding"] = blob.Properties.ContentEncoding;
-         meta.Properties["ContentLanguage"] = blob.Properties.ContentLanguage;
-         meta.Properties["ContentType"] = blob.Properties.ContentType;*/
+         destination.Properties["BlobType"] = source.BlobType.ToString();
+         destination.Properties["IsDeleted"] = source.IsDeleted.ToString();
+         destination.Properties["IsSnapshot"] = source.IsSnapshot.ToString();
+         if(source.Properties != null)
+         {
+            BlobProperties props = source.Properties;
+            if(props.ContentDisposition != null)
+               destination.Properties["ContentDisposition"] = props.ContentDisposition;
+            if(props.ContentEncoding != null)
+               destination.Properties["ContentEncoding"] = props.ContentEncoding;
+            if(props.ContentLanguage != null)
+               destination.Properties["ContentLanguage"] = props.ContentLanguage;
+            if(props.ContentType != null)
+               destination.Properties["ContentType"] = props.ContentType;
+            if(props.ContentMD5 != null)
+               destination.Properties["ContentMD5"] = props.ContentMD5;
+            if(props.ETag != null)
+               destination.Properties["ETag"] = props.ETag;
+            destination.Properties["IsIncrementalCopy"] = props.IsIncrementalCopy.ToString();
+            destination.Properties["IsServerEncrypted"] = props.IsServerEncrypted.ToString();
+            destination.Properties["LeaseDuration"] = props.LeaseDuration.ToString();
+            destination.Properties["LeaseState"] = props.LeaseState.ToString();
+            destination.Properties["LeaseStatus"] = props.LeaseStatus.ToString();
+            if(props.RehydrationStatus != null)
+               destination.Properties["RehydrationStatus"] = props.RehydrationStatus.Value.ToString();
+            if(props.RemainingDaysBeforePermanentDelete != null)
+               destination.Properties["RemainingDaysBeforePermanentDelete"] = props.RemainingDaysBeforePermanentDelete.Value.ToString();
+            if(props.StandardBlobTier != null)
+               destination.Properties["StandardBlobTier"] = props.StandardBlobTier.ToString();
+            if(props.PremiumPageBlobTier != null)
+               destination.Properties["PremiumPageBlobTier"] = props.PremiumPageBlobTier.ToString();
+
+         }
 
          if(source.Metadata?.Count > 0)
          {

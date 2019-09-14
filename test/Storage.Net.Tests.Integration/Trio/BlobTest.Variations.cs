@@ -27,6 +27,27 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }
 
+   public class AzureFilesFixture : BlobFixture
+   {
+      public AzureFilesFixture() : base("testshare")
+      {
+
+      }
+
+      protected override IBlobStorage CreateStorage(ITestSettings settings)
+      {
+         return StorageFactory.Blobs.AzureFiles(settings.AzureStorageName, settings.AzureStorageKey);
+      }
+   }
+
+   public class AzureFilesTest : BlobTest, IClassFixture<AzureFilesFixture>
+   {
+      public AzureFilesTest(AzureFilesFixture fixture) : base(fixture)
+      {
+
+      }
+   }
+
    public class AdlsGen1Fixture : BlobFixture
    {
       protected override IBlobStorage CreateStorage(ITestSettings settings)
@@ -181,4 +202,23 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }
 #endif
+
+   public class GcpFixture : BlobFixture
+   {
+      protected override IBlobStorage CreateStorage(ITestSettings settings)
+      {
+         return StorageFactory.Blobs.GoogleCloudStorageFromJson(
+            settings.GcpStorageBucketName,
+            settings.GcpStorageJsonCreds,
+            true);
+      }
+   }
+
+   public class GcpTest : BlobTest, IClassFixture<GcpFixture>
+   {
+      public GcpTest(GcpFixture fixture) : base(fixture)
+      {
+
+      }
+   }
 }

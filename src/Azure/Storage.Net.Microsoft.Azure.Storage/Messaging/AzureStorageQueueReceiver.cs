@@ -195,5 +195,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Messaging
          List<QueueMessage> result = batch.Select(Converter.ToQueueMessage).ToList();
          return result.Count == 0 ? null : result;
       }
+
+      public override async Task<IReadOnlyCollection<QueueMessage>> PeekMessagesAsync(int maxMessages, CancellationToken cancellationToken = default)
+      {
+         IEnumerable<CloudQueueMessage> batch = await _queue.PeekMessagesAsync(maxMessages);
+
+         return batch.Select(Converter.ToQueueMessage).ToList();
+      }
    }
 }

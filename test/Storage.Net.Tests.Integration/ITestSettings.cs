@@ -95,6 +95,17 @@ namespace Storage.Net.Tests
 
       #endregion
 
+      #region [ Google Cloud Platform ]
+
+      [Option(Alias = "Gcp.Storage.BucketName")]
+      string GcpStorageBucketName { get; }
+
+      [Option(Alias = "Gcp.Storage.JsonKey")]
+      string GcpStorageJsonCreds { get; }
+
+      #endregion
+
+
       #region [ MSSQL ]
 
       [Option(Alias = "Mssql.ConnectionString")]
