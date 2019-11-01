@@ -86,7 +86,7 @@ stages:
     steps:
     - task: DotNetCoreCLI@2
       displayName: 'run tests'
-      continueOnError: true
+      continueOnError: false
       inputs:
         command: test
         projects: test/Storage.Net.Tests.Integration/Storage.Net.Tests.Integration.csproj
