@@ -277,15 +277,14 @@ namespace Storage.Net.Blobs.Files
             GenericValidation.CheckBlobFullPath(blobId);
 
             string filePath = GetFilePath(blobId, false);
+
             if(!File.Exists(filePath))
             {
                result.Add(null);
                continue;
             }
 
-            var bid = new Blob(blobId);
-            EnrichWithMetadata(bid);
-            result.Add(bid);
+            result.Add(ToBlobItem(filePath, BlobItemKind.File, true));
          }
 
          return Task.FromResult<IReadOnlyCollection<Blob>>(result);
