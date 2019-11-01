@@ -36,6 +36,11 @@
       public const string AzureBlobStorage = "azure.blob";
 
       /// <summary>
+      /// Azure Event Hubs
+      /// </summary>
+      public const string AzureEventHub = "azure.eventhub";
+
+      /// <summary>
       /// Azure File Storage
       /// </summary>
       public const string AzureFilesStorage = "azure.file";

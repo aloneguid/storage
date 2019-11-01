@@ -10,11 +10,17 @@ namespace Storage.Net.ConnectionString
    /// </summary>
    public class StorageConnectionString
    {
+      /// <summary>
+      /// Native connection string prefix, follows after connection string prefix, i.e. local://native:...
+      /// </summary>
+      public const string NativePrefix = "native:";
+
       private const string PrefixSeparator = "://";
       private static readonly char[] PartsSeparators = new[] { ';' };
       private static readonly char[] PartSeparator = new[] { '=' };
 
       private readonly Dictionary<string, string> _parts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+      private string _nativeConnectionString;
 
       /// <summary>
       /// Creates a new instance of <see cref="StorageConnectionString"/>
@@ -49,6 +55,16 @@ namespace Storage.Net.ConnectionString
             _parts[key] = value;
          }
       }
+
+      /// <summary>
+      /// Determines if this is a native connection string
+      /// </summary>
+      public bool IsNative => _nativeConnectionString != null;
+
+      /// <summary>
+      /// Returns native connection string, or null if connection string is not native
+      /// </summary>
+      public string Native => _nativeConnectionString;
 
       /// <summary>
       /// Original connection string
@@ -116,14 +132,22 @@ namespace Storage.Net.ConnectionString
 
          // prefix extracted, now get the parts of the string
 
-         string[] parts = connectionString.Split(PartsSeparators, StringSplitOptions.RemoveEmptyEntries);
-         foreach(string part in parts)
+         //check if this is a native connection string
+         if(connectionString.StartsWith(NativePrefix))
          {
-            string[] kv = part.Split(PartSeparator, 2);
+            _nativeConnectionString = connectionString.Substring(NativePrefix.Length);
+         }
+         else
+         {
+            string[] parts = connectionString.Split(PartsSeparators, StringSplitOptions.RemoveEmptyEntries);
+            foreach(string part in parts)
+            {
+               string[] kv = part.Split(PartSeparator, 2);
 
-            string key = kv[0];
-            string value = kv.Length == 1 ? string.Empty : kv[1];
-            _parts[key] = value;
+               string key = kv[0];
+               string value = kv.Length == 1 ? string.Empty : kv[1];
+               _parts[key] = value;
+            }
          }
       }
 

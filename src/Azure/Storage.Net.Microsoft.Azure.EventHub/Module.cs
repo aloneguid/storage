@@ -14,6 +14,18 @@ namespace Storage.Net.Microsoft.Azure.EventHub
 
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString) => null;
       public IKeyValueStorage CreateKeyValueStorage(StorageConnectionString connectionString) => null;
-      public IMessenger CreateMessenger(StorageConnectionString connectionString) => null;
+
+      public IMessenger CreateMessenger(StorageConnectionString connectionString)
+      {
+         if(connectionString.Prefix == KnownPrefix.AzureEventHub)
+         {
+            if(connectionString.IsNative)
+            {
+               return new AzureEventHubMessenger(connectionString.Native);
+            }
+         }
+
+         return null;
+      }
    }
 }

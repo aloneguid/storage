@@ -11,7 +11,7 @@ namespace Storage.Net
       /// Create Azure Event Hub publisher by full connection string
       /// </summary>
       /// <param name="factory">Factory reference</param>
-      /// <param name="connectionString">Connection string</param>
+      /// <param name="connectionString">Full connection string, including entity path</param>
       public static IMessenger AzureEventHub(this IMessagingFactory factory, string connectionString)
       {
          return new AzureEventHubMessenger(connectionString);
