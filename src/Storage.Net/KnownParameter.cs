@@ -8,6 +8,11 @@ namespace Storage.Net
    public static class KnownParameter
    {
       /// <summary>
+      /// Indicates that this connection string is native
+      /// </summary>
+      public static string Native = "native";
+
+      /// <summary>
       /// Account or storage name
       /// </summary>
       public static readonly string AccountName = "account";

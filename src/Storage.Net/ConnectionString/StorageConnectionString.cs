@@ -10,11 +10,6 @@ namespace Storage.Net.ConnectionString
    /// </summary>
    public class StorageConnectionString
    {
-      /// <summary>
-      /// Native connection string prefix, follows after connection string prefix, i.e. local://native:...
-      /// </summary>
-      public const string NativePrefix = "native:";
-
       private const string PrefixSeparator = "://";
       private static readonly char[] PartsSeparators = new[] { ';' };
       private static readonly char[] PartSeparator = new[] { '=' };
@@ -133,9 +128,9 @@ namespace Storage.Net.ConnectionString
          // prefix extracted, now get the parts of the string
 
          //check if this is a native connection string
-         if(connectionString.StartsWith(NativePrefix))
+         if(connectionString.StartsWith(KnownParameter.Native + "="))
          {
-            _nativeConnectionString = connectionString.Substring(NativePrefix.Length);
+            _nativeConnectionString = connectionString.Substring(KnownParameter.Native.Length + 1);
          }
          else
          {

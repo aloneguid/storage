@@ -62,7 +62,7 @@ namespace Storage.Net.Tests
       {
          const string native = "t=6;iiiifldjfljd fla dfj;;df";
 
-         var cs = new StorageConnectionString("local://native:" + native);
+         var cs = new StorageConnectionString("local://native=" + native);
 
          Assert.Equal("local", cs.Prefix);
          Assert.Empty(cs.Parameters);
