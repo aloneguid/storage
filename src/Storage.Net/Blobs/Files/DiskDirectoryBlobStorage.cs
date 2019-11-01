@@ -77,28 +77,50 @@ namespace Storage.Net.Blobs.Files
 
       private Blob ToBlobItem(string fullPath, BlobItemKind kind, bool includeMeta)
       {
-         var fi = new FileInfo(fullPath);
 
-         fullPath = fullPath.Substring(_directoryFullName.Length);
-         fullPath = fullPath.Replace(Path.DirectorySeparatorChar, StoragePath.PathSeparator);
-         fullPath = fullPath.Trim(StoragePath.PathSeparator);
-         fullPath = StoragePath.PathSeparatorString + fullPath;
+         string relPath = fullPath.Substring(_directoryFullName.Length);
+         relPath = relPath.Replace(Path.DirectorySeparatorChar, StoragePath.PathSeparator);
+         relPath = relPath.Trim(StoragePath.PathSeparator);
+         relPath = StoragePath.PathSeparatorString + relPath;
 
-         var blob = new Blob(fullPath, kind);
-         blob.Size = fi.Length;
-         blob.LastModificationTime = fi.CreationTimeUtc;
-         blob.TryAddProperties(
-            "IsReadOnly", fi.IsReadOnly.ToString(),
-            "LastAccessTimeUtc", fi.LastAccessTimeUtc.ToString(),
-            "LastWriteTimeUtc", fi.LastWriteTimeUtc.ToString(),
-            "Attributes", FormatFlags(fi.Attributes));
-
-         if(includeMeta)
+         if(kind == BlobItemKind.File)
          {
-            EnrichWithMetadata(blob);
-         }
+            var fi = new FileInfo(fullPath);
 
-         return blob;
+            var blob = new Blob(relPath, kind);
+            blob.Size = fi.Length;
+            blob.LastModificationTime = fi.CreationTimeUtc;
+            blob.TryAddProperties(
+               "IsReadOnly", fi.IsReadOnly.ToString(),
+               "LastAccessTimeUtc", fi.LastAccessTimeUtc.ToString(),
+               "LastWriteTimeUtc", fi.LastWriteTimeUtc.ToString(),
+               "Attributes", FormatFlags(fi.Attributes));
+
+            if(includeMeta)
+            {
+               EnrichWithMetadata(blob);
+            }
+
+            return blob;
+         }
+         else
+         {
+            var di = new DirectoryInfo(fullPath);
+
+            var blob = new Blob(relPath, BlobItemKind.Folder);
+            blob.LastModificationTime = di.CreationTimeUtc;
+            blob.TryAddProperties(
+               "LastAccessTimeUtc", di.LastAccessTimeUtc.ToString(),
+               "LastWriteTimeUtc", di.LastWriteTimeUtc.ToString(),
+               "Attributes", FormatFlags(di.Attributes));
+
+            if(includeMeta)
+            {
+               EnrichWithMetadata(blob);
+            }
+
+            return blob;
+         }
       }
 
       private string GetFolder(string path, bool createIfNotExists)
