@@ -53,7 +53,7 @@ namespace Storage.Net.Tests.Integration.Azure
       [Fact]
       public async Task Acl_smoke()
       {
-         string path = StoragePath.Combine("test", Guid.NewGuid().ToString());
+         string path = StoragePath.Combine(Guid.NewGuid().ToString(), Guid.NewGuid().ToString());
          await _storage.WriteTextAsync(path, "permgen1?");
 
          await _storage.GetAccessControlAsync(path);

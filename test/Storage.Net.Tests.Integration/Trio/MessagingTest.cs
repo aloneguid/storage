@@ -98,7 +98,7 @@ namespace Storage.Net.Tests.Integration.Messaging
 
          //some providers don't list channels immediately as they are eventually consistent
 
-         const int maxRetries = 50;
+         const int maxRetries = 10;
 
          for(int i = 0; i < maxRetries; i++)
          {

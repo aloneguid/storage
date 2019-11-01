@@ -11,6 +11,7 @@ There are a few overloads in this package, for instance:
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.AmazonS3BlobStorage(string accessKeyId,
    string secretAccessKey,
+   string sessionToken,
    string bucketName,
    RegionEndpoint regionEndpoint = null);
 ```
