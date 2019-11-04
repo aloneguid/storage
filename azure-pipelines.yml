@@ -71,6 +71,15 @@ stages:
         OverWrite: true
         flattenFolders: true
 
+    - task: NuGetCommand@2
+      displayName: 'push to internal feed'
+      inputs:
+        command: 'push'
+        packagesToPush: '$(System.ArtifactsDirectory)/nuget/*.nupkg'
+        nuGetFeedType: 'internal'
+        publishVstsFeed: '4bab84c0-90f7-4425-afc6-ba077aa9757e/d26176f7-ae69-43db-8342-99ce408538ec'
+
+
     - task: PublishBuildArtifacts@1
       displayName: 'publish nugets'
       inputs:
@@ -111,7 +120,7 @@ stages:
 
 - stage: Deploy
   dependsOn: ['Build', 'BlobsTest', 'MessagingTest'] 
-  #condition: "eq(variables['Build.SourceBranch'], 'refs/heads/master')"
+  condition: "eq(variables['Build.SourceBranch'], 'refs/heads/master')"
   #condition: "or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/queuesvnext') )"
   jobs:
   - deployment: Nuget
@@ -130,17 +139,10 @@ stages:
               artifactName: 'nuget'
               downloadPath: '$(System.ArtifactsDirectory)'
           - task: NuGetCommand@2
-            condition: "or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/queuesvnext') )"
+            #condition: "or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/queuesvnext') )"
             displayName: nuget.org
             inputs:
               command: push
               packagesToPush: '$(System.ArtifactsDirectory)/nuget/*.nupkg'
               nuGetFeedType: external
               publishFeedCredentials: 'nuget.org (aloneguid)'
-          - task: NuGetCommand@2
-            displayName: 'push to public feed'
-            inputs:
-              command: 'push'
-              packagesToPush: '$(System.ArtifactsDirectory)/nuget/*.nupkg'
-              nuGetFeedType: 'internal'
-              publishVstsFeed: '4bab84c0-90f7-4425-afc6-ba077aa9757e/d26176f7-ae69-43db-8342-99ce408538ec'
