@@ -3,8 +3,6 @@ trigger:
   branches:
     include:
       - master
-      - v6
-      - queuesvnext
   paths:
     exclude:
       - README.md
@@ -71,11 +69,12 @@ stages:
         OverWrite: true
         flattenFolders: true
 
+    # we don't care if tests in other stages are not successful, we want to public this to internal testing
     - task: NuGetCommand@2
       displayName: 'push to internal feed'
       inputs:
         command: 'push'
-        packagesToPush: '$(System.ArtifactsDirectory)/nuget/*.nupkg'
+        packagesToPush: '$(build.artifactstagingdirectory)/**/*.nupkg'
         nuGetFeedType: 'internal'
         publishVstsFeed: '4bab84c0-90f7-4425-afc6-ba077aa9757e/d26176f7-ae69-43db-8342-99ce408538ec'
 
