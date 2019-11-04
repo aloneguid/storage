@@ -65,9 +65,10 @@ namespace Storage.Net.Tests
          var cs = new StorageConnectionString("local://native=" + native);
 
          Assert.Equal("local", cs.Prefix);
-         Assert.Empty(cs.Parameters);
+         Assert.Single(cs.Parameters);
          Assert.True(cs.IsNative);
          Assert.Equal(native, cs.Native);
+         Assert.Equal(native, cs.Parameters["native"]);
 
          //convert back to string
          string css = cs.ToString();

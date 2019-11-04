@@ -131,6 +131,7 @@ namespace Storage.Net.ConnectionString
          if(connectionString.StartsWith(KnownParameter.Native + "="))
          {
             _nativeConnectionString = connectionString.Substring(KnownParameter.Native.Length + 1);
+            _parts[KnownParameter.Native] = _nativeConnectionString;
          }
          else
          {
