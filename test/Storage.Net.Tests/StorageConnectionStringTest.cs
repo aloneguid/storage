@@ -69,6 +69,10 @@ namespace Storage.Net.Tests
          Assert.True(cs.IsNative);
          Assert.Equal(native, cs.Native);
 
+         //convert back to string
+         string css = cs.ToString();
+         Assert.Equal("local://native=" + native, css);
+
       }
    }
 }

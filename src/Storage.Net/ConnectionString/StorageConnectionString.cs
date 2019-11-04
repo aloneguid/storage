@@ -156,22 +156,32 @@ namespace Storage.Net.ConnectionString
          sb.Append(Prefix);
          sb.Append(PrefixSeparator);
 
-         bool first = true;
-         foreach(KeyValuePair<string, string> pair in _parts)
+         if(IsNative)
          {
-            if(first)
-            {
-               first = false;
-            }
-            else
-            {
-               sb.Append(PartsSeparators);
-               first = false;
-            }
-
-            sb.Append(pair.Key);
+            sb.Append(KnownParameter.Native);
             sb.Append(PartSeparator);
-            sb.Append(pair.Value);
+            sb.Append(Native);
+         }
+         else
+         {
+
+            bool first = true;
+            foreach(KeyValuePair<string, string> pair in _parts)
+            {
+               if(first)
+               {
+                  first = false;
+               }
+               else
+               {
+                  sb.Append(PartsSeparators);
+                  first = false;
+               }
+
+               sb.Append(pair.Key);
+               sb.Append(PartSeparator);
+               sb.Append(pair.Value);
+            }
          }
 
          return sb.ToString();
