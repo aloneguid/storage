@@ -8,6 +8,15 @@ namespace Storage.Net
    public static class Factory
    {
       /// <summary>
+      /// Register Azure module.
+      /// </summary>
+      public static IModulesFactory UseAzureEventHubs(this IModulesFactory factory)
+      {
+         return factory.Use(new Module());
+      }
+
+
+      /// <summary>
       /// Create Azure Event Hub publisher by full connection string
       /// </summary>
       /// <param name="factory">Factory reference</param>
