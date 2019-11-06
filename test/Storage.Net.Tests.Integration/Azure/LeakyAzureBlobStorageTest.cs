@@ -122,7 +122,7 @@ namespace Storage.Net.Tests.Integration.Azure
 
          using(BlobLease lease1 = await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20)))
          {
-            await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20), true);
+            await _native.AcquireBlobLeaseAsync(id, TimeSpan.FromSeconds(20), null, true);
          }
       }
 

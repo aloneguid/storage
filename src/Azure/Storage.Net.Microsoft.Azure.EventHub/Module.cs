@@ -21,7 +21,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          {
             if(connectionString.IsNative)
             {
-               return new AzureEventHubMessenger(connectionString.Native);
+               return new AzureEventHubMessenger(connectionString.Native, null);
             }
          }
 

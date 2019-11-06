@@ -59,7 +59,7 @@ namespace Storage.Net
       /// <param name="accountName">Storage Account name</param>
       /// <param name="key">Storage Account key</param>
       /// <returns>Generic blob storage interface</returns>
-      public static IBlobStorage AzureBlobStorage(this IBlobStorageFactory factory,
+      public static IAzureBlobStorage AzureBlobStorage(this IBlobStorageFactory factory,
          string accountName,
          string key)
       {
@@ -72,7 +72,7 @@ namespace Storage.Net
       /// <param name="factory">Reference to factory</param>
       /// <param name="sasUrl"></param>
       /// <returns></returns>
-      public static IBlobStorage AzureBlobStorageFromSas(this IBlobStorageFactory factory,
+      public static IAzureBlobStorage AzureBlobStorageFromSas(this IBlobStorageFactory factory,
          string sasUrl)
       {
          return AzureUniversalBlobStorageProvider.CreateFromSasUrl(sasUrl);
@@ -85,7 +85,7 @@ namespace Storage.Net
       /// <param name="accountName"></param>
       /// <param name="token"></param>
       /// <returns></returns>
-      public static IBlobStorage AzureBlobStorageFromAadToken(this IBlobStorageFactory factory,
+      public static IAzureBlobStorage AzureBlobStorageFromAadToken(this IBlobStorageFactory factory,
          string accountName,
          string token)
       {
@@ -111,7 +111,7 @@ namespace Storage.Net
       /// </summary>
       /// <param name="factory">Reference to factory</param>
       /// <returns>Generic blob storage interface</returns>
-      public static IBlobStorage AzureBlobDevelopmentStorage(this IBlobStorageFactory factory)
+      public static IAzureBlobStorage AzureBlobDevelopmentStorage(this IBlobStorageFactory factory)
       {
          return AzureUniversalBlobStorageProvider.CreateForLocalEmulator();
       }
@@ -120,7 +120,7 @@ namespace Storage.Net
       /// Creates an instance of Microsoft Azure Blob Storage that wraps around native <see cref="CloudBlobClient"/>.
       /// Avoid using if possible as it's a subject to change in future.
       /// </summary>
-      public static IBlobStorage AzureBlobStorage(this IBlobStorageFactory factory, CloudBlobClient cloudBlobClient)
+      public static IAzureBlobStorage AzureBlobStorage(this IBlobStorageFactory factory, CloudBlobClient cloudBlobClient)
       {
          if(cloudBlobClient == null)
             throw new ArgumentNullException(nameof(cloudBlobClient));

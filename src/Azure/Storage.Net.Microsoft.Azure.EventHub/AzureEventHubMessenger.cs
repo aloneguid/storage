@@ -15,9 +15,16 @@ namespace Storage.Net.Microsoft.Azure.EventHub
    {
       private readonly EventHubClient _client;
       private readonly string _entityName;
+      private readonly string _connectionString;
+
+      //for the receiving end
+      private readonly string _azureBlobStorageConnectionString;
+      private readonly string _consumerGroupName;
+      private readonly string _leaseContainerName;
+      private readonly string _storageBlobPrefix;
 
       /// <summary>
-      /// Creates an instance of event hub publisher by full connection string
+      /// Creates an instance of event hub publisher by full connection string. Use this if you only need to sumbit messages.
       /// </summary>
       /// <param name="connectionString">Full connection string, including entity name</param>
       public AzureEventHubMessenger(string connectionString)
@@ -25,8 +32,22 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          if(connectionString is null)
             throw new ArgumentNullException(nameof(connectionString));
          var csb = new EventHubsConnectionStringBuilder(connectionString);
+         _connectionString = csb.ToString();
          _client = EventHubClient.CreateFromConnectionString(connectionString);
          _entityName = csb.EntityPath;
+      }
+
+      public AzureEventHubMessenger(
+         string eventHubConnectionString,
+         string azureBlobStorageConnectionString,
+         string consumerGroupName = null,
+         string leaseContainerName = null,
+         string storageBlobPrefix = null) : this(eventHubConnectionString)
+      {
+         _azureBlobStorageConnectionString = azureBlobStorageConnectionString ?? throw new ArgumentNullException(nameof(azureBlobStorageConnectionString));
+         _consumerGroupName = consumerGroupName;
+         _leaseContainerName = leaseContainerName;
+         _storageBlobPrefix = storageBlobPrefix;
       }
 
       public AzureEventHubMessenger(string namespaceName, string entityName, string keyName, string key)
@@ -35,6 +56,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
             new Uri($"{namespaceName}.servicebus.windows.net"), entityName, keyName, key);
          _entityName = entityName;
          _client = EventHubClient.CreateFromConnectionString(csb.ToString());
+         _connectionString = csb.ToString();
       }
 
       private static Task ThrowManagementNotSupportedException()
@@ -122,7 +144,15 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          if(channelName != _entityName)
             throw new ArgumentException($"You can only process messages on '{_entityName}' channel", nameof(channelName));
 
-         await new EventHubMessageProcessor(null, messageProcessor).StartAsync();
+         await new EventHubMessageProcessor(
+            messageProcessor,
+            _connectionString,
+            _azureBlobStorageConnectionString,
+            _consumerGroupName,
+            _leaseContainerName,
+            _storageBlobPrefix)
+            .StartAsync()
+            .ConfigureAwait(false);
       }
 
       #endregion

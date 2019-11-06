@@ -25,6 +25,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
       private readonly CloudBlobClient _client;
 
+      public CloudStorageAccount NativeStorageAccount => _account;
+
       public AzureUniversalBlobStorageProvider(CloudBlobClient cloudBlobClient, CloudStorageAccount account)
       {
          _client = cloudBlobClient ?? throw new ArgumentNullException(nameof(cloudBlobClient));
@@ -479,7 +481,8 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
       public async Task<BlobLease> AcquireBlobLeaseAsync(
          string fullPath,
-         TimeSpan maxLeaseTime,
+         TimeSpan? maxLeaseTime = null,
+         string proposedLeaseId = null,
          bool waitForRelease = false,
          CancellationToken cancellationToken = default)
       {
@@ -488,9 +491,9 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          CloudBlockBlob leaseBlob = container.GetBlockBlobReference(path);
 
          //if blob doesn't exist, just create an empty one
-         if(!(await leaseBlob.ExistsAsync()))
+         if(!(await leaseBlob.ExistsAsync().ConfigureAwait(false)))
          {
-            await WriteAsync(fullPath, new MemoryStream(), false, cancellationToken);
+            await WriteAsync(fullPath, new MemoryStream(), false, cancellationToken).ConfigureAwait(false);
          }
 
          string leaseId = null;
@@ -499,7 +502,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          {
             try
             {
-               leaseId = await leaseBlob.AcquireLeaseAsync(maxLeaseTime);
+               leaseId = await leaseBlob.AcquireLeaseAsync(maxLeaseTime, proposedLeaseId, cancellationToken).ConfigureAwait(false);
 
                break;
             }
@@ -511,12 +514,22 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
                }
                else
                {
-                  await Task.Delay(TimeSpan.FromSeconds(1));
+                  await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
                }
             }
          }
 
          return new BlobLease(leaseBlob, leaseId);
+      }
+
+      public async Task ChangeLeaseAsync(
+         string fullPath, string oldLeaseId, string newLeaseId, CancellationToken cancellationToken = default)
+      {
+         (CloudBlobContainer container, string path) = await GetPartsAsync(fullPath);
+
+         CloudBlockBlob leaseBlob = container.GetBlockBlobReference(path);
+
+         await leaseBlob.ChangeLeaseAsync(newLeaseId, AccessCondition.GenerateLeaseCondition(oldLeaseId), cancellationToken).ConfigureAwait(false);
       }
 
       public async Task<Blob> CreateSnapshotAsync(string fullPath, CancellationToken cancellationToken)

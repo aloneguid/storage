@@ -22,12 +22,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
       /// <summary>
       /// Original Lease ID
       /// </summary>
-      public string LeaseId { get; }
+      public string LeaseId { get; private set; }
 
       /// <summary>
       /// Original blob that is leased
       /// </summary>
-      public CloudBlockBlob LeasedBlob => _blob;
+      internal CloudBlockBlob LeasedBlob => _blob;
 
       /// <summary>
       /// Renews active lease
