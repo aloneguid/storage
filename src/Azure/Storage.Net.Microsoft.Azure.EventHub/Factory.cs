@@ -28,7 +28,7 @@ namespace Storage.Net
       /// <param name="storageBlobPrefix">If you are planning to use the same container for multiple event hubs, you can pass an optional prefix here.</param>
       public static IMessenger AzureEventHub(this IMessagingFactory factory,
          string connectionString,
-         string azureBlobStorageConnectionString,
+         string azureBlobStorageConnectionString = null,
          string consumerGroupName = null,
          string leaseContainerName = null,
          string storageBlobPrefix = null

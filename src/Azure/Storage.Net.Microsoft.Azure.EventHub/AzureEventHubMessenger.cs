@@ -44,7 +44,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
          string leaseContainerName = null,
          string storageBlobPrefix = null) : this(eventHubConnectionString)
       {
-         _azureBlobStorageConnectionString = azureBlobStorageConnectionString ?? throw new ArgumentNullException(nameof(azureBlobStorageConnectionString));
+         _azureBlobStorageConnectionString = azureBlobStorageConnectionString;
          _consumerGroupName = consumerGroupName;
          _leaseContainerName = leaseContainerName;
          _storageBlobPrefix = storageBlobPrefix;
