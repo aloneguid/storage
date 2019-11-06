@@ -9,6 +9,7 @@
     <ProjectReference Include="..\..\src\AWS\Storage.Net.Amazon.Aws\Storage.Net.Amazon.Aws.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.EventHub\Storage.Net.Microsoft.Azure.EventHub.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Storage\Storage.Net.Microsoft.Azure.Storage.csproj" />
+    <ProjectReference Include="..\Storage.Net.Tests.Integration\Storage.Net.Tests.Integration.csproj" />
   </ItemGroup>
 
 </Project>

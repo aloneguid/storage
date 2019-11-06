@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Storage.Net.Amazon.Aws;
-using Storage.Net.Blobs;
+using Config.Net;
+using Storage.Net.Messaging;
+using Storage.Net.Tests;
 
 namespace Storage.Net.ConsoleRunner
 {
@@ -9,12 +11,31 @@ namespace Storage.Net.ConsoleRunner
    {
       static async Task Main(string[] args)
       {
-         IReadOnlyCollection<string> profiles = AwsCliCredentials.EnumerateProfiles();
+         ITestSettings settings = new ConfigurationBuilder<ITestSettings>()
+            .UseIniFile("c:\\tmp\\integration-tests.ini")
+            .Build();
 
-         IBlobStorage bs = StorageFactory.Blobs.AwsS3("***", "***", "eu-west-1");
-         IReadOnlyCollection<Blob> all = await bs.ListAsync();
+         using(IMessenger messenger = StorageFactory.Messages.AzureEventHub(
+            settings.EventHubConnectionString,
+            settings.AzureStorageNativeConnectionString,
+            null,
+            "consoleeventhubs", "myprefix"))
+         {
+            await messenger.StartMessageProcessorAsync("integration", new Processor());
 
-         //var ibs = StorageFactory.Blobs.AwsS3()
+            Console.ReadKey();
+         }
+      }
+   }
+
+   class Processor : IMessageProcessor
+   {
+      public async Task ProcessMessagesAsync(IReadOnlyCollection<QueueMessage> messages)
+      {
+         foreach(QueueMessage qm in messages)
+         {
+            Console.WriteLine($"received {qm.Id}: {qm.StringContent}");
+         }
       }
    }
 }
