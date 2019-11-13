@@ -276,7 +276,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             throw new ArgumentNullException(nameof(accessControl));
 
          GenericValidation.CheckBlobFullPath(fullPath);
-         DecomposePath(fullPath, out string fs, out string rp);
+         DecomposePath(fullPath, out string fs, out string rp, false);
 
          await _restApi.UpdatePathAsync(fs, rp, "setAccessControl",
             body: EmptyStream,
@@ -286,7 +286,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
       public async Task<AccessControl> GetAccessControlAsync(string fullPath, bool getUpn)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
-         DecomposePath(fullPath, out string fs, out string rp);
+         DecomposePath(fullPath, out string fs, out string rp, false);
 
          ApiResponse<string> response = await _restApi.GetPathPropertiesAsync(fs, rp, "getAccessControl", upn: getUpn).ConfigureAwait(false);
          await response.EnsureSuccessStatusCodeAsync().ConfigureAwait(false);

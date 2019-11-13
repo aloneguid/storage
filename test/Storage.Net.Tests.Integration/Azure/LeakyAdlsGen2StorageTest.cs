@@ -171,6 +171,64 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.DoesNotContain(await _storage.ListFilesystemsAsync(), x => x == filesystem);
       }
 
+      [Fact]
+      public async Task Acl_assign_non_default_permisssions_to_filesystem_for_user()
+      {
+         string filesystem = "aclnondefault";
+         string userId = _settings.AzureDataLakeGen2TestObjectId;
+
+         //create filesystem
+         await _storage.CreateFilesystemAsync(filesystem);
+
+         //check that user has no permissions
+         AccessControl access = await _storage.GetAccessControlAsync(filesystem);
+         Assert.DoesNotContain(access.Acl, x => x.Identity == userId);
+
+         //assign user a write permission
+         access.Acl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
+         await _storage.SetAccessControlAsync(filesystem, access);
+
+         //check user has permissions now
+         access = await _storage.GetAccessControlAsync(filesystem);
+
+         //delete filesystem
+         await _storage.DeleteFilesystemAsync(filesystem);
+
+         AclEntry userAcl = access.Acl.First(e => e.Identity == userId);
+         Assert.False(userAcl.CanRead);
+         Assert.True(userAcl.CanWrite);
+         Assert.False(userAcl.CanExecute);
+      }
+
+      [Fact]
+      public async Task Acl_assign_default_permisssions_to_filesystem_for_user()
+      {
+         string filesystem = "acldefault";
+         string userId = _settings.AzureDataLakeGen2TestObjectId;
+
+         //create filesystem
+         await _storage.CreateFilesystemAsync(filesystem);
+
+         //check that user has no permissions
+         AccessControl access = await _storage.GetAccessControlAsync(filesystem);
+         Assert.DoesNotContain(access.Acl, x => x.Identity == userId);
+
+         //assign user a write permission
+         access.DefaultAcl.Add(new AclEntry(ObjectType.User, userId, false, true, false));
+         await _storage.SetAccessControlAsync(filesystem, access);
+
+         //check user has permissions now
+         access = await _storage.GetAccessControlAsync(filesystem);
+
+         //delete filesystem
+         await _storage.DeleteFilesystemAsync(filesystem);
+
+         AclEntry userAcl = access.DefaultAcl.First(e => e.Identity == userId);
+         Assert.False(userAcl.CanRead);
+         Assert.True(userAcl.CanWrite);
+         Assert.False(userAcl.CanExecute);
+      }
+
       public async Task InitializeAsync()
       {
          //drop all blobs in test storage
