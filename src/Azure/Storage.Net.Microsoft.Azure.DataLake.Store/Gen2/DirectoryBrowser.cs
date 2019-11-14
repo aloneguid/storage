@@ -84,6 +84,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
                ApiResponse<PathList> response = await _api.ListPathAsync(fs, relativePath, recursive: options.Recurse, continuation: continuation)
                   .ConfigureAwait(false);
 
+               await response.EnsureSuccessStatusCodeAsync();
                list.AddRange(response.Content.Paths);
 
                if(response.Headers.Contains("x-ms-continuation"))
