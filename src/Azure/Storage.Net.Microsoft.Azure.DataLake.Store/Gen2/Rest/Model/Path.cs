@@ -6,7 +6,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest.Model
    class Path
    {
       [JsonProperty("contentLength")]
-      public int ContentLength { get; set; }
+      public long ContentLength { get; set; }
 
       [JsonProperty("eTag")]
       public string ETag { get; set; }
