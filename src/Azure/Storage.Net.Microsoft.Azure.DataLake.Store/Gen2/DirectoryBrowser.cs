@@ -87,13 +87,11 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
                await response.EnsureSuccessStatusCodeAsync();
                list.AddRange(response.Content.Paths);
 
-               if(response.Headers.Contains("x-ms-continuation"))
-               {
-                  continuation = response.GetHeader("x-ms-continuation");
-               }
+               continuation = response.Headers.Contains("x-ms-continuation") ?
+                  response.GetHeader("x-ms-continuation") : null;
             } while(continuation != null);
          }
-         catch(ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+         catch(ApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
             // specified path is not found, nothing serious
             return new List<Blob>();
