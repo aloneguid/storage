@@ -73,7 +73,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Rest
       /// <param name="timeoutSeconds">An optional operation timeout value in seconds. The period begins when the request is received by the service. If the timeout value elapses before the operation completes, the operation fails.</param>
       /// <returns></returns>
       [Get("/{filesystem}?resource=filesystem")]
-      Task<PathList> ListPathAsync(
+      Task<ApiResponse<PathList>> ListPathAsync(
          string filesystem,
          string directory = null,
          bool? recursive = true,

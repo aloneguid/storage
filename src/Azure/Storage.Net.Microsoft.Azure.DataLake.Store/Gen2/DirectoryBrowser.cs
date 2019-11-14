@@ -74,11 +74,23 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
          string fs = parts[0];
          string relativePath = StoragePath.Combine(parts.Skip(1));
 
-         PathList list;
+         List<Path> list = new List<Path>();
 
          try
          {
-            list = await _api.ListPathAsync(fs, relativePath, recursive: options.Recurse).ConfigureAwait(false);
+            string continuation = null;
+            do
+            {
+               ApiResponse<PathList> response = await _api.ListPathAsync(fs, relativePath, recursive: options.Recurse, continuation: continuation)
+                  .ConfigureAwait(false);
+
+               list.AddRange(response.Content.Paths);
+
+               if(response.Headers.Contains("x-ms-continuation"))
+               {
+                  continuation = response.GetHeader("x-ms-continuation");
+               }
+            } while(continuation != null);
          }
          catch(ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
          {
@@ -86,7 +98,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen2
             return new List<Blob>();
          }
 
-         IEnumerable<Blob> result = list.Paths.Select(p => LConvert.ToBlob(fs, p));
+         IEnumerable<Blob> result = list.Select(p => LConvert.ToBlob(fs, p));
 
          if(options.FilePrefix != null)
             result = result.Where(b => b.IsFolder || b.Name.StartsWith(options.FilePrefix));
