@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using NetBox.Extensions;
 
 namespace Storage.Net.ConnectionString
 {
@@ -143,7 +144,7 @@ namespace Storage.Net.ConnectionString
 
                string key = kv[0];
                string value = kv.Length == 1 ? string.Empty : kv[1];
-               _parts[key] = value;
+               _parts[key] = value.UrlDecode();
             }
          }
       }
@@ -182,7 +183,7 @@ namespace Storage.Net.ConnectionString
 
                sb.Append(pair.Key);
                sb.Append(PartSeparator);
-               sb.Append(pair.Value);
+               sb.Append(pair.Value.UrlEncode());
             }
          }
 

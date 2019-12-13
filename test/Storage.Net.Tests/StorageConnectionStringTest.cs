@@ -75,5 +75,19 @@ namespace Storage.Net.Tests
          Assert.Equal("local://native=" + native, css);
 
       }
+
+      [Theory]
+      [InlineData("va=lue")]
+      [InlineData("va;lue")]
+      public void Handles_special_characters(string valueToSave)
+      {
+         var cs = new StorageConnectionString("local://");
+         cs["key"] = valueToSave;
+
+         string css = cs.ToString();
+
+         cs = new StorageConnectionString(css);
+         Assert.Equal(valueToSave, cs["key"]);
+      }
    }
 }
