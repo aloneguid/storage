@@ -3,7 +3,7 @@
       <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
       <AssemblyTitle>Storage.Net</AssemblyTitle>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
-      <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+      <TargetFramework>netstandard2.0</TargetFramework>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
       <AssemblyName>Storage.Net</AssemblyName>
       <PackageId>Storage.Net</PackageId>
@@ -33,6 +33,6 @@
       <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.3.2" />
       <PackageReference Include="NetBox" Version="2.3.5" />
       <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
-      <PackageReference Include="System.Text.Json" Version="4.7.0"/>
+      <PackageReference Include="System.Text.Json" Version="4.7.0" />
    </ItemGroup>
 </Project>
