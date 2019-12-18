@@ -9,6 +9,7 @@
       private static readonly IBlobStorageFactory _blobs = new InternalBlobsFactory();
       private static readonly IMessagingFactory _messages = new InternalMessagingFactory();
       private static readonly IModulesFactory _moduleInit = new InternalModuleInitFactory();
+      private static readonly IConnectionStringFactory _css = new InternalConnectionStringFactory();
 
       /// <summary>
       /// Access to creating tables
@@ -30,6 +31,11 @@
       /// </summary>
       public static IModulesFactory Modules => _moduleInit;
 
+      /// <summary>
+      /// Connection strings
+      /// </summary>
+      public static IConnectionStringFactory ConnectionStrings => _css;
+
       class InternalTablesFactory : IKeyValueStorageFactory
       {
       }
@@ -44,6 +50,11 @@
       }
 
       class InternalModuleInitFactory : IModulesFactory
+      {
+
+      }
+
+      class InternalConnectionStringFactory : IConnectionStringFactory
       {
 
       }
@@ -68,6 +79,14 @@
    /// </summary>
    public interface IKeyValueStorageFactory
    {
+   }
+
+   /// <summary>
+   /// Creates connection strings, acts as a helper
+   /// </summary>
+   public interface IConnectionStringFactory
+   {
+
    }
 
    /// <summary>

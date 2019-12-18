@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.DataLake.Store.Gen1;
-using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2;
-using Storage.Net.Microsoft.Azure.DataLake.Store.Gen2.Model;
 using Xunit;
 
 namespace Storage.Net.Tests.Integration.Azure
@@ -29,31 +24,9 @@ namespace Storage.Net.Tests.Integration.Azure
       }
 
       [Fact]
-      public async Task Authenticate_with_shared_key()
-      {
-         IBlobStorage authInstance = StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(_settings.AzureDataLakeGen2Name, _settings.AzureDataLakeGen2Key);
-
-         //trigger any operation
-         await authInstance.ListAsync();
-      }
-
-      [Fact]
-      public async Task Authenticate_with_service_principal()
-      {
-         IBlobStorage authInstance = StorageFactory.Blobs.AzureDataLakeGen2StoreByClientSecret(
-            _settings.AzureDataLakeGen2Name,
-            _settings.AzureDataLakeGen2TenantId,
-            _settings.AzureDataLakeGen2PrincipalId,
-            _settings.AzureDataLakeGen2PrincipalSecret);
-
-         //trigger any operation
-         await authInstance.ListAsync();
-      }
-
-      [Fact]
       public async Task Acl_smoke()
       {
-         string path = StoragePath.Combine("test", Guid.NewGuid().ToString());
+         string path = StoragePath.Combine(Guid.NewGuid().ToString(), Guid.NewGuid().ToString());
          await _storage.WriteTextAsync(path, "permgen1?");
 
          await _storage.GetAccessControlAsync(path);

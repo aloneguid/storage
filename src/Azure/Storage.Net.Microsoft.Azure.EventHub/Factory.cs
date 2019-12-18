@@ -1,12 +1,5 @@
-﻿using System;
-using Storage.Net.Blobs;
-using Storage.Net.Messaging;
-using Storage.Net.KeyValue;
-using System.Net;
+﻿using Storage.Net.Messaging;
 using Storage.Net.Microsoft.Azure.EventHub;
-using System.Collections.Generic;
-using EHP = Storage.Net.Microsoft.Azure.EventHub.AzureEventHubPublisher;
-using EHR = Storage.Net.Microsoft.Azure.EventHub.AzureEventHubReceiver;
 
 namespace Storage.Net
 {
@@ -16,59 +9,52 @@ namespace Storage.Net
    public static class Factory
    {
       /// <summary>
-      /// Creates Azure Event Hub publisher by namespace connection string and hub path
+      /// Register Azure module.
       /// </summary>
-      /// <param name="factory">Factory reference</param>
-      /// <param name="connectionString">Connection string</param>
-      /// <param name="hubPath">Hub path (name)</param>
-      /// <returns>Message publisher</returns>
-      public static IMessagePublisher AzureEventHubPublisher(this IMessagingFactory factory, string connectionString, string hubPath)
+      public static IModulesFactory UseAzureEventHubs(this IModulesFactory factory)
       {
-         return EHP.Create(connectionString, hubPath);
+         return factory.Use(new Module());
       }
 
-      /// <summary>
-      /// Create Azure Event Hub publisher by full connection string
-      /// </summary>
-      /// <param name="factory">Factory reference</param>
-      /// <param name="fullConnectionString">Connection string</param>
-      public static IMessagePublisher AzureEventHubPublisher(this IMessagingFactory factory, string fullConnectionString)
-      {
-         return new EHP(fullConnectionString);
-      }
 
       /// <summary>
-      /// The most detailed method with full fragmentation
+      /// Create Azure Event Hub messenger by full connection string and provide all the information for receiving end.
       /// </summary>
       /// <param name="factory">Factory reference</param>
-      /// <param name="endpointAddress">Endpoint address</param>
-      /// <param name="entityPath">Entity path</param>
-      /// <param name="sharedAccessKeyName">Shared access key name</param>
-      /// <param name="sharedAccessKey">Shared access key value</param>
-      /// <returns></returns>
-      public static IMessagePublisher AzureEventHubPublisher(this IMessagingFactory factory, Uri endpointAddress, string entityPath, string sharedAccessKeyName, string sharedAccessKey)
-      {
-         return EHP.Create(endpointAddress, entityPath, sharedAccessKeyName, sharedAccessKey);
-      }
-
-      /// <summary>
-      /// Creates Azure Event Hub receiver
-      /// </summary>
-      /// <param name="factory">Factory reference</param>
-      /// <param name="connectionString"></param>
-      /// <param name="hubPath"></param>
-      /// <param name="partitionIds"></param>
-      /// <param name="consumerGroupName"></param>
-      /// <param name="stateStorage"></param>
-      /// <returns></returns>
-      public static IMessageReceiver AzureEventHubReceiver(this IMessagingFactory factory,
-         string connectionString, string hubPath,
-         IEnumerable<string> partitionIds = null,
+      /// <param name="connectionString">Full connection string, including entity path</param>
+      /// <param name="azureBlobStorageConnectionString">Native Azure Blob Storage connection string. Event Hub receiver requires this for internal state management, therefore you need to provide it if you plan to receive messages, and not just send them.</param>
+      /// <param name="consumerGroupName">Name of of the consumer group, defaults to "$Default" when not passed, however it's a good practive to create a new consumer group.</param>
+      /// <param name="leaseContainerName">Name of the container to use for internal state, defaults to "eventhubs".</param>
+      /// <param name="storageBlobPrefix">If you are planning to use the same container for multiple event hubs, you can pass an optional prefix here.</param>
+      public static IMessenger AzureEventHub(this IMessagingFactory factory,
+         string connectionString,
+         string azureBlobStorageConnectionString = null,
          string consumerGroupName = null,
-         IBlobStorage stateStorage = null
+         string leaseContainerName = null,
+         string storageBlobPrefix = null
          )
       {
-         return new AzureEventHubReceiver(connectionString, hubPath, partitionIds, consumerGroupName, stateStorage);
+         return new AzureEventHubMessenger(
+            connectionString,
+            azureBlobStorageConnectionString,
+            consumerGroupName,
+            leaseContainerName,
+            storageBlobPrefix);
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="namespaceName"></param>
+      /// <param name="entityName"></param>
+      /// <param name="keyName"></param>
+      /// <param name="key"></param>
+      /// <returns></returns>
+      public static IMessenger AzureEventHub(this IMessagingFactory factory,
+         string namespaceName, string entityName, string keyName, string key)
+      {
+         return new AzureEventHubMessenger(namespaceName, entityName, keyName, key);
       }
    }
 }

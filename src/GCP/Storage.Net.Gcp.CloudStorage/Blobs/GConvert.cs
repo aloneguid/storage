@@ -64,7 +64,9 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
       {
          var result = new List<Blob>();
 
-         using(IAsyncEnumerator<Object> enumerator = pae.GetEnumerator())
+#pragma warning disable IDE0008 // Use explicit type (async enumerator conflict)
+         using(var enumerator = pae.GetEnumerator())
+#pragma warning restore IDE0008 // Use explicit type
          {
             while(await enumerator.MoveNext().ConfigureAwait(false))
             {

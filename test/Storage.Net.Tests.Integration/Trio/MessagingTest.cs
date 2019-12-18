@@ -2,169 +2,240 @@
 using Storage.Net.Messaging;
 using System;
 using System.Threading.Tasks;
-using System.Linq;
-using NetBox.Generator;
-using System.Diagnostics;
 using System.Collections.Generic;
+using Storage.Net.Microsoft.Azure.ServiceBus;
+using System.Linq;
+using System.Threading;
 
 namespace Storage.Net.Tests.Integration.Messaging
 {
-   [Trait("Category", "Messaging")]
+   [Trait("Category", "Messenger")]
    public abstract class MessagingTest : IAsyncLifetime
    {
       private readonly MessagingFixture _fixture;
+      private readonly string _channelPrefix;
+      private readonly string _receiveChannelSuffix;
+      private readonly IMessenger _msg;
+      private readonly string _qn;
 
-      protected MessagingTest(MessagingFixture fixture)
+      protected MessagingTest(MessagingFixture fixture, string channelPrefix = null, string channelFixedName = null, string receiveChannelSuffix = null)
       {
          _fixture = fixture;
+         _channelPrefix = channelPrefix;
+         _qn = channelFixedName ?? NewChannelName();
+         _receiveChannelSuffix = receiveChannelSuffix;
+         _msg = fixture.Messenger;
       }
 
       public async Task InitializeAsync()
       {
-         await _fixture.StartPumpAsync();
+         try
+         {
+            await _msg.CreateChannelAsync(_qn);
+         }
+         catch(NotSupportedException)
+         {
+
+         }
       }
 
-      public Task DisposeAsync() => Task.CompletedTask;
+      private string NewChannelName()
+      {
+         return $"{_channelPrefix}{Guid.NewGuid().ToString()}";
+      }
+
+      public async Task DisposeAsync()
+      {
+         //clear up all the channels
+
+         try
+         {
+            await _msg.DeleteChannelAsync(_qn);
+         }
+         catch { }
+      }
 
       [Fact]
       public async Task SendMessage_OneMessage_DoesntCrash()
       {
          var qm = QueueMessage.FromText("test");
-         await _fixture.Publisher.PutMessagesAsync(new[] { qm });
+
+         await _msg.SendAsync(_qn, qm);
       }
 
       [Fact]
-      public async Task SendMessage_Null_ThrowsArgumentNull()
+      public async Task SendMessage_NullChannel_ArgumentException()
       {
-         await Assert.ThrowsAsync<ArgumentNullException>(() => _fixture.Publisher.PutMessageAsync(null));
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _msg.SendAsync(null, QueueMessage.FromText("test")));
       }
 
       [Fact]
-      public async Task SendMessages_LargeAmount_Succeeds()
+      public async Task SendMessage_NullMessages_ArgumentException()
       {
-         await _fixture.Publisher.PutMessagesAsync(Enumerable.Range(0, 100).Select(i => QueueMessage.FromText("message #" + i)).ToList());
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _msg.SendAsync(_qn, null));
       }
 
       [Fact]
-      public async Task SendMessages_Null_DoesntFail()
+      public async Task Channels_list_doesnt_crash()
       {
-         await _fixture.Publisher.PutMessagesAsync(null);
+         await _msg.ListChannelsAsync();
       }
 
       [Fact]
-      public async Task SendMessages_SomeNull_ThrowsArgumentNull()
+      public async Task Channels_Create_list_contains_created_channel()
       {
-         await Assert.ThrowsAsync<ArgumentNullException>(() => _fixture.Publisher.PutMessagesAsync(new[] { QueueMessage.FromText("test"), null }));
-      }
-
-      [Fact]
-      public async Task SendMessage_ExtraProperties_DoesntCrash()
-      {
-         var msg = new QueueMessage("prop content at " + DateTime.UtcNow);
-         msg.Properties["one"] = "one value";
-         msg.Properties["two"] = "two value";
-         await _fixture.Publisher.PutMessagesAsync(new[] { msg });
-      }
-
-      [Fact]
-      public async Task SendMessage_SimpleOne_Received()
-      {
-         string content = RandomGenerator.RandomString;
-
-         string tag = await _fixture.PutMessageAsync(new QueueMessage(content));
-
-         QueueMessage received = await _fixture.WaitMessageAsync(tag);
-
-         Assert.True(received != null, $"no messages received with tag {tag}, {_fixture.GetMessageCount()} received in total");
-         Assert.Equal(content, received.StringContent);
-      }
-
-      [Fact]
-      public async Task SendMessage_WithProperties_Received()
-      {
-         string content = RandomGenerator.RandomString;
-
-         var msg = new QueueMessage(content);
-         msg.Properties["one"] = "v1";
-
-         string tag = await _fixture.PutMessageAsync(msg);
-
-         QueueMessage received = await _fixture.WaitMessageAsync(tag);
-
-         Assert.True(received != null, "no message received with tag " + tag);
-         Assert.Equal(content, received.StringContent);
-         Assert.Equal("v1", received.Properties["one"]);
-      }
-
-      [Fact]
-      public async Task Peek_SendTwoMessages_Peeked()
-      {
-         await _fixture.PutMessageAsync(QueueMessage.FromText("test peeek"));
-
-         IReadOnlyCollection<QueueMessage> messages = await _fixture.Receiver.PeekMessagesAsync(10);
-
-         Assert.True(messages.Count > 0);
-      }
-
-      [Fact]
-      public async Task KeepAlive_Call_DoesntCrash()
-      {
-         string tag = await _fixture.PutMessageAsync();
-         QueueMessage received = await _fixture.WaitMessageAsync(tag);
+         string channelName = NewChannelName();
 
          try
          {
-            await _fixture.Receiver.KeepAliveAsync(received);
+            await _msg.CreateChannelAsync(channelName);
          }
          catch(NotSupportedException)
          {
-            //not all the providers support this, so ignore this exception
+            return;
          }
+
+         //some providers don't list channels immediately as they are eventually consistent
+
+         const int maxRetries = 10;
+
+         for(int i = 0; i < maxRetries; i++)
+         {
+            IReadOnlyCollection<string> channels = await _msg.ListChannelsAsync();
+
+            if(channels.Contains(channelName))
+               return;
+
+            await Task.Delay(TimeSpan.FromSeconds(5));
+         }
+
+         Assert.True(false, $"channel not found after {maxRetries} retries.");
       }
 
       [Fact]
-      public async Task CleanQueue_SendMessage_ReceiveAndConfirm()
+      public async Task Channels_delete_goesaway()
       {
-         string content = RandomGenerator.RandomString;
-         var msg = new QueueMessage(content);
-         string tag = await _fixture.PutMessageAsync(msg);
-
-         QueueMessage rmsg = await _fixture.WaitMessageAsync(tag);
-         Assert.NotNull(rmsg);
-      }
-
-      [Fact]
-      public async Task MessagePump_AddFewMessages_CanReceiveOneAndPumpClearsThemAll()
-      {
-         QueueMessage[] messages = Enumerable.Range(0, 10)
-            .Select(i => new QueueMessage(nameof(MessagePump_AddFewMessages_CanReceiveOneAndPumpClearsThemAll) + "#" + i))
-            .ToArray();
-
-         int prevCount = _fixture.GetMessageCount();
-         await _fixture.Publisher.PutMessagesAsync(messages);
-         await Task.Delay(TimeSpan.FromSeconds(10));
-         int nowCount = _fixture.GetMessageCount();
-
-         Assert.True(nowCount - prevCount >= 10, $"was: {prevCount}, now: {nowCount}, needs at least 10");
-      }
-
-      [Fact]
-      public async Task MessageCount_IsGreaterThanZero()
-      {
-         //put quite a few messages
-
-         await _fixture.Publisher.PutMessagesAsync(Enumerable.Range(0, 100).Select(i => QueueMessage.FromText("message #" + i)).ToList());
+         string channelName = NewChannelName();
 
          try
          {
-            int count = await _fixture.Receiver.GetMessageCountAsync();
-
-            Assert.True(count > 0);
+            await _msg.CreateChannelAsync(channelName);
          }
          catch(NotSupportedException)
          {
-            //not all providers support this
+            return;
          }
+
+         await _msg.DeleteChannelAsync(channelName);
+
+         IReadOnlyCollection<string> channels = await _msg.ListChannelsAsync();
+
+         Assert.DoesNotContain(channelName, channels);
+
+      }
+
+      [Fact]
+      public async Task Channels_delete_null_list_argument_exception()
+      {
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _msg.DeleteChannelsAsync(null));
+      }
+
+      [Fact]
+      public async Task MessageCount_Send_One_Count_Changes()
+      {
+         long count1;
+
+         try
+         {
+            count1 = await _msg.GetMessageCountAsync(_qn + _receiveChannelSuffix);
+         }
+         catch(NotSupportedException)
+         {
+            return;
+         }
+
+         await _msg.SendAsync(_qn, QueueMessage.FromText("bla bla"));
+
+         long count2 = await _msg.GetMessageCountAsync(_qn + _receiveChannelSuffix);
+
+         Assert.NotEqual(count1, count2);
+      }
+
+      [Fact]
+      public async Task MessageCount_Null_ThrowsArgumentNull()
+      {
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _msg.GetMessageCountAsync(null));
+      }
+
+      [Fact]
+      public async Task MessageCount_NonExistentQueue_Return0()
+      {
+         try
+         {
+            Assert.Equal(0, await _msg.GetMessageCountAsync(NewChannelName() + _receiveChannelSuffix));
+         }
+         catch(NotSupportedException)
+         {
+
+         }
+      }
+
+      [Fact]
+      public async Task Receive_SendOne_Received()
+      {
+         string tag = await SendAsync();
+
+         try
+         {
+            IReadOnlyCollection<QueueMessage> messages = await _msg.ReceiveAsync(_qn);
+
+            Assert.Contains(messages, m => m.Properties.TryGetValue("tag", out string itag) && itag == tag);
+         }
+         catch(NotSupportedException)
+         {
+
+         }
+      }
+
+      [Fact]
+      public async Task Peek_NullChannel_ThrowsArgumentNull()
+      {
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _msg.PeekAsync(null));
+      }
+
+      [Fact]
+      public async Task Peek_SendMessage_HasAtLeaseOne()
+      {
+         try
+         {
+            await SendAsync();
+
+            IReadOnlyCollection<QueueMessage> messages = await _msg.PeekAsync(_qn);
+
+            Assert.NotEmpty(messages);
+         }
+         catch(NotSupportedException)
+         {
+
+         }
+      }
+
+      [Fact]
+      public async Task Receive_NullChannel_ArgumentNullException()
+      {
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _msg.ReceiveAsync(null));
+      }
+
+      private async Task<string> SendAsync()
+      {
+         string tag = Guid.NewGuid().ToString();
+
+         var msg = QueueMessage.FromText("hm");
+         msg.Properties["tag"] = tag;
+
+         await _msg.SendAsync(_qn, msg);
+
+         return tag;
       }
    }
 }

@@ -169,5 +169,21 @@ namespace Storage.Net
       {
          return Normalize(path1) == Normalize(path2);
       }
+
+      /// <summary>
+      /// Replace file name
+      /// </summary>
+      /// <param name="path"></param>
+      /// <param name="newFileName"></param>
+      /// <returns></returns>
+      public static string Rename(string path, string newFileName)
+      {
+         string[] parts = Split(path);
+
+         if(parts.Length == 1)
+            return newFileName;
+
+         return Combine(Combine(parts.Take(parts.Length - 1)), newFileName);
+      }
    }
 }

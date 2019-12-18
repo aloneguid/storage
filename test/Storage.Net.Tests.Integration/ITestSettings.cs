@@ -14,6 +14,9 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.Storage.Key")]
       string AzureStorageKey { get; }
 
+      [Option(Alias = "Azure.Storage.NativeConnectionString")]
+      string AzureStorageNativeConnectionString { get; }
+
       [Option(Alias = "Azure.DataLakeGen2.Name")]
       string AzureDataLakeGen2Name { get; }
 
@@ -50,9 +53,6 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.EventHub.ConnectionString")]
       string EventHubConnectionString { get; }
 
-      [Option(Alias = "Azure.EventHub.Path")]
-      string EventHubPath { get; }
-
       [Option(Alias = "Azure.DataLake.TenantId")]
       string AzureDataLakeTenantId { get; }
 
@@ -71,8 +71,14 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.KeyVault.Uri")]
       Uri KeyVaultUri { get; }
 
-      [Option(Alias = "Azure.KeyVault.Creds")]
-      NetworkCredential KeyVaultCreds { get; }
+      [Option(Alias = "Azure.KeyVault.TenantId")]
+      string KeyVaultTenantId { get; }
+
+      [Option(Alias = "Azure.KeyVault.ClientId")]
+      string KeyVaultClientId { get; }
+
+      [Option(Alias = "Azure.KeyVault.ClientSecret")]
+      string KeyVaultSecret { get; }
 
       [Option(Alias = "Azure.Databricks.BaseUri")]
       string DatabricksBaseUri { get; }
@@ -92,6 +98,9 @@ namespace Storage.Net.Tests
 
       [Option(Alias = "Aws.TestBucketName")]
       string AwsTestBucketName { get; }
+
+      [Option(Alias = "Aws.TestBucketRegion", DefaultValue = "eu-west-1")]
+      string AwsTestBucketRegion { get; }
 
       #endregion
 

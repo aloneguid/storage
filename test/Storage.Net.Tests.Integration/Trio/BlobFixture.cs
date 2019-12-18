@@ -51,7 +51,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 
          //drop all blobs in test storage
 
-         IReadOnlyCollection<Blob> topLevel = (await Storage.ListAsync(recurse: false)).ToList();
+         IReadOnlyCollection<Blob> topLevel = (await Storage.ListAsync(folderPath: BlobPrefix, recurse: false)).ToList();
 
          try
          {

@@ -76,10 +76,8 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
 
       public Task<ITransaction> OpenTransactionAsync() => Task.FromResult(EmptyTransaction.Instance);
 
-      public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
+      public Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
       {
-         CheckReadOnly();
-
          throw new NotImplementedException();
       }
 

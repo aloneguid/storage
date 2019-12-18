@@ -61,7 +61,28 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// Custom provider-specific properties. Key names are case-insensitive.
       /// </summary>
-      public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+      public Dictionary<string, object> Properties { get; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
+      /// <summary>
+      /// Try to get property and cast it to a specified type
+      /// </summary>
+      public bool TryGetProperty<TValue>(string name, out TValue value, TValue defaultValue = default)
+      {
+         if(name == null || !Properties.TryGetValue(name, out object objValue))
+         {
+            value = defaultValue;
+            return false;
+         }
+
+         if(objValue is TValue)
+         {
+            value = (TValue)objValue;
+            return true;
+         }
+
+         value = defaultValue;
+         return false;
+      }
 
       /// <summary>
       /// User defined metadata. Key names are case-insensitive.
@@ -72,14 +93,36 @@ namespace Storage.Net.Blobs
       /// Tries to add properties in pairs when value is not null
       /// </summary>
       /// <param name="keyValues"></param>
-      public void TryAddProperties(params string[] keyValues)
+      public void TryAddProperties(params object[] keyValues)
       {
          for(int i = 0; i < keyValues.Length; i += 2)
          {
-            string key = keyValues[i];
-            string value = keyValues[i + 1];
+            string key = (string)keyValues[i];
+            object value = keyValues[i + 1];
 
-            if(value != null)
+            if(key != null && value != null)
+            {
+               if(value is string s && string.IsNullOrEmpty(s))
+                  continue;
+
+               Properties[key] = value;
+            }
+         }
+      }
+
+      /// <summary>
+      /// Tries to add properties from dictionary by key names
+      /// </summary>
+      /// <param name="source"></param>
+      /// <param name="keyNames"></param>
+      public void TryAddPropertiesFromDictionary(IDictionary<string, string> source, params string[] keyNames)
+      {
+         if(source == null || keyNames == null)
+            return;
+
+         foreach(string key in keyNames)
+         {
+            if(source.TryGetValue(key, out string value))
             {
                Properties[key] = value;
             }

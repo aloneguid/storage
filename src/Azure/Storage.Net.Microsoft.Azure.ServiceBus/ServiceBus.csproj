@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+      <TargetFrameworks>netstandard2.0</TargetFrameworks>
+      <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
+      <AssemblyTitle>Storage.Net.Microsoft.Azure.ServiceBus</AssemblyTitle>
+      <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
+      <GenerateDocumentationFile>true</GenerateDocumentationFile>
+      <PackageId>Storage.Net.Microsoft.Azure.ServiceBus</PackageId>
+      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
+      <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
+      <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+      <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+      <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+      <Version>1.0.0</Version>
+      <FileVersion>1.0.0.0</FileVersion>
+      <AssemblyVersion>1.0.0.0</AssemblyVersion>
+      <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
+      <PackageLicenseUrl>https://github.com/aloneguid/storage/blob/master/LICENSE</PackageLicenseUrl>
+      <RepositoryType>GitHub</RepositoryType>
+      <Description>Extension to Storage.Net providing integration with Microsoft Azure Storage for blobs, tables and queues.</Description>
+      <LangVersion>latest</LangVersion>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <WarningsAsErrors />
+      <AssemblyName>Storage.Net.Microsoft.Azure.ServiceBus</AssemblyName>
+      <RootNamespace>Storage.Net.Microsoft.Azure.ServiceBus</RootNamespace>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+      <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+   </PropertyGroup>
+   <ItemGroup>
+      <PackageReference Include="Microsoft.Azure.Management.ServiceBus" Version="2.1.0" />
+      <PackageReference Include="Microsoft.Azure.ServiceBus" Version="4.1.1" />
+   </ItemGroup>
+   <ItemGroup>
+      <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
+   </ItemGroup>
+</Project>

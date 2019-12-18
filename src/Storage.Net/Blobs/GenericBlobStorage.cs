@@ -129,7 +129,7 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// 
       /// </summary>
-      public virtual Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
+      public virtual Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
       {
          throw new NotSupportedException();
       }

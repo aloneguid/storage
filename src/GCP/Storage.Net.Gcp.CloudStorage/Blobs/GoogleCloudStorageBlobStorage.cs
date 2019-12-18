@@ -145,24 +145,15 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
       }
 
 
-      public override Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
+      public override async Task WriteAsync(string fullPath, Stream dataStream,
+         bool append = false, CancellationToken cancellationToken = default)
       {
          if(append)
             throw new NotSupportedException();
          GenericValidation.CheckBlobFullPath(fullPath);
          fullPath = StoragePath.Normalize(fullPath, false);
 
-         // no write streaming support in this crappy SDK
-
-         return Task.FromResult<Stream>(new FixedStream(new MemoryStream(), null, async (fx) =>
-         {
-            var ms = (MemoryStream)fx.Parent;
-            ms.Position = 0;
-
-            await _client.UploadObjectAsync(
-               _bucketName, fullPath, null, ms,
-               cancellationToken: cancellationToken).ConfigureAwait(false);
-         }));
+         await _client.UploadObjectAsync(_bucketName, fullPath, null, dataStream, cancellationToken: cancellationToken).ConfigureAwait(false);
       }
 
       public override async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)

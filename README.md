@@ -8,13 +8,13 @@
 
 Storage.NET is a field-tested .NET library that helps to achieve [polycloud techniques](https://www.thoughtworks.com/radar/techniques/polycloud). 
 
-It provides generic interface for popular cloud storage providers like Amazon S3, Azure Service Bus, Azure Event Hub, Azure Storage, Azure Data Lake Store thus abstracting Messaging, Blob (object store for unsturctured data) and Table (NoSQL key-value store) services.
+It provides generic interface for popular cloud storage providers like Amazon S3, Azure Service Bus, Azure Event Hub, Azure Storage, Azure Data Lake Store thus abstracting Blob and Messaging services.
 
 It also implements in-memory and on-disk versions of all the abstractions for faster local machine development. Connection strings are supported too!
 
 ![Comic Why](doc/comic-why.png)
 
-Like desktop like we do? You can download a preview version of a **native Windows 10 client** here:
+Storage.Net is used by some big **Fotrune 500** companies, large, medium and small businesses, open-source projects and even desktop applications like this one:
 
 <a href='//www.microsoft.com/store/apps/9NKV1D43NLL3?cid=storebadge&ocid=badge'>
    <img src='https://assets.windowsphone.com/85864462-9c82-451e-9355-a3d5f874397a/English_get-it-from-MS_InvariantCulture_Default.png' alt='English badge' style='width: 284px; height: 104px;' width='284' height='104'/>
@@ -27,7 +27,8 @@ Like desktop like we do? You can download a preview version of a **native Window
 - [Implementations](#implementations)
 - [Getting Started](#getting-started)
   - [Blob Storage](#blob-storage)
-  - [Key-Value Storage](#key-value-storage)
+    - [High-level architecture](#high-level-architecture)
+    - [Transform Sinks](#transform-sinks)
   - [Messaging](#messaging)
 - [Contributing](#contributing)
 - [Sponsorship](#sponsorship)
@@ -44,23 +45,21 @@ Storage.Net supports **Azure Service Bus**, **Azure Event Hub**, **Azure Storage
 
 Storage.Net also implements inmemory and on disk versions of all the abstractions, therefore you can develop fast on local machine or use vendor free serverless implementations for parts of your applciation which don't require a separate third party backend at a particular point in development.
 
-This framework supports `.NET 4.5.2` and `.NET Standard 1.6`, and all of the plugins exist for all frameworks.
+This framework supports `.NET Standard 2.0` and higher.
 
 ## Implementations
 
 ![Storagetypes](doc/storagetypes.svg)
 
-Storage.Net defines three different storage types:
+Storage.Net defines two different storage types:
 
 - **Blob Storage** is used to store arbitrary files of any size, that do not have any structure. The data is essentially a binary file. Examples of a blog storage is Azure Blob Storage, Amazon S3, local folder etc.
-- **Key-Value Storage** is essentialy a large dictionary where key points to some value. Examples are Azure Table Storage, etcd etc.
 - **Messaging** is an asynchronous mechanism to send and receive messages between disconnected systems. For instance MSMQ, Azure Service Bus, Amazon Simple Queue etc.
 
 Some effort has been made to document the supported storage options, you are welcome to contribute to documentation, or browse the following sections:
 
 - [Blob Storage Implementations](doc/blobs.md)
 - [Messaging Implementations](doc/messaging.md)
-- [Key-Value Implementations](doc/keyvalue.md)
 
 ## Geting Started
 
@@ -84,7 +83,7 @@ You can also use connection strings to create blob storage instances. Connection
 IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blobs://...parameters...");
 ```
 
-In this example we create a blob storage implementation which happens to be Microsoft Azure blob storage. The project is referencing an appropriate [nuget package](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage). As blob storage methods promote streaming we create a `MemoryStream` over a string for simplicity sake. In your case the actual stream can come from a variety of sources.
+In this example we create a blob storage implementation which happens to be Microsoft Azure blob storage. The project is referencing an appropriate [nuget package](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage.Blobs/). As blob storage methods promote streaming we create a `MemoryStream` over a string for simplicity sake. In your case the actual stream can come from a variety of sources.
 
 ```csharp
 using Storage.Net;
@@ -145,15 +144,43 @@ public async Task BlobStorage_sample2()
 
 You can find the list of supported blob storage implementations [here](doc/blobs.md).
 
-### Key-Value Storage
+#### High-level architecture
 
-The intention of creating a simplistic key-value storage is to abstract away different implementations of storing key-value data. An entry point to key-value storage is [IKeyValueStorage](src/Storage.Net/KeyValue/IKeyValueStorage.cs) interface. As with blobs, you can create this interface by calling to one of the factory methods:
+The basic architecture of blobs is depicted in the following diagram:
 
-![](doc/storagefactory-intellisense-kv.gif)
+![](doc/blobs-interfaces.svg)
 
-Once created, you can start working with key-value storage using one of the methods available in `IKeyValueStorage`.
+All of the core methods are defined in the `IBlobStorage` interface. This is the interface that's enough for a new storage provider to implement in order to add a new storage provider.
 
-You can find the list of supported key-value implementations [here](doc/keyvalue.md).
+However, some providers support more than just basic operations, for instance Azure Blob Storage supports blob leasing, shared access signatures etc., therefore it actually implements `IAzureBlobStorage` interface that in turn implements `IBlobStorage` interface, and extends the functionality further. Same goes for AWS S3 and others.
+
+However, when you are browsing `IBlobStorage` interface, intellisesnse will shows you a plethora of methods that are not there. This is because there are plenty of **extension methods** defined for it. Extension methods add extra useful stuff, such as ability to write/read strings, JSON objects and so on, but they in turn use only methods from `IBlobStorage`. The decision to split those methods into extension methods was because that is logical functionality not dependent on any underlying implementation. Also implementing new storage providers is much easier, as you only have to implement a subset of methods.
+
+#### Transform Sinks
+
+Transform sinks is another awesome feature of Storage.Net that works across all the storage providers. Transform sinks allow you to **transform data stream** for both upload and download to somehow transform the underlying stream of data. Examples of transform sinks would be *gzipping data* transparently, *encrypting it*, and so on.
+
+Let's say you would like to *gzip* all of the files that you upload/download to a storage. You can do that in the following way:
+
+```csharp
+IBlobStorage myGzippedStorage = StorageFactory.Blobs
+   .AzureBlobStorageWithSharedKey("name", "key")
+   .WithGzipCompression();
+```
+
+Then use the storage as you would before - all the data is compressed as you write it (with any `WriteXXX` method) and decompressed as you read it (with any `ReadXXX` method).
+
+For more details on sinks available and how to implement your own sink, [read this page](doc/sinks.md).
+
+
+##### Implementation Details
+
+Due to the nature of the transforms, they can change both the underlying data, and stream size, therefore there is an issue with storage providers, as they need to know beforehand the size of the blob you are uploading. The matter becomes more complicated when some implementations need to calculate other statistics of the data before uploading i.e. hash, CRC and so on. Therefore the only *reliable* way to stream transformed data is to actually perform all of the transofrms, and then upload it. In this implementation, Storage.Net uses in-memory transforms to achieve this, however does it extremely efficiently by using [Microsoft.IO.RecyclableMemoryStream](https://github.com/Microsoft/Microsoft.IO.RecyclableMemoryStream) package that performs memory pooling and reclaiming for you so that you don't need to worry about software slowdows. You can read more about this technique [here](http://www.philosophicalgeek.com/2015/02/06/announcing-microsoft-io-recycablememorystream/).
+
+This also means that today a transform sink can upload a stream only as large as the amount of RAM available on your machine. I am, however, thinking of ways to go further than that, and there are some beta implementations available that might see the light soon.
+
+![](doc/sinks-memory.svg)
+
 
 ### Messaging
 
@@ -266,6 +293,14 @@ Does your company use Storage.Net?  Ask your manager or marketing team if your c
 ## Contributing
 
 All contributions of any size and areas are welcome, being it coding, testing, documentation or consulting. The framework is heavily tested under stress with integration tests, in fact most of the code is tests, not implementation, and this approach is more preferred to adding unstable features.
+
+PRs are raised against [develop](https://github.com/aloneguid/storage/tree/develop) branch, **master** is for releases only.
+
+All the builds (from PR or branches) are automatically generating *NuGet packages* which are placed into the following intermediate feed:
+
+`https://pkgs.dev.azure.com/aloneguid/AllPublic/_packaging/storagenet/nuget/v3/index.json`
+
+Builds from *master* branch publishes NuGet to `nuget.org`.
 
 ### Code
 

@@ -26,7 +26,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
          string path = StoragePath.Normalize(options.FolderPath);
          var result = new List<Blob>();
 
-         await BrowseAsync(path, options, result, token);
+         await BrowseAsync(path, options, result, token).ConfigureAwait(false);
 
          return result;
       }
@@ -38,7 +38,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
          try
          {
             IEnumerable<Blob> entries = 
-               (await EnumerateDirectoryAsync(path, options, UserGroupRepresentation.ObjectID))
+               (await EnumerateDirectoryAsync(path, options, UserGroupRepresentation.ObjectID).ConfigureAwait(false))
                .Where(options.IsMatch);
 
             if (options.BrowseFilter != null)
@@ -70,7 +70,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
                      options,
                      container,
                      token
-                  )));
+                  ))).ConfigureAwait(false);
             }
          }
       }
@@ -86,7 +86,8 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
 
          while(options.MaxResults == null || result.Count < options.MaxResults.Value)
          {
-            List<DirectoryEntry> page = await EnumerateDirectoryAsync(path, _listBatchSize, listAfter, "", userIdFormat, cancelToken);
+            List<DirectoryEntry> page =
+               await EnumerateDirectoryAsync(path, _listBatchSize, listAfter, "", userIdFormat, cancelToken).ConfigureAwait(false);
 
             //no more results
             if(page == null || page.Count == 0)
@@ -112,7 +113,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
          var resp = new OperationResponse();
          List<DirectoryEntry> page = await Core.ListStatusAsync(path, listAfter, listBefore, maxEntries, userIdFormat, _client,
             new RequestOptions(new ExponentialRetryPolicy(2, 1000)),
-            resp);
+            resp).ConfigureAwait(false);
          return page;
          //return new FileStatusOutput(listBefore, listAfter, maxEntries, userIdFormat, _client, path);
       }

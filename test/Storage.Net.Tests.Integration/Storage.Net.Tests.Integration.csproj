@@ -1,15 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
    <PropertyGroup>
-      <TargetFrameworks>netcoreapp2.1</TargetFrameworks>
+      <TargetFramework>netcoreapp2.1</TargetFramework>
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
-      <PackageReference Include="Shouldly" Version="3.0.2" />
       <PackageReference Include="xunit" Version="2.4.1" />
       <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
          <PrivateAssets>all</PrivateAssets>
@@ -17,21 +15,23 @@
       </PackageReference>
       <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
       <PackageReference Include="LogMagic" Version="2.17.5" />
-      <PackageReference Include="Config.Net" Version="4.13.7" />
-      <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+      <PackageReference Include="Config.Net" Version="4.14.16" />
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
    </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Databricks.Dbfs\Storage.Net.Microsoft.Azure.Databricks.Dbfs.csproj" />
-    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.DataLake.Store\Storage.Net.Microsoft.Azure.DataLake.Store.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Databricks.Dbfs\Databricks.Dbfs.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.DataLake.Store\DataLakeGen1.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.EventHub\EventHub.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.KeyVault\KeyVault.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Queues\StorageQueues.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.ServiceBus\ServiceBus.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Storage.Blobs\Blobs.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Storage.Files\Files.csproj" />
     <ProjectReference Include="..\..\src\GCP\Storage.Net.Gcp.CloudStorage\Storage.Net.Gcp.CloudStorage.csproj" />
     <ProjectReference Include="..\..\src\General\Storage.Net.Ftp\Storage.Net.Ftp.csproj" />
     <ProjectReference Include="..\..\src\Storage.Net.SFtp\Storage.Net.SFtp.csproj" />
     <ProjectReference Include="..\..\src\Storage.Net\Storage.Net.csproj" />
-    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.EventHub\Storage.Net.Microsoft.Azure.EventHub.csproj" />
-    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.KeyVault\Storage.Net.Microsoft.Azure.KeyVault.csproj" />
-    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.ServiceBus\Storage.Net.Microsoft.Azure.ServiceBus.csproj" />
-    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Storage\Storage.Net.Microsoft.Azure.Storage.csproj" />
     <ProjectReference Include="..\..\src\AWS\Storage.Net.Amazon.Aws\Storage.Net.Amazon.Aws.csproj" />
   </ItemGroup>
 

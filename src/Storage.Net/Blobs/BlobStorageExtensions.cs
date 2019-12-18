@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using NetBox;
@@ -33,7 +34,7 @@ namespace Storage.Net.Blobs
       {
          IReadOnlyCollection<Blob> all = await blobStorage.ListAsync(options, cancellationToken);
 
-         return all.Where(i => i.IsFile).ToList();
+         return all.Where(i => i!= null && i.IsFile).ToList();
       }
 
       /// <summary>
@@ -81,11 +82,14 @@ namespace Storage.Net.Blobs
       /// </summary>
       /// <param name="provider"></param>
       /// <param name="fullPath">Blob id</param>
+      /// <param name="textEncoding">Optional text encoding. When not specified, <see cref="UTF8Encoding"/> is used.</param>
       /// <param name="cancellationToken"></param>
       /// <returns></returns>
       public static async Task<string> ReadTextAsync(
          this IBlobStorage provider,
-         string fullPath, CancellationToken cancellationToken = default)
+         string fullPath,
+         Encoding textEncoding = null,
+         CancellationToken cancellationToken = default)
       {
          Stream src = await provider.OpenReadAsync(fullPath, cancellationToken);
          if (src == null) return null;
@@ -96,7 +100,7 @@ namespace Storage.Net.Blobs
             await src.CopyToAsync(ms);
          }
 
-         return Encoding.UTF8.GetString(ms.ToArray());
+         return (textEncoding ?? Encoding.UTF8).GetString(ms.ToArray());
       }
 
       /// <summary>
@@ -105,13 +109,16 @@ namespace Storage.Net.Blobs
       /// <param name="provider"></param>
       /// <param name="fullPath">Blob to write</param>
       /// <param name="text">Text to write, treated in UTF-8 encoding</param>
+      /// <param name="textEncoding">Optional text encoding. When not specified, <see cref="UTF8Encoding"/> is used.</param>
       /// <param name="cancellationToken"></param>
       /// <returns></returns>
       public static async Task WriteTextAsync(
          this IBlobStorage provider,
-         string fullPath, string text, CancellationToken cancellationToken = default)
+         string fullPath, string text,
+         Encoding textEncoding = null,
+         CancellationToken cancellationToken = default)
       {
-         using (Stream s = text.ToMemoryStream())
+         using (Stream s = text.ToMemoryStream(textEncoding ?? Encoding.UTF8))
          {
             await provider.WriteAsync(fullPath, s, false, cancellationToken);
          }
@@ -191,10 +198,7 @@ namespace Storage.Net.Blobs
 
          using (var source = new MemoryStream(data))
          {
-            using(Stream dest = await provider.OpenWriteAsync(fullPath, false, cancellationToken).ConfigureAwait(false))
-            {
-               await source.CopyToAsync(dest).ConfigureAwait(false);
-            }
+            await provider.WriteAsync(fullPath, source, append, cancellationToken).ConfigureAwait(false);
          }
       }
 
@@ -218,31 +222,6 @@ namespace Storage.Net.Blobs
       #endregion
 
       #region [ Streaming ]
-
-      /// <summary>
-      /// Copy data from <paramref name="sourceStream"/> and write to the destination storage
-      /// </summary>
-      /// <param name="storage"></param>
-      /// <param name="fullPath">Full blob path, required.</param>
-      /// <param name="sourceStream">Source stream to copy from, required</param>
-      /// <param name="append">When true, the blob gets overwritten, otherwise the data is appended.</param>
-      /// <param name="cancellationToken"></param>
-      /// <returns></returns>
-      public static async Task WriteAsync(
-         this IBlobStorage storage,
-         string fullPath,
-         Stream sourceStream,
-         bool append = false,
-         CancellationToken cancellationToken = default)
-      {
-         if(sourceStream == null)
-            throw new ArgumentNullException(nameof(sourceStream));
-
-         using(Stream dest = await storage.OpenWriteAsync(fullPath, append, cancellationToken).ConfigureAwait(false))
-         {
-            await sourceStream.CopyToAsync(dest).ConfigureAwait(false);
-         }
-      }
 
       /// <summary>
       /// Downloads blob to a stream
@@ -317,7 +296,68 @@ namespace Storage.Net.Blobs
 
       #endregion
 
-      #region [ Uniqueue ]
+#region [ Objects ]
+
+      /// <summary>
+      /// Writes an object to blob storage using <see cref="JsonSerializer"/>
+      /// </summary>
+      /// <typeparam name="T">Objec type</typeparam>
+      /// <param name="storage"></param>
+      /// <param name="fullPath">Full path to blob</param>
+      /// <param name="instance">Object instance to write</param>
+      /// <param name="options">Optional serialiser options</param>
+      /// <param name="encoding">Text encoding used to write to the blob storage, defaults to <see cref="UTF8Encoding"/></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      public static async Task WriteJsonAsync<T>(
+         this IBlobStorage storage,
+         string fullPath, T instance,
+         JsonSerializerOptions options = null,
+         Encoding encoding = null,
+         CancellationToken cancellationToken = default)
+      {
+         string jsonText = JsonSerializer.Serialize(instance, options);
+         await WriteTextAsync(storage, fullPath, jsonText, encoding, cancellationToken).ConfigureAwait(false);
+      }
+
+      /// <summary>
+      /// Reads an object from blob storage using <see cref="JsonSerializer"/>
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
+      /// <param name="storage"></param>
+      /// <param name="fullPath">Full path to blob</param>
+      /// <param name="ignoreInvalidJson">When true, json that cannot be deserialised is ignored and method simply returns default value</param>
+      /// <param name="options">Optional serialiser options</param>
+      /// <param name="encoding">Text encoding used to write to the blob storage, defaults to <see cref="UTF8Encoding"/></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      public static async Task<T> ReadJsonAsync<T>(this IBlobStorage storage,
+         string fullPath,
+         bool ignoreInvalidJson = false,
+         JsonSerializerOptions options = null,
+         Encoding encoding = null,
+         CancellationToken cancellationToken = default)
+      {
+         string jsonText = await storage.ReadTextAsync(fullPath, encoding, cancellationToken);
+         if(string.IsNullOrEmpty(jsonText))
+            return default;
+
+         try
+         {
+            return JsonSerializer.Deserialize<T>(jsonText, options);
+         }
+         catch(JsonException)
+         {
+            if(ignoreInvalidJson)
+               return default;
+
+            throw;
+         }
+      }
+
+#endregion
+
+#region [ Uniqueue ]
 
       /// <summary>
       /// Copies blob to another storage
@@ -331,12 +371,12 @@ namespace Storage.Net.Blobs
          this IBlobStorage provider,
          string blobId, IBlobStorage targetStorage, string newId, CancellationToken cancellationToken = default)
       {
-         Stream src = await provider.OpenReadAsync(blobId, cancellationToken);
-         if (src == null) return;
-
-         using (src)
+         using(Stream src = await provider.OpenReadAsync(blobId, cancellationToken).ConfigureAwait(false))
          {
-            await targetStorage.WriteAsync(newId ?? blobId, src, false, cancellationToken);
+            if(src == null)
+               return;
+
+            await targetStorage.WriteAsync(newId ?? blobId, src, false, cancellationToken).ConfigureAwait(false);
          }
       }
 
@@ -370,7 +410,80 @@ namespace Storage.Net.Blobs
          }
       }
 
-      #endregion
+      /// <summary>
+      /// Rename a blob (folder, file etc.).
+      /// </summary>
+      /// <param name="blobStorage"></param>
+      /// <param name="oldPath"></param>
+      /// <param name="newPath"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      public static async Task RenameAsync(this IBlobStorage blobStorage,
+         string oldPath, string newPath, CancellationToken cancellationToken = default)
+      {
+         if(oldPath is null)
+            throw new ArgumentNullException(nameof(oldPath));
+         if(newPath is null)
+            throw new ArgumentNullException(nameof(newPath));
 
+         //try to use extended client here
+         if(blobStorage is IExtendedBlobStorage extendedBlobStorage)
+         {
+            await extendedBlobStorage.RenameAsync(oldPath, newPath, cancellationToken).ConfigureAwait(false);
+         }
+         else
+         {
+            //this needs to be done recursively
+            foreach(Blob item in await blobStorage.ListAsync(oldPath, recurse: true).ConfigureAwait(false))
+            {
+               if(item.IsFile)
+               {
+                  string renamedPath = item.FullPath.Replace(oldPath, newPath);
+
+                  await blobStorage.CopyToAsync(item, blobStorage, renamedPath, cancellationToken).ConfigureAwait(false);
+                  await blobStorage.DeleteAsync(item, cancellationToken).ConfigureAwait(false);
+               }
+            }
+
+            //rename self
+            await blobStorage.CopyToAsync(oldPath, blobStorage, newPath, cancellationToken).ConfigureAwait(false);
+            await blobStorage.DeleteAsync(oldPath, cancellationToken).ConfigureAwait(false);
+         }
+
+
+      }
+
+#endregion
+
+#region [ Folders ]
+
+      /// <summary>
+      /// Creates a new folder in this storage. If storage supports hierarchy, the folder is created as is, otherwise a folder is created by putting a dummy zero size file in that folder.
+      /// </summary>
+      /// <param name="blobStorage"></param>
+      /// <param name="folderPath">Path to the folder</param>
+      /// <param name="dummyFileName">If storage doesn't support hierary, you can override the dummy file name created in that empty folder.</param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      public static async Task CreateFolderAsync(
+         this IBlobStorage blobStorage, string folderPath, string dummyFileName = null, CancellationToken cancellationToken = default)
+      {
+         if(blobStorage is IHierarchicalBlobStorage hierarchicalBlobStorage)
+         {
+            await hierarchicalBlobStorage.CreateFolderAsync(folderPath, cancellationToken);
+         }
+         else
+         {
+            string fullPath = StoragePath.Combine(folderPath, dummyFileName ?? ".empty");
+
+            await blobStorage.WriteTextAsync(
+               fullPath,
+               "created as a workaround by Storage.Net when creating an empty parent folder",
+               null,
+               cancellationToken);
+         }
+      }
+
+#endregion
    }
 }

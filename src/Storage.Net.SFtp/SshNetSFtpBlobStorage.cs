@@ -134,17 +134,6 @@ namespace Storage.Net.SFtp
 
       public Task<ITransaction> OpenTransactionAsync() => Task.FromResult(EmptyTransaction.Instance);
 
-      public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default(CancellationToken))
-      {
-         using(var sftpClient = CreateClient())
-         {
-            return Task.FromResult<Stream>(Policy.Handle<Exception>().Retry(MaxRetryCount, (e, t) =>
-            {
-               _logger.LogError(e, "Try: {0} - Failed opening resource {1} for writing", t, fullPath);
-            }).Execute(() => sftpClient.OpenWrite(fullPath)));
-         }
-      }
-
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default(CancellationToken))
       {
          throw new NotSupportedException();
@@ -158,6 +147,17 @@ namespace Storage.Net.SFtp
             sftpClient.RenameFile(StoragePath.Normalize(fromPath), StoragePath.Normalize(toPath));
          }
          return Task.CompletedTask;
+      }
+
+      public Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+      {
+         using(var sftpClient = CreateClient())
+         {
+            return Task.FromResult<Stream>(Policy.Handle<Exception>().Retry(MaxRetryCount, (e, t) =>
+            {
+               _logger.LogError(e, "Try: {0} - Failed opening resource {1} for writing", t, fullPath);
+            }).Execute(() => sftpClient.OpenWrite(fullPath)));
+         }
       }
    }
 }

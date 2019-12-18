@@ -8,6 +8,7 @@ using NetBox;
 using NetBox.Extensions;
 using NetBox.Generator;
 using Storage.Net.Blobs;
+using Storage.Net.Tests.Integration.Util;
 using Xunit;
 
 namespace Storage.Net.Tests.Integration.Blobs
@@ -249,7 +250,8 @@ namespace Storage.Net.Tests.Integration.Blobs
          long size = Encoding.UTF8.GetBytes(content).Length;
          string md5 = content.GetHash(HashType.Md5);
 
-         Assert.Equal(size, meta.Size);
+         if(meta.Size != null)
+            Assert.Equal(size, meta.Size);
          if(meta.MD5 != null)
             Assert.Equal(md5, meta.MD5);
          if(meta.LastModificationTime != null)
@@ -312,19 +314,35 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
 
       [Fact]
-      public async Task Write_with_openwrite_succeeds()
+      public async Task Write_with_writeasync_succeeds()
       {
          string id = RandomBlobPath();
          byte[] data = Encoding.UTF8.GetBytes("oh my");
 
-         using(Stream dest = await _storage.OpenWriteAsync(id))
-         {
-            await dest.WriteAsync(data, 0, data.Length);
-         }
+         await _storage.WriteAsync(id, new MemoryStream(data));
 
          //read and check
          string result = await _storage.ReadTextAsync(id);
          Assert.Equal("oh my", result);
+      }
+
+      [Fact]
+      public async Task Write_nullDataStream_argumentnullexception()
+      {
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _storage.WriteAsync(RandomBlobPath(), (Stream)null, false));
+      }
+
+      [Fact]
+      public async Task Write_non_seekable_stream_succeeds()
+      {
+         string s = "test content";
+         string id = RandomBlobPath();
+
+         var nonSeekable = new NonSeekableStream(new MemoryStream(Encoding.UTF8.GetBytes(s)));
+
+         await _storage.WriteAsync(id, nonSeekable);
+
+         Assert.Equal(s, await _storage.ReadTextAsync(id));
       }
 
       [Fact]
@@ -353,12 +371,19 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
 
       [Fact]
-      public async Task Delete_folder_removes_all_files()
+      public async Task Delete_non_existing_file_ignores()
+      {
+         string path = RandomBlobPath();
+         await _storage.DeleteAsync(path);
+      }
+
+      [Fact]
+      public async Task Delete_folder_removes_everything()
       {
          //setup
          string prefix = RandomBlobPath();
          string file1 = StoragePath.Combine(prefix, "1.txt");
-         string file2 = StoragePath.Combine(prefix, "2.txt");
+         string file2 = StoragePath.Combine(prefix, "sub", "2.txt");
 
 
          try
@@ -376,8 +401,86 @@ namespace Storage.Net.Tests.Integration.Blobs
          }
 
          //assert
-         Assert.False(await _storage.ExistsAsync(file1));
-         Assert.False(await _storage.ExistsAsync(file2));
+         IReadOnlyCollection<Blob> files = await _storage.ListAsync(prefix, recurse: true);
+         Assert.True(files.Count == 0);
+      }
+
+      [Fact]
+      public async Task Rename_File_Renames()
+      {
+         string prefix = RandomBlobPath();
+         string file = StoragePath.Combine(prefix, "1");
+
+         try
+         {
+            await _storage.WriteTextAsync(file, "test");
+            await _storage.RenameAsync(file, StoragePath.Combine(prefix, "2"));
+            IReadOnlyCollection<Blob> list = await _storage.ListAsync(prefix);
+
+            Assert.Single(list);
+            Assert.True(list.First().Name == "2");
+         }
+         catch(NotSupportedException)
+         {
+
+         }
+      }
+
+      [Fact]
+      public async Task Rename_OldPathNull_ThowsArgumentNull()
+      {
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _storage.RenameAsync(null, "test/1"));
+      }
+
+      [Fact]
+      public async Task Rename_NewPathNull_ThowsArgumentNull()
+      {
+         await Assert.ThrowsAsync<ArgumentNullException>(() => _storage.RenameAsync("test/1", null));
+      }
+
+
+      [Fact]
+      public async Task Rename_Folder_Renames()
+      {
+         string prefix = RandomBlobPath();
+         string file1 = StoragePath.Combine(prefix, "old", "1.txt");
+         string file11 = StoragePath.Combine(prefix, "old", "1", "1.txt");
+         string file111 = StoragePath.Combine(prefix, "old", "1", "1", "1.txt");
+
+         try
+         {
+            await _storage.WriteTextAsync(file1, string.Empty);
+         }
+         catch(NotSupportedException)
+         {
+            return;
+         }
+
+         await _storage.WriteTextAsync(file11, string.Empty);
+         await _storage.WriteTextAsync(file111, string.Empty);
+
+         await _storage.RenameAsync(StoragePath.Combine(prefix, "old"), StoragePath.Combine(prefix, "new"));
+
+         IReadOnlyCollection<Blob> list = await _storage.ListAsync(prefix);
+      }
+
+      [Fact]
+      public async Task Read_larger_file()
+      {
+         string text = RandomGenerator.GetRandomString(1024 * 1024, false);
+
+         try
+         {
+            await _storage.WriteTextAsync("test/test", text);
+
+            string text2 = await _storage.ReadTextAsync("test/test");
+
+            Assert.Equal(text, text2);
+         }
+         catch(NotSupportedException)
+         {
+
+         }
       }
 
       [Fact]
@@ -389,7 +492,6 @@ namespace Storage.Net.Tests.Integration.Blobs
 
          await _storage.WriteTextAsync(blob, "test");
          Blob blob2 = await _storage.GetBlobAsync(blob);
-         Assert.True(blob2.Size > 0);
 
          try
          {
@@ -445,10 +547,8 @@ namespace Storage.Net.Tests.Integration.Blobs
          blob.Metadata["user"] = "ivan";
          blob.Metadata["fun"] = "no";
 
-         using(Stream s = await _storage.OpenWriteAsync(blob))
-         {
-            s.Write(RandomGenerator.GetRandomBytes(10, 15));
-         }
+         await _storage.WriteAsync(blob, new MemoryStream(RandomGenerator.GetRandomBytes(10, 15)));
+
          try
          {
             await _storage.SetBlobAsync(blob);
@@ -504,6 +604,24 @@ namespace Storage.Net.Tests.Integration.Blobs
 
          string hash2 = await _storage.GetMD5HashAsync(blob);
          Assert.Equal(hash, hash2);
+      }
+
+      [Fact]
+      public async Task Hierarchy_CreateFolder_Exists()
+      {
+         string folderPath = RandomBlobPath();
+
+         try
+         {
+            await _storage.CreateFolderAsync(folderPath);
+
+            IReadOnlyCollection<Blob> files = await _storage.ListAsync(folderPath);
+            Assert.True(files.Any());  //check dummy file exists
+         }
+         catch(NotSupportedException)
+         {
+
+         }
       }
 
       private string RandomBlobPath(string prefix = null, string subfolder = null, string extension = "")

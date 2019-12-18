@@ -1,36 +1,31 @@
-﻿using Microsoft.Azure.KeyVault;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Microsoft.Azure.KeyVault.Models;
-using Microsoft.Rest.Azure;
 using System.Threading;
 using System.Text.RegularExpressions;
 using NetBox.Extensions;
 using NetBox;
 using System.Net;
-using Storage.Net.Streaming;
 using Storage.Net.Blobs;
+using Azure.Security.KeyVault.Secrets;
+using Azure.Core;
+using Azure;
 
 namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
 {
    class AzureKeyVaultBlobStorageProvider : IBlobStorage
    {
-      private readonly KeyVaultClient _vaultClient;
-      private readonly ClientCredential _credential;
+      private readonly SecretClient _client;
       private readonly string _vaultUri;
       private static readonly Regex secretNameRegex = new Regex("^[0-9a-zA-Z-]+$");
 
-      public AzureKeyVaultBlobStorageProvider(Uri vaultUri, string azureAadClientId, string azureAadClientSecret)
+      public AzureKeyVaultBlobStorageProvider(Uri vaultUri, TokenCredential tokenCredential)
       {
-         _credential = new ClientCredential(azureAadClientId, azureAadClientSecret);
-
-         _vaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(GetAccessTokenAsync), GetHttpClient());
+         _client = new SecretClient(vaultUri, tokenCredential);
 
          _vaultUri = vaultUri.ToString().Trim('/');
       }
@@ -45,72 +40,59 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
 
          if (!StoragePath.IsRootPath(options.FolderPath)) return new List<Blob>();
 
-         var secretNames = new List<Blob>();
-         IPage<SecretItem> page = await _vaultClient.GetSecretsAsync(_vaultUri).ConfigureAwait(false);
+         var secrets = new List<Blob>();
 
-         do
+         await foreach(SecretProperties secretProperties in _client.GetPropertiesOfSecretsAsync(cancellationToken).ConfigureAwait(false))
          {
-            var ids = page
-               .Select((Func<SecretItem, Blob>)AzureKeyVaultBlobStorageProvider.ToBlobId)
-               .Where(options.IsMatch)
-               .Where(s => options.BrowseFilter == null || options.BrowseFilter(s))
-               .ToList();
-            secretNames.AddRange(ids);
+            Blob blob = ToBlob(secretProperties);
+            if(!options.IsMatch(blob))
+               continue;
 
-            if(options.MaxResults != null && secretNames.Count >= options.MaxResults.Value)
-            {
-               return secretNames.Take(options.MaxResults.Value).ToList();
-            }
+            if(options.BrowseFilter != null && !options.BrowseFilter(blob))
+               continue;
+
+            secrets.Add(blob);
+
+            if(options.MaxResults != null && secrets.Count >= options.MaxResults.Value)
+               break;
          }
-         while (page.NextPageLink != null && (page = await _vaultClient.GetSecretsNextAsync(page.NextPageLink).ConfigureAwait(false)) != null);
 
-         return secretNames;
+         return secrets;
       }
 
-      private static Blob ToBlobId(SecretItem item)
+      private static Blob ToBlob(SecretProperties secretProperties)
       {
-         int idx = item.Id.LastIndexOf('/');
-         var blob = new Blob(item.Id.Substring(idx + 1), BlobItemKind.File);
+         var blob = new Blob(secretProperties.Name, BlobItemKind.File);
+         blob.LastModificationTime = secretProperties.UpdatedOn;
 
-         blob.LastModificationTime = item.Attributes.Updated;
-
-         if(item.Attributes.Created != null)
-            blob.Properties["Created"] = item.Attributes.Created.Value.ToIso8601DateString();
-         if(item.Attributes.Enabled != null)
-            blob.Properties["Enabled"] = item.Attributes.Enabled.Value.ToString();
-         if(item.Attributes.Expires != null)
-            blob.Properties["Expires"] = item.Attributes.Expires.Value.ToIso8601DateString();
-         if(item.Attributes.NotBefore != null)
-            blob.Properties["NotBefore"] = item.Attributes.NotBefore.Value.ToIso8601DateString();
-         if(item.Attributes.RecoveryLevel != null)
-            blob.Properties["RecoveryLevel"] = item.Attributes.RecoveryLevel;
-
-         if(item.ContentType != null)
-            blob.Properties["ContentType"] = item.ContentType;
-         if(item.Managed != null)
-            blob.Properties["Managed"] = item.Managed.Value.ToString();
-
-         if(item.Tags != null && item.Tags.Count > 0)
-            blob.Metadata.MergeRange(item.Tags);
+         blob.TryAddProperties(
+            "ContentType", secretProperties.ContentType,
+            "CreatedOn", secretProperties.CreatedOn,
+            "IsEnabled", secretProperties.Enabled,
+            "ExpiresOn", secretProperties.ExpiresOn,
+            "Id", secretProperties.Id,
+            "KeyId", secretProperties.KeyId,
+            "IsManaged", secretProperties.Managed,
+            "NotBefore", secretProperties.NotBefore,
+            "RecoveryLevel", secretProperties.RecoveryLevel,
+            "Tags", secretProperties.Tags,
+            "UpdatedOn", secretProperties.UpdatedOn,
+            "VaultUri", secretProperties.VaultUri,
+            "Version", secretProperties.Version,
+            "IsSecret", true);
 
          return blob;
       }
 
-      public Task<Stream> OpenWriteAsync(string fullPath, bool append, CancellationToken cancellationToken)
+      public async Task WriteAsync(string fullPath, Stream dataStream, bool append, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
          ValidateSecretName(fullPath);
          if (append) throw new ArgumentException("appending to secrets is not supported", nameof(append));
 
-         var callbackStream = new FixedStream(new MemoryStream(), null, async fx =>
-         {
-            string value = Encoding.UTF8.GetString(((MemoryStream)fx.Parent).ToArray());
-
-            await _vaultClient.SetSecretAsync(_vaultUri, fullPath, value).ConfigureAwait(false);
-         });
-
-         return Task.FromResult<Stream>(callbackStream);
-         
+         byte[] data = dataStream.ToByteArray();
+         string value = Encoding.UTF8.GetString(data);
+         await _client.SetSecretAsync(fullPath, value, cancellationToken).ConfigureAwait(false);
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken)
@@ -118,28 +100,37 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
          GenericValidation.CheckBlobFullPath(fullPath);
          ValidateSecretName(fullPath);
 
-         SecretBundle secret;
          try
          {
-            secret = await _vaultClient.GetSecretAsync(_vaultUri, fullPath).ConfigureAwait(false);
+            Response<KeyVaultSecret> secret = await _client.GetSecretAsync(fullPath, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            string value = secret.Value.Value;
+
+            return value.ToMemoryStream();
          }
-         catch(KeyVaultErrorException ex)
+         catch(RequestFailedException ex) when (ex.Status == 404)
          {
-            if (IsNotFound(ex)) return null;
-            TryHandleException(ex);
-            throw;
+            return null;
          }
-
-         string value = secret.Value;
-
-         return value.ToMemoryStream();
       }
 
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobFullPaths(fullPaths);
 
-         await Task.WhenAll(fullPaths.Select(fullPath => _vaultClient.DeleteSecretAsync(_vaultUri, fullPath))).ConfigureAwait(false);
+         await Task.WhenAll(fullPaths.Select(fullPath => DeleteAsync(fullPath, cancellationToken))).ConfigureAwait(false);
+      }
+
+      private async Task DeleteAsync(string fullPath, CancellationToken cancellationToken)
+      {
+         try
+         {
+            await _client.StartDeleteSecretAsync(fullPath, cancellationToken).ConfigureAwait(false);
+         }
+         catch(RequestFailedException ex) when(ex.Status == 404)
+         {
+
+         }
       }
 
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
@@ -151,18 +142,16 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
 
       private async Task<bool> ExistsAsync(string fullPath)
       {
-         SecretBundle secret;
-
          try
          {
-            secret = await _vaultClient.GetSecretAsync(_vaultUri, fullPath).ConfigureAwait(false);
+            await _client.GetSecretAsync(fullPath).ConfigureAwait(false);
          }
-         catch (KeyVaultErrorException)
+         catch(RequestFailedException ex) when(ex.Status == 404)
          {
-            secret = null;
+            return false;
          }
 
-         return secret != null;
+         return true;
       }
 
       public async Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
@@ -181,61 +170,17 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
       {
          try
          {
-            SecretBundle secret = await _vaultClient.GetSecretAsync(_vaultUri, fullPath).ConfigureAwait(false);
-            byte[] data = Encoding.UTF8.GetBytes(secret.Value);
-            return new Blob(fullPath)
-            {
-               Size = data.Length,
-               MD5 = secret.Value.GetHash(HashType.Md5),
-               LastModificationTime = secret.Attributes.Updated
-            };
+            Response<KeyVaultSecret> secret = await _client.GetSecretAsync(fullPath).ConfigureAwait(false);
+
+            return ToBlob(secret.Value.Properties);
          }
-         catch(KeyVaultErrorException ex) when(ex.Response.StatusCode == HttpStatusCode.NotFound)
+         catch(RequestFailedException ex) when(ex.Status == 404)
          {
             return null;
          }
       }
 
       #endregion
-
-      /// <summary>
-      /// Gets the access token
-      /// </summary>
-      /// <param name="authority"> Authority </param>
-      /// <param name="resource"> Resource </param>
-      /// <param name="scope"> scope </param>
-      /// <returns> token </returns>
-      public async Task<string> GetAccessTokenAsync(string authority, string resource, string scope)
-      {
-         var context = new AuthenticationContext(authority, TokenCache.DefaultShared);
-
-         AuthenticationResult result = await context.AcquireTokenAsync(resource, _credential).ConfigureAwait(false);
-
-         return result.AccessToken;
-      }
-
-      /// <summary>
-      /// Create an HttpClient object that optionally includes logic to override the HOST header
-      /// field for advanced testing purposes.
-      /// </summary>
-      /// <returns>HttpClient instance to use for Key Vault service communication</returns>
-      private HttpClient GetHttpClient()
-      {
-         return new HttpClient();
-      }
-
-      private static void TryHandleException(KeyVaultErrorException ex)
-      {
-         if(IsNotFound(ex))
-         {
-            throw new StorageException(ErrorCode.NotFound, ex);
-         }
-      }
-
-      private static bool IsNotFound(KeyVaultErrorException ex)
-      {
-         return ex.Body.Error.Code == "SecretNotFound";
-      }
 
       private static void ValidateSecretName(string fullPath)
       {

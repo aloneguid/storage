@@ -5,6 +5,7 @@ using Storage.Net.Amazon.Aws.Blobs;
 using Storage.Net.Blobs;
 using Storage.Net.Messaging;
 using Storage.Net.Amazon.Aws;
+using Storage.Net.ConnectionString;
 
 namespace Storage.Net
 {
@@ -28,17 +29,14 @@ namespace Storage.Net
       /// </summary>
       /// <param name="factory">Factory reference</param>
       /// <param name="bucketName">Bucket name</param>
-      /// <param name="regionEndpoint">Optionally set region endpoint. When not specified defaults to EU West</param>
-      /// <param name="skipBucketCreation">Directive to skip the creation of the S3 bucket if one does not exist</param>
+      /// <param name="region">Required regional endpoint.</param>
       /// <returns>A reference to the created storage</returns>
-      public static IBlobStorage AmazonS3BlobStorage(this IBlobStorageFactory factory,
+      public static IBlobStorage AwsS3(this IBlobStorageFactory factory,
          string bucketName,
-         RegionEndpoint regionEndpoint = null,
-         bool skipBucketCreation = false)
+         string region)
       {
-         return new AwsS3BlobStorage(bucketName, regionEndpoint, skipBucketCreation);
+         return new AwsS3BlobStorage(bucketName, region);
       }
-
 
       /// <summary>
       /// Creates an Amazon S3 storage
@@ -46,36 +44,20 @@ namespace Storage.Net
       /// <param name="factory">Factory reference</param>
       /// <param name="accessKeyId">Access key ID</param>
       /// <param name="secretAccessKey">Secret access key</param>
+      /// /// <param name="sessionToken">Optional. Only required when using session credentials.</param>
       /// <param name="bucketName">Bucket name</param>
-      /// <param name="regionEndpoint">Optionally set region endpoint. When not specified defaults to EU West</param>
-      /// <param name="skipBucketCreation">Directive to skip the creation of the S3 bucket if one does not exist</param>
-      /// <returns>A reference to the created storage</returns>
-      public static IBlobStorage AmazonS3BlobStorage(this IBlobStorageFactory factory,
-         string accessKeyId,
-         string secretAccessKey,
-         string bucketName,
-         RegionEndpoint regionEndpoint = null,
-         bool skipBucketCreation = false)
-      {
-         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, bucketName, regionEndpoint, skipBucketCreation);
-      }
-
-      /// <summary>
-      /// Creates an Amazon S3 storage provider for a custom S3-compatible storage server
-      /// </summary>
-      /// <param name="factory">Factory reference</param>
-      /// <param name="accessKeyId">Access key ID</param>
-      /// <param name="secretAccessKey">Secret access key</param>
-      /// <param name="bucketName">Bucket name</param>
+      /// <param name="region">Region endpoint</param>
       /// <param name="serviceUrl">S3-compatible service location</param>
       /// <returns>A reference to the created storage</returns>
-      public static IBlobStorage AmazonS3BlobStorage(this IBlobStorageFactory factory,
+      public static IBlobStorage AwsS3(this IBlobStorageFactory factory,
          string accessKeyId,
          string secretAccessKey,
+         string sessionToken,
          string bucketName,
-         string serviceUrl)
+         string region,
+         string serviceUrl = null)
       {
-         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, bucketName, serviceUrl);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, sessionToken, bucketName, region, serviceUrl);
       }
 
       /// <summary>
@@ -84,17 +66,38 @@ namespace Storage.Net
       /// <param name="factory">Factory reference</param>
       /// <param name="accessKeyId">Access key ID</param>
       /// <param name="secretAccessKey">Secret access key</param>
+      /// <param name="sessionToken">Optional. Only required when using session credentials.</param>
       /// <param name="bucketName">Bucket name</param>
       /// <param name="clientConfig">S3 client configuration</param>
       /// <returns>A reference to the created storage</returns>
-      public static IBlobStorage AmazonS3BlobStorage(this IBlobStorageFactory factory,
+      public static IBlobStorage AwsS3(this IBlobStorageFactory factory,
          string accessKeyId,
          string secretAccessKey,
+         string sessionToken,
          string bucketName,
          AmazonS3Config clientConfig)
       {
-         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, bucketName, clientConfig);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, sessionToken, bucketName, clientConfig);
       }
+
+#if !NET16
+
+      /// <summary>
+      /// Creates an Amazon S3 storage provider using credentials from AWS CLI configuration file (~/.aws/credentials)
+      /// </summary>
+      /// <param name="factory">Factory reference</param>
+      /// <param name="awsCliProfileName"></param>
+      /// <param name="bucketName">Bucket name</param>
+      /// <param name="region"></param>
+      /// <returns>A reference to the created storage</returns>
+      public static IBlobStorage AwsS3(this IBlobStorageFactory factory,
+         string awsCliProfileName,
+         string bucketName,
+         string region)
+      {
+         return AwsS3BlobStorage.FromAwsCliProfile(awsCliProfileName, bucketName, region);
+      }
+#endif
 
       /// <summary>
       /// Creates Amazon Simple Queue Service publisher
@@ -103,37 +106,45 @@ namespace Storage.Net
       /// <param name="accessKeyId">Access key ID</param>
       /// <param name="secretAccessKey">Secret access key</param>
       /// <param name="serviceUrl"></param>
-      /// <param name="queueName"></param>
       /// <param name="regionEndpoint"></param>
       /// <returns></returns>
-      public static IMessagePublisher AmazonSQSMessagePublisher(this IMessagingFactory factory,
+      public static IMessenger AwsSQS(this IMessagingFactory factory,
          string accessKeyId,
          string secretAccessKey,
          string serviceUrl,
-         string queueName,
          RegionEndpoint regionEndpoint = null)
       {
-         return new AwsS3MessagePublisher(accessKeyId, secretAccessKey, serviceUrl, queueName, regionEndpoint);
+         return new AwsSQSMessenger(accessKeyId, secretAccessKey, serviceUrl, regionEndpoint);
       }
 
+      #region [ Connection Strings ]
+
       /// <summary>
-      /// Creates Amazon Simple Queue Service receiver
+      /// Creates a connection string from AWS CLI profile name
       /// </summary>
       /// <param name="factory"></param>
-      /// <param name="accessKeyId">Access key ID</param>
-      /// <param name="secretAccessKey">Secret access key</param>
-      /// <param name="serviceUrl"></param>
-      /// <param name="queueName"></param>
-      /// <param name="regionEndpoint"></param>
+      /// <param name="profileName"></param>
+      /// <param name="bucketName"></param>
+      /// <param name="region"></param>
       /// <returns></returns>
-      public static IMessageReceiver AmazonSQSMessageReceiver(this IMessagingFactory factory,
-         string accessKeyId,
-         string secretAccessKey,
-         string serviceUrl,
-         string queueName,
-         RegionEndpoint regionEndpoint = null)
+      public static StorageConnectionString ForAwsS3FromCliProfile(this IConnectionStringFactory factory,
+         string profileName,
+         string bucketName,
+         string region)
       {
-         return new AwsS3MessageReceiver(accessKeyId, secretAccessKey, serviceUrl, queueName, regionEndpoint);
+         if(profileName is null)
+            throw new System.ArgumentNullException(nameof(profileName));
+         if(bucketName is null)
+            throw new System.ArgumentNullException(nameof(bucketName));
+         if(region is null)
+            throw new System.ArgumentNullException(nameof(region));
+         var cs = new StorageConnectionString(KnownPrefix.AwsS3 + "://");
+         cs[KnownParameter.LocalProfileName] = profileName;
+         cs[KnownParameter.BucketName] = bucketName;
+         cs[KnownParameter.Region] = region;
+         return cs;
       }
+
+      #endregion
    }
 }

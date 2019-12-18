@@ -1,4 +1,6 @@
-﻿using Storage.Net.Blobs;
+﻿using Azure.Core;
+using Azure.Identity;
+using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.KeyVault;
 using Storage.Net.Microsoft.Azure.KeyVault.Blobs;
 using System;
@@ -22,22 +24,31 @@ namespace Storage.Net
       /// <param name="azureAadClientSecret">The azure aad client secret.</param>
       /// <returns></returns>
       public static IBlobStorage AzureKeyVault(this IBlobStorageFactory factory,
-         Uri vaultUri, string azureAadClientId, string azureAadClientSecret)
+         Uri vaultUri,
+         string tenantId,
+         string applicationId,
+         string applicationSecret,
+         string activeDirectoryAuthEndpoint = "https://login.microsoftonline.com/")
       {
-         return new AzureKeyVaultBlobStorageProvider(vaultUri, azureAadClientId, azureAadClientSecret);
+         TokenCredential credential =
+             new ClientSecretCredential(
+                 tenantId,
+                 applicationId,
+                 applicationSecret,
+                 new TokenCredentialOptions() { AuthorityHost = new Uri(activeDirectoryAuthEndpoint) });
+
+         return new AzureKeyVaultBlobStorageProvider(vaultUri, credential);
       }
 
       /// <summary>
-      /// Azure Key Vault secrets.
+      /// Azure Key Vault secrets
       /// </summary>
-      /// <param name="factory">The factory.</param>
-      /// <param name="vaultUri">The vault URI.</param>
-      /// <param name="cred">The cred.</param>
+      /// <param name="factory"></param>
+      /// <param name="vaultUri"></param>
       /// <returns></returns>
-      public static IBlobStorage AzureKeyVault(this IBlobStorageFactory factory,
-         Uri vaultUri, NetworkCredential cred)
+      public static IBlobStorage AzureKeyVaultWithMsi(this IBlobStorageFactory factory, Uri vaultUri)
       {
-         return new AzureKeyVaultBlobStorageProvider(vaultUri, cred.UserName, cred.Password);
+         return new AzureKeyVaultBlobStorageProvider(vaultUri, new ManagedIdentityCredential());
       }
 
    }

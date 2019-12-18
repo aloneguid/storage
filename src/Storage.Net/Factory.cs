@@ -4,10 +4,11 @@ using Storage.Net.Blobs;
 using Storage.Net.Blobs.Files;
 using Storage.Net.Messaging;
 using Storage.Net.ConnectionString;
-using Storage.Net.KeyValue;
-using Storage.Net.KeyValue.Files;
 using Storage.Net.Messaging.Large;
 using Storage.Net.Messaging.Files;
+using System.IO.Compression;
+using Storage.Net.Blobs.Sinks.Impl;
+using Storage.Net.Blobs.Sinks;
 
 namespace Storage.Net
 {
@@ -44,38 +45,11 @@ namespace Storage.Net
       }
 
       /// <summary>
-      /// Creates a key-value storage instance from a connections tring
-      /// </summary>
-      public static IKeyValueStorage FromConnectionString(this IKeyValueStorageFactory factory, string connectionString)
-      {
-         return ConnectionStringFactory.CreateKeyValueStorage(connectionString);
-      }
-
-      /// <summary>
       /// Creates message publisher
       /// </summary>
-      public static IMessagePublisher PublisherFromConnectionString(this IMessagingFactory factory, string connectionString)
+      public static IMessenger MessengerFromConnectionString(this IMessagingFactory factory, string connectionString)
       {
-         return ConnectionStringFactory.CreateMessagePublisher(connectionString);
-      }
-
-      /// <summary>
-      /// Creates message receiver
-      /// </summary>
-      public static IMessageReceiver ReceiverFromConnectionString(this IMessagingFactory factory, string connectionString)
-      {
-         return ConnectionStringFactory.CreateMessageReceiver(connectionString);
-      }
-
-      /// <summary>
-      /// Creates a new instance of CSV file storage
-      /// </summary>
-      /// <param name="factory"></param>
-      /// <param name="rootDir"></param>
-      public static IKeyValueStorage CsvFiles(this IKeyValueStorageFactory factory,
-         DirectoryInfo rootDir)
-      {
-         return new CsvFileKeyValueStorage(rootDir);
+         return ConnectionStringFactory.CreateMessager(connectionString);
       }
 
       /// <summary>
@@ -114,19 +88,9 @@ namespace Storage.Net
       /// <param name="factory"></param>
       /// <param name="name">Memory buffer name. Publishers with the same name will contain identical messages. Querying a publisher again
       /// with the same name returns an identical publisher. To create a receiver for this memory bufffer use the same name.</param>
-      public static IMessagePublisher InMemoryPublisher(this IMessagingFactory factory, string name)
+      public static IMessenger InMemory(this IMessagingFactory factory, string name)
       {
-         return InMemoryMessagePublisherReceiver.CreateOrGet(name);
-      }
-
-      /// <summary>
-      /// Creates a message receiver to receive messages from a specified memory buffer.
-      /// </summary>
-      /// <param name="factory"></param>
-      /// <param name="name">Memory buffer name. Use the name used when you've created a publisher to receive messages from that buffer.</param>
-      public static IMessageReceiver InMemoryReceiver(this IMessagingFactory factory, string name)
-      {
-         return InMemoryMessagePublisherReceiver.CreateOrGet(name);
+         return InMemoryMessenger.CreateOrGet(name);
       }
 
       /// <summary>
@@ -135,20 +99,9 @@ namespace Storage.Net
       /// <param name="factory"></param>
       /// <param name="path">Path to directory to use as a backing store. If it doesn't exist, it will be created.</param>
       /// <returns></returns>
-      public static IMessagePublisher DirectoryFilesPublisher(this IMessagingFactory factory, string path)
+      public static IMessenger Disk(this IMessagingFactory factory, string path)
       {
-         return new DiskMessagePublisherReceiver(path);
-      }
-
-      /// <summary>
-      /// Creates a message receiver that uses local disk directory as a backing store
-      /// </summary>
-      /// <param name="factory"></param>
-      /// <param name="path">Path to directory to use as a backing store. If it doesn't exist, it will be created.</param>
-      /// <returns></returns>
-      public static IMessageReceiver DirectoryFilesReceiver(this IMessagingFactory factory, string path)
-      {
-         return new DiskMessagePublisherReceiver(path);
+         return new LocalDiskMessenger(path);
       }
 
       /// <summary>
@@ -156,30 +109,59 @@ namespace Storage.Net
       /// to blob storage and cleared on the message itself. The message is then stamped with a property <see cref="QueueMessage.LargeMessageContentHeaderName"/>
       /// which contains blob path of the message content.
       /// </summary>
-      /// <param name="messagePublisher">Message publisher to wrap</param>
+      /// <param name="messenger">Message publisher to wrap</param>
       /// <param name="offloadStorage">Blob storage used to offload the message content</param>
       /// <param name="minSizeLarge">Threshold size</param>
       /// <param name="blobPathGenerator">Optional generator for blob path used to save large message content.</param>
       /// <returns></returns>
-      public static IMessagePublisher HandleLargeContent(this IMessagePublisher messagePublisher, IBlobStorage offloadStorage, int minSizeLarge,
+      public static IMessenger HandleLargeContent(this IMessenger messenger, IBlobStorage offloadStorage, int minSizeLarge,
          Func<QueueMessage, string> blobPathGenerator = null)
       {
-         return new LargeMessageContentMessagePublisher(messagePublisher, offloadStorage, minSizeLarge, blobPathGenerator, false);
-      }
-
-      /// <summary>
-      /// Wraps message receiver so that if it has message property <see cref="QueueMessage.LargeMessageContentHeaderName"/> set,
-      /// uses <paramref name="offloadStorage"/> to download the message content, inject into the message, and remove the property.
-      /// </summary>
-      /// <param name="messageReceiver">Message receiver to wrap</param>
-      /// <param name="offloadStorage">Storage used to find large content</param>
-      /// <returns></returns>
-      public static IMessageReceiver HandleLargeContent(this IMessageReceiver messageReceiver, IBlobStorage offloadStorage)
-      {
-         return new LargeMessageContentMessageReceiver(messageReceiver, offloadStorage);
+         return new LargeMessageMessenger(messenger, offloadStorage, minSizeLarge, blobPathGenerator, false);
       }
 
       #region [ Data Decorators ]
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="blobStorage"></param>
+      /// <param name="sinks"></param>
+      /// <returns></returns>
+      public static IBlobStorage WithSinks(this IBlobStorage blobStorage,
+         params ITransformSink[] sinks)
+      {
+         return new SinkedBlobStorage(blobStorage, sinks);
+      }
+
+      /// <summary>
+      /// Wraps blob storage into zip compression
+      /// </summary>
+      /// <param name="blobStorage"></param>
+      /// <param name="compressionLevel"></param>
+      /// <returns></returns>
+      public static IBlobStorage WithGzipCompression(
+         this IBlobStorage blobStorage, CompressionLevel compressionLevel = CompressionLevel.Optimal)
+      {
+         return blobStorage.WithSinks(new GZipSink(compressionLevel));
+      }
+
+#if !NET16
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="blobStorage"></param>
+      /// <param name="encryptionKey"></param>
+      /// <returns></returns>
+      public static IBlobStorage WithSymmetricEncryption(
+         this IBlobStorage blobStorage,
+         string encryptionKey)
+      {
+         return blobStorage.WithSinks(new SymmetricEncryptionSink(encryptionKey));
+      }
+
+#endif
 
       #endregion
    }

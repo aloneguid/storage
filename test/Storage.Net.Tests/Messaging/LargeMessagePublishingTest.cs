@@ -9,14 +9,14 @@ namespace Storage.Net.Tests.Messaging
     public class LargeMessagePublishingTest
     {
         private readonly IBlobStorage _blobStorage;
-        private readonly IMessagePublisher _publisher;
+        private readonly IMessenger _publisher;
 
         public LargeMessagePublishingTest()
         {
             _blobStorage = StorageFactory.Blobs.InMemory();
 
             _publisher = StorageFactory.Messages
-                .InMemoryPublisher(nameof(LargeMessagePublishingTest))
+                .InMemory(nameof(LargeMessagePublishingTest))
                 .HandleLargeContent(_blobStorage, 100);
         }
 
@@ -26,7 +26,7 @@ namespace Storage.Net.Tests.Messaging
             var smallMessage = new QueueMessage(RandomGenerator.GetRandomBytes(50, 50));
 
             //send small message
-            await _publisher.PutMessageAsync(smallMessage);
+            await _publisher.SendAsync("test", smallMessage);
             int blobCount = (await _blobStorage.ListFilesAsync(new ListOptions { Recurse = true })).Count;
 
             //validate that small message was never uploaded
@@ -42,7 +42,7 @@ namespace Storage.Net.Tests.Messaging
             var largeMessage = new QueueMessage(RandomGenerator.GetRandomBytes(150, 150));
 
             //send large message
-            await _publisher.PutMessageAsync(largeMessage);
+            await _publisher.SendAsync("test", largeMessage);
             int blobCount = (await _blobStorage.ListFilesAsync(new ListOptions { Recurse = true })).Count;
 
             //validate that small message was uploaded once

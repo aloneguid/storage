@@ -9,8 +9,8 @@
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="FluentFTP" Version="27.0.2" />
-      <PackageReference Include="Polly" Version="7.1.0" />
+      <PackageReference Include="FluentFTP" Version="28.0.5" />
+      <PackageReference Include="Polly" Version="7.2.0" />
    </ItemGroup>
 
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">

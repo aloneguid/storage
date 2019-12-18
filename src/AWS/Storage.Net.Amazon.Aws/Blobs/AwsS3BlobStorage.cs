@@ -25,9 +25,8 @@ namespace Storage.Net.Amazon.Aws.Blobs
       private readonly string _bucketName;
       private readonly AmazonS3Client _client;
       private readonly TransferUtility _fileTransferUtility;
-      private readonly bool _skipBucketCreation = false;
       private bool _initialised = false;
-      
+
 
       /// <summary>
       /// Returns reference to the native AWS S3 blob client.
@@ -37,54 +36,72 @@ namespace Storage.Net.Amazon.Aws.Blobs
       //https://github.com/awslabs/aws-sdk-net-samples/blob/master/ConsoleSamples/AmazonS3Sample/AmazonS3Sample/S3Sample.cs
 
 
-      /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint, and will assume the running AWS ECS Task role credentials or Lambda role credentials 
-      /// </summary>
-      public AwsS3BlobStorage(string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
+#if !NET16
+      public static AwsS3BlobStorage FromAwsCliProfile(string profileName, string bucketName, string region)
       {
-         _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
-         _client = new AmazonS3Client(regionEndpoint);
-         _skipBucketCreation = skipBucketCreation;
+         return new AwsS3BlobStorage(bucketName, region, AwsCliCredentials.GetCredentials(profileName));
+      }
+#endif
+
+      public AwsS3BlobStorage(string bucketName, string region, AWSCredentials credentials)
+      {
+         _bucketName = bucketName;
+         _client = new AmazonS3Client(credentials, CreateConfig(region, null));
          _fileTransferUtility = new TransferUtility(_client);
       }
 
+      /// <summary>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint, and will assume the running AWS ECS Task role credentials or Lambda role credentials 
+      /// </summary>
+      public AwsS3BlobStorage(string bucketName, string region)
+      {
+         _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
+         _client = new AmazonS3Client(region.ToRegionEndpoint());
+         _fileTransferUtility = new TransferUtility(_client);
+      }
 
       /// <summary>
       /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint
       /// </summary>
-      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, RegionEndpoint regionEndpoint, bool skipBucketCreation = false)
-         : this(accessKeyId, secretAccessKey, bucketName, new AmazonS3Config { RegionEndpoint = regionEndpoint ?? RegionEndpoint.EUWest1 }, skipBucketCreation)
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string sessionToken, string bucketName, string region, string serviceUrl)
+         : this(accessKeyId, secretAccessKey, sessionToken, bucketName, CreateConfig(region, serviceUrl))
       {
       }
 
-      /// <summary>
-      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for an S3-compatible storage provider hosted on an alternative service URL
-      /// </summary>
-      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, string serviceUrl, bool skipBucketCreation = false)
-         : this(accessKeyId, secretAccessKey, bucketName, new AmazonS3Config
-         {
-            RegionEndpoint = RegionEndpoint.USEast1,
-            ServiceURL = serviceUrl
-         }, skipBucketCreation)
+      private static AmazonS3Config CreateConfig(string region, string serviceUrl)
       {
+         var config = new AmazonS3Config();
+         if(region != null)
+            config.RegionEndpoint = region.ToRegionEndpoint();
+         if(serviceUrl != null)
+            config.ServiceURL = serviceUrl;
+         return config;
       }
 
       /// <summary>
       /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given S3 client configuration
       /// </summary>
-      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string bucketName, AmazonS3Config clientConfig, bool skipBucketCreation = false)
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string sessionToken,
+         string bucketName, AmazonS3Config clientConfig)
       {
-         if (accessKeyId == null) throw new ArgumentNullException(nameof(accessKeyId));
-         if (secretAccessKey == null) throw new ArgumentNullException(nameof(secretAccessKey));
+         if(accessKeyId == null)
+            throw new ArgumentNullException(nameof(accessKeyId));
+         if(secretAccessKey == null)
+            throw new ArgumentNullException(nameof(secretAccessKey));
          _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
-         _skipBucketCreation = skipBucketCreation;
-         _client = new AmazonS3Client(new BasicAWSCredentials(accessKeyId, secretAccessKey), clientConfig);
+
+         AWSCredentials awsCreds = (sessionToken == null)
+            ? (AWSCredentials)new BasicAWSCredentials(accessKeyId, secretAccessKey)
+            : new SessionAWSCredentials(accessKeyId, secretAccessKey, sessionToken);
+
+         _client = new AmazonS3Client(awsCreds, clientConfig);
+
          _fileTransferUtility = new TransferUtility(_client);
       }
 
       private async Task<AmazonS3Client> GetClientAsync()
       {
-         if (!_initialised && !_skipBucketCreation)
+         if(!_initialised)
          {
             try
             {
@@ -94,7 +111,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
                _initialised = true;
             }
-            catch (AmazonS3Exception ex) when (ex.ErrorCode == "BucketAlreadyOwnedByYou")
+            catch(AmazonS3Exception ex) when(ex.ErrorCode == "BucketAlreadyOwnedByYou")
             {
                //ignore this error as bucket already exists
                _initialised = true;
@@ -109,7 +126,8 @@ namespace Storage.Net.Amazon.Aws.Blobs
       /// </summary>
       public async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
       {
-         if (options == null) options = new ListOptions();
+         if(options == null)
+            options = new ListOptions();
 
          GenericValidation.CheckBlobPrefix(options.FilePrefix);
 
@@ -135,23 +153,17 @@ namespace Storage.Net.Amazon.Aws.Blobs
       /// <summary>
       /// S3 doesnt support this natively and will cache everything in MemoryStream until disposed.
       /// </summary>
-      public Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
+      public async Task WriteAsync(string fullPath, Stream dataStream, bool append = false,
+         CancellationToken cancellationToken = default)
       {
-         if (append) throw new NotSupportedException();
+         if(append)
+            throw new NotSupportedException();
          GenericValidation.CheckBlobFullPath(fullPath);
          fullPath = StoragePath.Normalize(fullPath, false);
 
          //http://docs.aws.amazon.com/AmazonS3/latest/dev/HLuploadFileDotNet.html
 
-         var callbackStream = new FixedStream(new MemoryStream(), null, async (fx) =>
-         {
-            var ms = (MemoryStream)fx.Parent;
-            ms.Position = 0;
-
-            await _fileTransferUtility.UploadAsync(ms, _bucketName, fullPath, cancellationToken).ConfigureAwait(false);
-         });
-
-         return Task.FromResult<Stream>(callbackStream);
+         await _fileTransferUtility.UploadAsync(dataStream, _bucketName, fullPath, cancellationToken).ConfigureAwait(false);
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
@@ -160,7 +172,8 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
          fullPath = StoragePath.Normalize(fullPath, false);
          GetObjectResponse response = await GetObjectAsync(fullPath).ConfigureAwait(false);
-         if (response == null) return null;
+         if(response == null)
+            return null;
 
          return new FixedStream(response.ResponseStream, length: response.ContentLength, (Action<FixedStream>)null);
       }
@@ -177,7 +190,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
          GenericValidation.CheckBlobFullPath(fullPath);
 
          fullPath = StoragePath.Normalize(fullPath, false);
-         
+
          await client.DeleteObjectAsync(_bucketName, fullPath, cancellationToken).ConfigureAwait(false);
          using(var browser = new AwsS3DirectoryBrowser(client, _bucketName))
          {
@@ -204,7 +217,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
          }
          catch(AmazonS3Exception ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
-            
+
          }
 
          return false;
@@ -265,9 +278,10 @@ namespace Storage.Net.Amazon.Aws.Blobs
             GetObjectResponse response = await client.GetObjectAsync(request).ConfigureAwait(false);
             return response;
          }
-         catch (AmazonS3Exception ex)
+         catch(AmazonS3Exception ex)
          {
-            if (IsDoesntExist(ex)) return null;
+            if(IsDoesntExist(ex))
+               return null;
 
             TryHandleException(ex);
             throw;
@@ -277,7 +291,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
       private static bool TryHandleException(AmazonS3Exception ex)
       {
-         if (IsDoesntExist(ex))
+         if(IsDoesntExist(ex))
          {
             throw new StorageException(ErrorCode.NotFound, ex);
          }

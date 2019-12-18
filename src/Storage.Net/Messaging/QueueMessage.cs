@@ -80,6 +80,11 @@ namespace Storage.Net.Messaging
       public int DequeueCount { get; set; }
 
       /// <summary>
+      /// When present, indicates time when this message becomes visible again
+      /// </summary>
+      public DateTimeOffset? NextVisibleTime { get; set; }
+
+      /// <summary>
       /// Message content as string
       /// </summary>
       public string StringContent

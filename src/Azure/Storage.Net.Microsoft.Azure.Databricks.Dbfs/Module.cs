@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Storage.Net.Blobs;
+﻿using Storage.Net.Blobs;
 using Storage.Net.ConnectionString;
-using Storage.Net.KeyValue;
 using Storage.Net.Messaging;
 
 namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
@@ -14,7 +10,7 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
 
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == "azure.databricks.dbfs")
+         if(connectionString.Prefix == KnownPrefix.DatabricksDbfs)
          {
             connectionString.GetRequired("baseUri", true, out string baseUri);
             connectionString.GetRequired("token", true, out string token);
@@ -27,10 +23,6 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
          return null;
       }
 
-      public IKeyValueStorage CreateKeyValueStorage(StorageConnectionString connectionString) => null;
-
-      public IMessagePublisher CreateMessagePublisher(StorageConnectionString connectionString) => null;
-
-      public IMessageReceiver CreateMessageReceiver(StorageConnectionString connectionString) => null;
+      public IMessenger CreateMessenger(StorageConnectionString connectionString) => null;
    }
 }

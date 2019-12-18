@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Storage.Net.Microsoft.Azure.Queues</AssemblyName>
+  </PropertyGroup>
+
+   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+      <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+   </PropertyGroup>
+
+   <ItemGroup>
+    <Compile Include="..\..\JsonExtensions.cs" Link="JsonExtensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
+     <PackageReference Include="Microsoft.Azure.Storage.Queue" Version="11.1.1" />
+  </ItemGroup>
+
+</Project>

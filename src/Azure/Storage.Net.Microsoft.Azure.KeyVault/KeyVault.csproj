@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+      <TargetFrameworks>netstandard2.0</TargetFrameworks>
+      <Description>Extension to Storage.Net providing integration with Microsoft Azure Key vault as a blob storage.</Description>
+      <Version>1.0.0-alpha-0</Version>
+      <FileVersion>1.0.0.0</FileVersion>
+      <AssemblyVersion>1.0.0.0</AssemblyVersion>
+      <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
+      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
+      <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
+      <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
+      <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
+      <PackageLicenseUrl>https://github.com/aloneguid/storage/blob/master/LICENSE</PackageLicenseUrl>
+      <RepositoryType>GitHub</RepositoryType>
+      <LangVersion>latest</LangVersion>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <WarningsAsErrors />
+      <PackageId>Storage.Net.Microsoft.Azure.KeyVault</PackageId>
+      <AssemblyName>Storage.Net.Microsoft.Azure.KeyVault</AssemblyName>
+      <RootNamespace>Storage.Net.Microsoft.Azure.KeyVault</RootNamespace>
+      <LangVersion>latest</LangVersion>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+      <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+   </PropertyGroup>
+   <ItemGroup>
+     <PackageReference Include="Azure.Identity" Version="1.1.0" />
+     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.0.0" />
+   </ItemGroup>
+   <ItemGroup>
+      <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
+   </ItemGroup>
+</Project>

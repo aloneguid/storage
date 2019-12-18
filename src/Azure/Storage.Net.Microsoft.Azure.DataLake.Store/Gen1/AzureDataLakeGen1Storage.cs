@@ -14,7 +14,7 @@ using Microsoft.Azure.DataLake.Store.Acl;
 
 namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
 {
-   class AzureDataLakeGen1Storage : IAzureDataLakeGen1BlobStorage
+   class AzureDataLakeGen1Storage : IAzureDataLakeGen1BlobStorage, IExtendedBlobStorage
    {
       private readonly string _accountName;
       private readonly string _domain;
@@ -67,43 +67,49 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
       {
          if (options == null) options = new ListOptions();
 
-         AdlsClient client = await GetAdlsClientAsync();
+         AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
 
          var browser = new DirectoryBrowser(client, ListBatchSize);
-         return await browser.BrowseAsync(options, cancellationToken);
+         return await browser.BrowseAsync(options, cancellationToken).ConfigureAwait(false);
       }
 
-      public async Task<Stream> OpenWriteAsync(string fullPath, bool append, CancellationToken cancellationToken)
+      public async Task WriteAsync(string fullPath, Stream dataStream, bool append, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
 
-         AdlsClient client = await GetAdlsClientAsync();
+         if(dataStream is null)
+            throw new ArgumentNullException(nameof(dataStream));
+
+         AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
 
          AdlsOutputStream stream;
 
          if(append)
          {
-            stream = await client.GetAppendStreamAsync(fullPath, cancellationToken);
+            stream = await client.GetAppendStreamAsync(fullPath, cancellationToken).ConfigureAwait(false);
          }
          else
          {
             stream = await client.CreateFileAsync(fullPath, IfExists.Overwrite,
                createParent: true,
-               cancelToken: cancellationToken);
+               cancelToken: cancellationToken).ConfigureAwait(false);
          }
 
-         return new AdlsWriteableStream(stream);
+         using(stream)
+         {
+            await dataStream.CopyToAsync(stream).ConfigureAwait(false);
+         }
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
 
-         AdlsClient client = await GetAdlsClientAsync();
+         AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
 
          try
          {
-            AdlsInputStream response = await client.GetReadStreamAsync(fullPath, cancellationToken);
+            AdlsInputStream response = await client.GetReadStreamAsync(fullPath, cancellationToken).ConfigureAwait(false);
 
             return response;
          }
@@ -117,19 +123,19 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
       {
          GenericValidation.CheckBlobFullPaths(fullPaths);
 
-         AdlsClient client = await GetAdlsClientAsync();
+         AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
 
          //DeleteRecursiveAsync works with both files and folder, however it will delete folders recursively (that's what I want)
          await Task.WhenAll(
             fullPaths.Select(
-               fullPath => client.DeleteRecursiveAsync(fullPath, cancellationToken)));
+               fullPath => client.DeleteRecursiveAsync(fullPath, cancellationToken))).ConfigureAwait(false);
       }
 
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobFullPaths(fullPaths);
 
-         AdlsClient client = await GetAdlsClientAsync();
+         AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
 
          var result = new List<bool>();
 
@@ -147,9 +153,9 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
       {
          GenericValidation.CheckBlobFullPaths(fullPaths);
 
-         AdlsClient client = await GetAdlsClientAsync();
+         AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
 
-         return await Task.WhenAll(fullPaths.Select(fullPath => GetBlobWithMetaAsync(fullPath, client, cancellationToken)));
+         return await Task.WhenAll(fullPaths.Select(fullPath => GetBlobWithMetaAsync(fullPath, client, cancellationToken))).ConfigureAwait(false);
       }
 
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
@@ -161,7 +167,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
       {
          try
          {
-            DirectoryEntry entry = await client.GetDirectoryEntryAsync(fullPath, cancelToken: cancellationToken);
+            DirectoryEntry entry = await client.GetDirectoryEntryAsync(fullPath, cancelToken: cancellationToken).ConfigureAwait(false);
             return new Blob(fullPath)
             {
                Size = entry.Length,
@@ -178,9 +184,9 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
 
       public async Task GetAccessControlAsync(string fullPath)
       {
-         AdlsClient client = await GetAdlsClientAsync();
+         AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
 
-         AclStatus acl = await client.GetAclStatusAsync(fullPath, UserGroupRepresentation.ObjectID);
+         AclStatus acl = await client.GetAclStatusAsync(fullPath, UserGroupRepresentation.ObjectID).ConfigureAwait(false);
       }
 
       #endregion
@@ -189,7 +195,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
       {
          if (_client != null) return _client;
 
-         ServiceClientCredentials creds = await GetCredsAsync();
+         ServiceClientCredentials creds = await GetCredsAsync().ConfigureAwait(false);
 
          _client = AdlsClient.CreateClient($"{_accountName}.azuredatalakestore.net", creds);
 
@@ -203,7 +209,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
          if (_clientSecret != null)
          {
             var cc = new ClientCredential(_clientId, _clientSecret);
-            _credential = await ApplicationTokenProvider.LoginSilentAsync(_domain, cc);
+            _credential = await ApplicationTokenProvider.LoginSilentAsync(_domain, cc).ConfigureAwait(false);
          }
          else
          {
@@ -223,6 +229,17 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
       {
          return Task.FromResult(EmptyTransaction.Instance);
       }
+
+      #region [ IExtendedBlobStorage ]
+
+      public async Task RenameAsync(string oldPath, string newPath, CancellationToken cancellationToken = default)
+      {
+         AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
+
+         await client.RenameAsync(StoragePath.Normalize(oldPath), StoragePath.Normalize(newPath), true, cancellationToken);
+      }
+
+      #endregion
 
       public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
       {

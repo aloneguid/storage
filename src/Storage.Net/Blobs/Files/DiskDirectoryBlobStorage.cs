@@ -69,28 +69,58 @@ namespace Storage.Net.Blobs.Files
          return Task.FromResult<IReadOnlyCollection<Blob>>(result);
       }
 
+      private static string FormatFlags(FileAttributes fa)
+      {
+         return string.Join("",
+            fa.ToString().Split(',').Select(v => v.Trim().Substring(0, 1).ToUpper()).OrderBy(l => l));
+      }
+
       private Blob ToBlobItem(string fullPath, BlobItemKind kind, bool includeMeta)
       {
-         fullPath = fullPath.Substring(_directoryFullName.Length);
-         fullPath = fullPath.Replace(Path.DirectorySeparatorChar, StoragePath.PathSeparator);
-         fullPath = fullPath.Trim(StoragePath.PathSeparator);
-         fullPath = StoragePath.PathSeparatorString + fullPath;
 
-         var blob = new Blob(fullPath, kind);
+         string relPath = fullPath.Substring(_directoryFullName.Length);
+         relPath = relPath.Replace(Path.DirectorySeparatorChar, StoragePath.PathSeparator);
+         relPath = relPath.Trim(StoragePath.PathSeparator);
+         relPath = StoragePath.PathSeparatorString + relPath;
 
-         var fi = new FileInfo(fullPath);
-         blob.TryAddProperties(
-            "IsReadOnly", fi.IsReadOnly.ToString(),
-            "LastAccessTimeUtc", fi.LastAccessTimeUtc.ToString(),
-            "LastWriteTimeUtc", fi.LastWriteTimeUtc.ToString(),
-            "Attributes", fi.Attributes.ToString());
-
-         if(includeMeta)
+         if(kind == BlobItemKind.File)
          {
-            EnrichWithMetadata(blob);
-         }
+            var fi = new FileInfo(fullPath);
 
-         return blob;
+            var blob = new Blob(relPath, kind);
+            blob.Size = fi.Length;
+            blob.LastModificationTime = fi.CreationTimeUtc;
+            blob.TryAddProperties(
+               "IsReadOnly", fi.IsReadOnly.ToString(),
+               "LastAccessTimeUtc", fi.LastAccessTimeUtc.ToString(),
+               "LastWriteTimeUtc", fi.LastWriteTimeUtc.ToString(),
+               "Attributes", FormatFlags(fi.Attributes));
+
+            if(includeMeta)
+            {
+               EnrichWithMetadata(blob);
+            }
+
+            return blob;
+         }
+         else
+         {
+            var di = new DirectoryInfo(fullPath);
+
+            var blob = new Blob(relPath, BlobItemKind.Folder);
+            blob.LastModificationTime = di.CreationTimeUtc;
+            blob.TryAddProperties(
+               "LastAccessTimeUtc", di.LastAccessTimeUtc.ToString(),
+               "LastWriteTimeUtc", di.LastWriteTimeUtc.ToString(),
+               "Attributes", FormatFlags(di.Attributes));
+
+            if(includeMeta)
+            {
+               EnrichWithMetadata(blob);
+            }
+
+            return blob;
+         }
       }
 
       private string GetFolder(string path, bool createIfNotExists)
@@ -184,18 +214,18 @@ namespace Storage.Net.Blobs.Files
       {
       }
 
-      /// <summary>
-      /// 
-      /// </summary>
-      public Task<Stream> OpenWriteAsync(string fullPath, bool append, CancellationToken cancellationToken)
+      public async Task WriteAsync(string fullPath, Stream dataStream, bool append, CancellationToken cancellationToken)
       {
+         if(dataStream is null)
+            throw new ArgumentNullException(nameof(dataStream));
          GenericValidation.CheckBlobFullPath(fullPath);
 
          fullPath = StoragePath.Normalize(fullPath, false);
 
-         Stream stream = CreateStream(fullPath, !append);
-
-         return Task.FromResult(stream);
+         using(Stream stream = CreateStream(fullPath, !append))
+         {
+            await dataStream.CopyToAsync(stream).ConfigureAwait(false);
+         }
       }
 
       /// <summary>
@@ -269,15 +299,14 @@ namespace Storage.Net.Blobs.Files
             GenericValidation.CheckBlobFullPath(blobId);
 
             string filePath = GetFilePath(blobId, false);
+
             if(!File.Exists(filePath))
             {
                result.Add(null);
                continue;
             }
 
-            var bid = new Blob(blobId);
-            EnrichWithMetadata(bid);
-            result.Add(bid);
+            result.Add(ToBlobItem(filePath, BlobItemKind.File, true));
          }
 
          return Task.FromResult<IReadOnlyCollection<Blob>>(result);
@@ -314,15 +343,6 @@ namespace Storage.Net.Blobs.Files
 
          try
          {
-            //scans the entire file, disable as it's really expensive and slow
-            /*using(Stream fs = File.OpenRead(fi.FullName))
-            {
-               blob.MD5 = fs.GetHash(HashType.Md5);
-            }*/
-
-            blob.Size = fi.Length;
-            blob.LastModificationTime = fi.CreationTimeUtc;
-
             string attrFilePath = path + AttributesFileExtension;
             if(File.Exists(attrFilePath))
             {

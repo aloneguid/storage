@@ -46,32 +46,6 @@ namespace Storage.Net.Tests.Integration.General
       }
 
       [Fact]
-      public async void OpenWriteTest()
-      {
-         var storage = GetBlobStorage();
-         var fileName = "test";
-         var result = await storage.OpenWriteAsync(fileName);
-         Assert.IsType<SftpFileStream>(result);
-      }
-
-      [Fact]
-      public async void DeleteTest()
-      {
-         var storage = GetBlobStorage();
-         var directoryName = "test";
-         await storage.OpenWriteAsync(directoryName);
-         try
-         {
-            await storage.DeleteAsync(directoryName);
-            Assert.True(true);
-         }
-         catch(Exception e)
-         {
-            throw new ArgumentException($"'{directoryName}' folder or file can't be deleted. {e.Message}");
-         }
-      }
-
-      [Fact]
       public async void ExistTest()
       {
          var storage = GetBlobStorage();

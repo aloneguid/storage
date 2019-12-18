@@ -8,13 +8,13 @@ This page lists blob storage providers available in Storage.Net
 - [Local Disk](#local-disk)
 - [Zip File](#zip-file)
 - [FTP](#ftp)
-- [Microsoft Azure Blob Storage](#microsoft-azure-blob-storage)
-- [Microsoft Azure File Shares](#microsoft-azure-file-shares)
-- [Amazon S3 Storage](#amazon-s3-storage)
+- [Microsoft Azure Blob and File Storage](blobs/azure.md)
+- [Amazon S3 Storage](blobs/awss3.md)
 - [Azure Data Lake Store](#azure-data-lake-store)
   - [Gen 1](#gen-1) 
-  - [Gen 2](#gen-2) 
+  - [Gen 2](#gen-2)
 - [Google Cloud Storage](#google-cloud-storage)
+- [Azure Key Vault](#azure-key-vault)
 
 ### In-Memory
 
@@ -91,150 +91,6 @@ To create from connection string, first register the module when your program st
 ```csharp
 IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("ftp://host=hostname;user=username;password=password");
 ```
-
-
-### Microsoft Azure Blob Storage
-
-In order to use Microsoft Azure blob storage you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.Storage.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage/) package first. The provider wraps around the standard Microsoft Storage SDK.
-
-There are a few overloads in this package, for instance:
-
-```csharp
-//create from account name and key (secret)
-IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorage(accountName, accountKey);
-
-//create to use local development storage emulator
-IBlobStorage storage = StorageFactory.Blobs.AzureBlobDevelopmentStorage();
-
-//create an instance of Microsoft Azure Blob Storage that wraps around native CloudBlobClient
-IBlobStorage storage = StorageFactory.Blobs.AzureBloStorage(client);
-```
-
-Please use the native option with caution, as it exposes the internal native client reference which may change in future.
-
-To use connection strings, first register the module when your program starts by calling `StorageFactory.Modules.UseAzureStorage();` then use the following:
-
-```csharp
-//using account name and key
-IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blob://account=account_name;key=secret_value");
-
-//local development emulator
-IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.blob://development=true");
-```
-
-This storage is working with `block blobs` only. We are planning to add `append blobs` support but that requires some architectural changes and as always you're welcome to help.
-
-This package treats the first part of the path as **container name**. This allows you to have access to all the containers at once. For instance, path `root/file.txt` creates file `file.txt` in the root of container called `root`. `root/folder1/file.txt` creates file `file.txt` in folder `folder1` under container `root` and so on. You can check if the folder returned is a container by referring to `isContainer` custom property (`blob.Properties["IsContainer"] == "True"`).
-
-
-#### Native Operations
-
-You can access some native, blob storage specific operations by casting (unsafe) `IBlobStorage` to `IAzureBlobStorage`.
-
-##### SAS Tokens
-
-Please see the interface details or contribute to the docs ;)
-
-##### Blob Lease (aka Lock)
-
-There is a helper utility method to acquire a block blob lease, which is useful for virtual transactions support. For instance:
-
-
-```csharp
-using(BlobLease lease = await _blobs.AcquireBlobLeaseAsync(id, timeSpan))
-{
-   // your code
-}
-```
-
-Where the first parameter is blob id and the second is lease duration. The `BlobLease` returned implements `IDisposable` pattern so that on exit the lease is returned. Note that if blob doesn't exist, current implementation will create a zero-size file and then acquire a least, just for your convenience. The blob is not deleted automatically though.
-
-`AcquireBlobLeaseAsync` also has an option to wait for the lease to be returned (third optional argument) which when set to true causes this library to try to acquire a lease every second until it's released, and re-lease it.
-
-It also exposes `RenewLeaseAsync()` method to renew the lease explicitly, and `LeasedBlob` property that returns a native `CloudBlockBlob` that is leased if you need to explicitly call any methods not supported by this wrapper.
-
-### Microsoft Azure File Shares
-
-In order to use Microsoft Azure blob storage you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.Storage.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage/) package first. The provider wraps around the standard Microsoft Storage SDK.
-
-To create file share by storage name and key:
-
-```csharp
-IBlobStorage storage = StorageFactory.Blobs.AzureFiles(accountName, accountKey);
-```
-
-or connection string:
-
-```csharp
-IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("azure.file://account=account_name;key=secret_value");
-```
-
-### Amazon S3 Storage
-
-In order to use Microsoft Azure blob storage you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Amazon.Aws.svg)](https://www.nuget.org/packages/Storage.Net.Amazon.Aws/) package first. The provider wraps around the standard AWS SDK which is updated regularry.
-
-There are a few overloads in this package, for instance:
-
-```csharp
-IBlobStorage storage = StorageFactory.Blobs.AmazonS3BlobStorage(string accessKeyId,
-   string secretAccessKey,
-   string bucketName,
-   RegionEndpoint regionEndpoint = null);
-```
-
-Please see `StorageFactory.Blobs` factory entry for more options.
-
-To create with a connection string, first reference the module:
-
-```csharp
-StorageFactory.Modules.UseAwsStorage();
-```
-
-Then construct using the following format:
-
-```csharp
-IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("aws.s3://keyId=...;key=...;bucket=...;region=...");
-```
-
-where:
-- **keyId** is (optional) access key ID.
-- **key** is (optional) secret access key.
-- **bucket** is bucket name.
-- **region** is an optional value and defaults to `EU West 1` if not specified. At the moment of this wring the following regions are supported. However as we are using the official AWS SDK, when region information changes, storage.net gets automatically updated.
-  - `us-east-1`
-  - `us-east-2`
-  - `us-west-1`
-  - `us-west-2`
-  - `eu-north-1`
-  - `eu-west-1`
-  - `eu-west-2`
-  - `eu-west-3`
-  - `eu-central-1`
-  - `ap-northeast-1`
-  - `ap-northeast-2`
-  - `ap-northeast-3`
-  - `ap-south-1`
-  - `ap-southeast-1`
-  - `ap-southeast-2`
-  - `sa-east-1`
-  - `us-gov-east-1`
-  - `us-gov-west-1`
-  - `cn-north-1`
-  - `cn-northwest-1`
-  - `ca-central-1`
-
-If **keyId** and **key** are omitted, the AWS SDK's default approach to credential resolution will be used. For example: if running in Lambda, it will assume the Lambda execution role; if there are credentials configured in ~/.aws, it will use those; etc.  See [AWS SDK Documentation](https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/net-dg-config-creds.html) for more details.
-
-#### Performance & Memory Consumption
-
-By default, `S3 SDK` is *extremely ineffective* and I have no idea why. Can it be that .NET developers are not paying enough attention to good quality code or Amazon is just not good in programming? In particular, SDK doesn't deal very well with streaming. When you stream with S3 SDK, it **accumulates data in memory and only uploads it on flush!**. Whoever designed it this way has probably never built real software. Unfortunately, S3 has a limitation that data length needs to be known beforehand in order to create a file. See issues [here](https://github.com/aws/aws-sdk-net/issues/1095) and [here](https://github.com/aws/aws-sdk-net/issues/1073) for more information.
-
-If you ever wonder why your application is slow, say thanks to Amazon engineers.
-
-
-#### Native Operations
-
-Native operations are exposed via [IAwsS3BlobStorageNativeOperations](../src/AWS/Storage.Net.Amazon.Aws/Blobs/IAwsS3BlobStorage.cs) interface.
 
 ## Azure Data Lake Store
 
@@ -401,3 +257,9 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("google.storage
 ```
 
 Where **cred** is a *BASE64* encoded credential string.
+
+### Azure Key Vault
+
+In order to use Key Vault reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.KeyVault.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.KeyVault) package first.
+
+> todo

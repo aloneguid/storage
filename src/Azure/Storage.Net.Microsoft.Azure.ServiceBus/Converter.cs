@@ -12,10 +12,11 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus
          if(message == null)
             throw new ArgumentNullException(nameof(message));
 
-         var result = new Message(message.Content)
+         var result = new Message(message.Content);
+         if(message.Id != null)
          {
-            MessageId = message.Id
-         };
+            result.MessageId = message.Id;
+         }
          if(message.Properties != null && message.Properties.Count > 0)
          {
             foreach(KeyValuePair<string, string> prop in message.Properties)

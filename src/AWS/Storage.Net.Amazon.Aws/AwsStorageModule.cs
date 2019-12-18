@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Amazon;
 using Storage.Net.Amazon.Aws.Blobs;
 using Storage.Net.Blobs;
 using Storage.Net.ConnectionString;
-using Storage.Net.KeyValue;
 using Storage.Net.Messaging;
 
 namespace Storage.Net.Amazon.Aws
@@ -16,35 +12,43 @@ namespace Storage.Net.Amazon.Aws
 
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == "aws.s3")
+         if(connectionString.Prefix == KnownPrefix.AwsS3)
          {
-            string keyId = connectionString.Get("keyId");
-            string key = connectionString.Get("key");
+            string cliProfileName = connectionString.Get(KnownParameter.LocalProfileName);
+            connectionString.GetRequired(KnownParameter.BucketName, true, out string bucket);
+            connectionString.GetRequired(KnownParameter.Region, true, out string region);
 
-            if(string.IsNullOrEmpty(keyId) != string.IsNullOrEmpty(key))
+            if(string.IsNullOrEmpty(cliProfileName))
             {
-               throw new ArgumentException($"connection string requires both 'key' and 'keyId' parameters, or neither.");
+               string keyId = connectionString.Get(KnownParameter.KeyId);
+               string key = connectionString.Get(KnownParameter.KeyOrPassword);
+
+               if(string.IsNullOrEmpty(keyId) != string.IsNullOrEmpty(key))
+               {
+                  throw new ArgumentException($"connection string requires both 'key' and 'keyId' parameters, or neither.");
+               }
+
+
+               if(string.IsNullOrEmpty(keyId))
+               {
+                  return new AwsS3BlobStorage(bucket, region);
+               }
+
+               string sessionToken = connectionString.Get(KnownParameter.SessionToken);
+               return new AwsS3BlobStorage(keyId, key, sessionToken, bucket, region, null);
             }
-
-            connectionString.GetRequired("bucket", true, out string bucket);
-            string region = connectionString.Get("region");
-
-            RegionEndpoint endpoint = RegionEndpoint.GetBySystemName(string.IsNullOrEmpty(region) ? "eu-west-1" : region);
-
-            if(string.IsNullOrEmpty(keyId))
+#if !NET16
+            else
             {
-               return new AwsS3BlobStorage(bucket, endpoint);
+               return AwsS3BlobStorage.FromAwsCliProfile(cliProfileName, bucket, region);
             }
-
-            return new AwsS3BlobStorage(keyId, key, bucket, endpoint);
+#endif
          }
 
 
          return null;
       }
 
-      public IKeyValueStorage CreateKeyValueStorage(StorageConnectionString connectionString) => throw new NotImplementedException();
-      public IMessagePublisher CreateMessagePublisher(StorageConnectionString connectionString) => throw new NotImplementedException();
-      public IMessageReceiver CreateMessageReceiver(StorageConnectionString connectionString) => throw new NotImplementedException();
+      public IMessenger CreateMessenger(StorageConnectionString connectionString) => null;
    }
 }

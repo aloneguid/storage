@@ -74,10 +74,10 @@ namespace Storage.Net.Streaming
       /// </summary>
       public override long Position
       {
-         get => _parent.Position;
+         get => _position;
          set
          {
-            _parent.Position = value;
+            _position = value;
          }
       }
 

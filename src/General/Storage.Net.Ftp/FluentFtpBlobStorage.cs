@@ -179,13 +179,17 @@ namespace Storage.Net.Ftp
 
       public Task<ITransaction> OpenTransactionAsync() => Task.FromResult(EmptyTransaction.Instance);
 
-      public async Task<Stream> OpenWriteAsync(string fullPath, bool append = false, CancellationToken cancellationToken = default)
+      public async Task WriteAsync(string fullPath, Stream dataStream,
+         bool append = false, CancellationToken cancellationToken = default)
       {
          FtpClient client = await GetClientAsync().ConfigureAwait(false);
 
-         return await retryPolicy.ExecuteAsync<Stream>(async () =>
+         await retryPolicy.ExecuteAsync(async () =>
          {
-            return await client.OpenWriteAsync(fullPath, FtpDataType.Binary, true).ConfigureAwait(false);
+            using(Stream dest = await client.OpenWriteAsync(fullPath, FtpDataType.Binary, true).ConfigureAwait(false))
+            {
+               await dataStream.CopyToAsync(dest).ConfigureAwait(false);
+            }
          }).ConfigureAwait(false);
       }
 

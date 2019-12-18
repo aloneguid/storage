@@ -26,6 +26,8 @@ namespace Storage.Net.Tests
          Assert.Equal("accname", account);
          Assert.Equal("keywithequals==", key);
          Assert.Equal("me", container);
+         Assert.False(scs.IsNative);
+         Assert.Null(scs.Native);
       }
 
       [Fact]
@@ -53,6 +55,25 @@ namespace Storage.Net.Tests
          var cs = new StorageConnectionString("local://account=my;msi");
 
          Assert.True(cs.Parameters.ContainsKey("msi"));
+      }
+
+      [Fact]
+      public void Native_Parsed()
+      {
+         const string native = "t=6;iiiifldjfljd fla dfj;;df";
+
+         var cs = new StorageConnectionString("local://native=" + native);
+
+         Assert.Equal("local", cs.Prefix);
+         Assert.Single(cs.Parameters);
+         Assert.True(cs.IsNative);
+         Assert.Equal(native, cs.Native);
+         Assert.Equal(native, cs.Parameters["native"]);
+
+         //convert back to string
+         string css = cs.ToString();
+         Assert.Equal("local://native=" + native, css);
+
       }
    }
 }

@@ -7,24 +7,14 @@ using Xunit;
 namespace Storage.Net.Tests.Integration.Messaging
 {
 
-   /// <summary>
-   /// Azure Storage Queue
-   /// </summary>
+   #region [ Azure Storage Queue ]
+
    public class AzureStorageQueueFixture : MessagingFixture
    {
-      protected override IMessagePublisher CreatePublisher(ITestSettings settings) => 
-         StorageFactory.Messages.AzureStorageQueuePublisher(
+      protected override IMessenger CreateMessenger(ITestSettings settings) =>
+         StorageFactory.Messages.AzureStorageQueue(
             settings.AzureStorageName,
-            settings.AzureStorageKey,
-            settings.AzureStorageQueueName);
-
-      protected override IMessageReceiver CreateReceiver(ITestSettings settings) =>
-         StorageFactory.Messages.AzureStorageQueueReceiver(
-            settings.AzureStorageName,
-            settings.AzureStorageKey,
-            settings.AzureStorageQueueName,
-            TimeSpan.FromMinutes(1),
-            TimeSpan.FromMilliseconds(500));
+            settings.AzureStorageKey);
    }
 
    public class AzureStorageQueueTest : MessagingTest, IClassFixture<AzureStorageQueueFixture>
@@ -34,165 +24,113 @@ namespace Storage.Net.Tests.Integration.Messaging
       }
    }
 
-   /// <summary>
-   /// Azure Large Storage Queue
-   /// </summary>
-   public class AzureLargeStorageQueueFixture : MessagingFixture
+   #endregion
+
+   #region [ In-Memory ]
+
+   public class InMemoryFixture : MessagingFixture
    {
-      protected override IMessagePublisher CreatePublisher(ITestSettings settings)
+      protected override IMessenger CreateMessenger(ITestSettings settings)
       {
-         string largeQueueName = settings.AzureStorageQueueName + "lg";
-         IBlobStorage offloadStorage = StorageFactory.Blobs.AzureBlobStorage(settings.AzureStorageName, settings.AzureStorageKey);
-
-         return StorageFactory.Messages.AzureStorageQueuePublisher(
-            settings.AzureStorageName,
-            settings.AzureStorageKey,
-            largeQueueName)
-            .HandleLargeContent(offloadStorage, 2);
-      }
-
-      protected override IMessageReceiver CreateReceiver(ITestSettings settings)
-      {
-         string largeQueueName = settings.AzureStorageQueueName + "lg";
-         IBlobStorage offloadStorage = StorageFactory.Blobs.AzureBlobStorage(settings.AzureStorageName, settings.AzureStorageKey);
-
-         return StorageFactory.Messages.AzureStorageQueueReceiver(
-            settings.AzureStorageName,
-            settings.AzureStorageKey,
-            largeQueueName,
-            TimeSpan.FromMinutes(1),
-            TimeSpan.FromMilliseconds(500))
-            .HandleLargeContent(offloadStorage);
+         return StorageFactory.Messages.InMemory("test");
       }
    }
 
-   public class AzureLargeStorageQueueTest : MessagingTest, IClassFixture<AzureLargeStorageQueueFixture>
+   public class InMemoryTest : MessagingTest, IClassFixture<InMemoryFixture>
    {
-      public AzureLargeStorageQueueTest(AzureLargeStorageQueueFixture fixture) : base(fixture)
+      public InMemoryTest(InMemoryFixture fixture) : base(fixture)
       {
       }
    }
 
-   /// <summary>
-   /// Azure Service Bus Queue
-   /// </summary>
-   public class AzureServiceBusQueueFixture : MessagingFixture
-   {
-      protected override IMessagePublisher CreatePublisher(ITestSettings settings) =>
-         StorageFactory.Messages.AzureServiceBusQueuePublisher(
-            settings.ServiceBusConnectionString,
-            "testqueue");
+   #endregion
 
-      protected override IMessageReceiver CreateReceiver(ITestSettings settings) =>
-         StorageFactory.Messages.AzureServiceBusQueueReceiver(
-            settings.ServiceBusConnectionString,
-            "testqueue",
-            true);
+   #region [ Disk ]
+
+   public class DiskFixture : MessagingFixture
+   {
+      protected override IMessenger CreateMessenger(ITestSettings settings)
+      {
+         return StorageFactory.Messages.Disk(_testDir);
+      }
    }
 
-   public class AzureServiceBusQueueTest : MessagingTest, IClassFixture<AzureServiceBusQueueFixture>
+   public class DiskTest : MessagingTest, IClassFixture<DiskFixture>
    {
-      public AzureServiceBusQueueTest(AzureServiceBusQueueFixture fixture) : base(fixture)
+      public DiskTest(DiskFixture fixture) : base(fixture)
       {
       }
    }
 
-   /// <summary>
-   /// Azure Service Bus Topic
-   /// </summary>
-   public class AzureServiceBusTopicFixture : MessagingFixture
-   {
-      protected override IMessagePublisher CreatePublisher(ITestSettings settings) =>
-         StorageFactory.Messages.AzureServiceBusTopicPublisher(
-            settings.ServiceBusConnectionString,
-            "testtopic");
+   #endregion
 
-      protected override IMessageReceiver CreateReceiver(ITestSettings settings) =>
-         StorageFactory.Messages.AzureServiceBusTopicReceiver(
-            settings.ServiceBusConnectionString,
-            "testtopic",
-            "testsub",
-            true);
+   #region [ AWS SQS ]
+
+   public class AwsSQSFixture : MessagingFixture
+   {
+      protected override IMessenger CreateMessenger(ITestSettings settings)
+      {
+         return StorageFactory.Messages.AwsSQS(
+            settings.AwsAccessKeyId,
+            settings.AwsSecretAccessKey,
+            "https://sqs.us-east-1.amazonaws.com",
+            RegionEndpoint.USEast1);
+      }
    }
 
-   public class AzureServiceBusTopicTest : MessagingTest, IClassFixture<AzureServiceBusTopicFixture>
+
+   public class AwsSQSTest : MessagingTest, IClassFixture<AwsSQSFixture>
    {
-      public AzureServiceBusTopicTest(AzureServiceBusTopicFixture fixture) : base(fixture)
+      public AwsSQSTest(AwsSQSFixture fixture) : base(fixture)
+      {
+      }
+   }
+   #endregion
+
+   #region [ Azure Service Bus ]
+
+   public class AzureServiceBusFixture : MessagingFixture
+   {
+      protected override IMessenger CreateMessenger(ITestSettings settings)
+      {
+         return StorageFactory.Messages.AzureServiceBus(settings.ServiceBusConnectionString);
+
+      }
+   }
+
+   public class AzureServiceBusTopicTest : MessagingTest, IClassFixture<AzureServiceBusFixture>
+   {
+      public AzureServiceBusTopicTest(AzureServiceBusFixture fixture) : base(fixture, "t/", "t/fxtopic", receiveChannelSuffix: "/default")
       {
       }
    }
 
-   /// <summary>
-   /// Azure Event Hub
-   /// </summary>
+   public class AzureServiceBusQueueTest : MessagingTest, IClassFixture<AzureServiceBusFixture>
+   {
+      public AzureServiceBusQueueTest(AzureServiceBusFixture fixture) : base(fixture, "q/", "q/fxqueue")
+      {
+      }
+   }
+
+   #endregion
+
+   #region [ Azure Event Hubs ]
+
    public class AzureEventHubFixture : MessagingFixture
    {
-      protected override IMessagePublisher CreatePublisher(ITestSettings settings) =>
-         StorageFactory.Messages.AzureEventHubPublisher(
-            settings.EventHubConnectionString,
-            settings.EventHubPath);
-
-      protected override IMessageReceiver CreateReceiver(ITestSettings settings) =>
-         StorageFactory.Messages.AzureEventHubReceiver(
-            settings.EventHubConnectionString,
-            settings.EventHubPath,
-            null,
-            null,
-            StorageFactory.Blobs.AzureBlobStorage(
-               settings.AzureStorageName,
-               settings.AzureStorageKey));
+      protected override IMessenger CreateMessenger(ITestSettings settings)
+      {
+         return StorageFactory.Messages.AzureEventHub(settings.EventHubConnectionString);
+      }
    }
 
    public class AzureEventHubTest : MessagingTest, IClassFixture<AzureEventHubFixture>
    {
-      public AzureEventHubTest(AzureEventHubFixture fixture) : base(fixture)
+      public AzureEventHubTest(AzureEventHubFixture fixture) : base(fixture, channelFixedName: "integration")
       {
       }
    }
 
-   /// <summary>
-   /// Local Disk Directory
-   /// </summary>
-   public class LocalDirectoryFixture : MessagingFixture
-   {
-      protected override IMessagePublisher CreatePublisher(ITestSettings settings) => StorageFactory.Messages.DirectoryFilesPublisher(_testDir);
+   #endregion
 
-      protected override IMessageReceiver CreateReceiver(ITestSettings settings) => StorageFactory.Messages.DirectoryFilesReceiver(_testDir);
-   }
-
-   public class LocalDirectoryTest : MessagingTest, IClassFixture<LocalDirectoryFixture>
-   {
-      public LocalDirectoryTest(LocalDirectoryFixture fixture) : base(fixture)
-      {
-      }
-   }
-
-   /// <summary>
-   /// Amazon Simple Queue
-   /// </summary>
-   public class AmazonSimpleQueueFixture : MessagingFixture
-   {
-      protected override IMessagePublisher CreatePublisher(ITestSettings settings) =>
-         StorageFactory.Messages.AmazonSQSMessagePublisher(
-            settings.AwsAccessKeyId,
-            settings.AwsSecretAccessKey,
-            "https://sqs.us-east-1.amazonaws.com",
-            "integration",
-            RegionEndpoint.USEast1);
-
-      protected override IMessageReceiver CreateReceiver(ITestSettings settings) =>
-         StorageFactory.Messages.AmazonSQSMessageReceiver(
-            settings.AwsAccessKeyId,
-            settings.AwsSecretAccessKey,
-               "https://sqs.us-east-1.amazonaws.com",
-               "integration",
-               RegionEndpoint.USEast1);
-   }
-
-   public class AmazonSimpleQueueTest : MessagingTest, IClassFixture<AmazonSimpleQueueFixture>
-   {
-      public AmazonSimpleQueueTest(AmazonSimpleQueueFixture fixture) : base(fixture)
-      {
-      }
-   }
 }

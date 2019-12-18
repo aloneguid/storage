@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+     <LangVersion>latest</LangVersion>
+     <PackageId>Storage.Net.Microsoft.Azure.Storage.Blobs</PackageId>
+     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+     <WarningsAsErrors />
+     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+     <RootNamespace>Storage.Net.Microsoft.Azure.Storage.Blobs</RootNamespace>
+     <AssemblyName>Storage.Net.Microsoft.Azure.Storage.Blobs</AssemblyName>
+     <Description>Support for Azure blob storage.</Description>
+  </PropertyGroup>
+
+   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+      <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+   </PropertyGroup>
+
+
+   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.1.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.1.0" />
+    <PackageReference Include="System.Text.Json" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
+  </ItemGroup>
+
+</Project>

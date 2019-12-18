@@ -34,10 +34,10 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
          {
             IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
 
-            IAsyncEnumerable<KeyValuePair<string, byte[]>> enumerable =
+            global::Microsoft.ServiceFabric.Data.IAsyncEnumerable<KeyValuePair<string, byte[]>> enumerable =
                await coll.CreateEnumerableAsync(tx.Tx);
 
-            using (IAsyncEnumerator<KeyValuePair<string, byte[]>> enumerator = enumerable.GetAsyncEnumerator())
+            using (global::Microsoft.ServiceFabric.Data.IAsyncEnumerator<KeyValuePair<string, byte[]>> enumerator = enumerable.GetAsyncEnumerator())
             {
                while (await enumerator.MoveNextAsync(cancellationToken))
                {
@@ -54,26 +54,22 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
          return result;
       }
 
-      public Task<Stream> OpenWriteAsync(string fullPath, bool append, CancellationToken cancellationToken = default)
+      public async Task WriteAsync(string fullPath, Stream dataStream,
+         bool append, CancellationToken cancellationToken = default)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
 
-         return Task.FromResult<Stream>(new FixedStream(new MemoryStream(), null, async fx =>
+         if(append)
          {
-            fx.Parent.Position = 0;
-
-            if(append)
-            {
-               await AppendAsync(fullPath, fx.Parent);
-            }
-            else
-            {
-               await WriteAsync(fullPath, fx.Parent);
-            }
-         }));
+            await AppendAsync(fullPath, dataStream, cancellationToken);
+         }
+         else
+         {
+            await WriteAsync(fullPath, dataStream, cancellationToken);
+         }
       }
 
-      private async Task WriteAsync(Blob blob, Stream sourceStream)
+      private async Task WriteAsync(Blob blob, Stream sourceStream, CancellationToken cancellationToken)
       {
          string fullPath = ToFullPath(blob);
 
@@ -81,8 +77,8 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
 
          using (ServiceFabricTransaction tx = GetTransaction())
          {
-            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
-            IReliableDictionary<string, BlobMetaTag> metaColl = await OpenMetaCollectionAsync();
+            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync().ConfigureAwait(false);
+            IReliableDictionary<string, BlobMetaTag> metaColl = await OpenMetaCollectionAsync().ConfigureAwait(false);
 
             var meta = new BlobMetaTag
             {
@@ -91,20 +87,20 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
                Md = value.GetHash(HashType.Md5).ToHexString()
             };
 
-            await metaColl.AddOrUpdateAsync(tx.Tx, fullPath, meta, (k, v) => meta);
-            await coll.AddOrUpdateAsync(tx.Tx, fullPath, value, (k, v) => value);
+            await metaColl.AddOrUpdateAsync(tx.Tx, fullPath, meta, (k, v) => meta).ConfigureAwait(false);
+            await coll.AddOrUpdateAsync(tx.Tx, fullPath, value, (k, v) => value).ConfigureAwait(false);
 
-            await tx.CommitAsync();
+            await tx.CommitAsync().ConfigureAwait(false);
          }
       }
 
-      private async Task AppendAsync(string fullPath, Stream sourceStream)
+      private async Task AppendAsync(string fullPath, Stream sourceStream, CancellationToken cancellationToken)
       {
          fullPath = ToFullPath(fullPath);
 
          using (ServiceFabricTransaction tx = GetTransaction())
          {
-            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
+            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync().ConfigureAwait(false);
 
             //create a new byte array with
             byte[] extra = sourceStream.ToByteArray();
@@ -118,10 +114,10 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
             Array.Copy(extra, 0, newData, oldLength, extra.Length);
 
             //put new array into the key
-            await coll.AddOrUpdateAsync(tx.Tx, fullPath, extra, (k, v) => extra);
+            await coll.AddOrUpdateAsync(tx.Tx, fullPath, extra, (k, v) => extra).ConfigureAwait(false);
 
             //commit the transaction
-            await tx.CommitAsync();
+            await tx.CommitAsync().ConfigureAwait(false);
          }
       }
 
@@ -216,7 +212,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
       private async Task<IReliableDictionary<string, byte[]>> OpenCollectionAsync()
       {
          IReliableDictionary<string, byte[]> collection = 
-            await _stateManager.GetOrAddAsync<IReliableDictionary<string, byte[]>>(_collectionName);
+            await _stateManager.GetOrAddAsync<IReliableDictionary<string, byte[]>>(_collectionName).ConfigureAwait(false);
 
          return collection;
       }
@@ -224,7 +220,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
       private async Task<IReliableDictionary<string, BlobMetaTag>> OpenMetaCollectionAsync()
       {
          IReliableDictionary<string, BlobMetaTag> collection =
-            await _stateManager.GetOrAddAsync<IReliableDictionary<string, BlobMetaTag>>(_collectionName + "_meta");
+            await _stateManager.GetOrAddAsync<IReliableDictionary<string, BlobMetaTag>>(_collectionName + "_meta").ConfigureAwait(false);
 
          return collection;
       }
