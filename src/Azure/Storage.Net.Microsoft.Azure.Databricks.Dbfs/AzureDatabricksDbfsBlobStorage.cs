@@ -95,5 +95,7 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
             throw new InvalidOperationException("file system is read-only");
          }
       }
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default) => throw new NotImplementedException();
    }
 }

@@ -77,5 +77,10 @@ namespace Storage.Net.Blobs
       /// </summary>
       /// <returns></returns>
       Task<ITransaction> OpenTransactionAsync();
+
+      /// <summary>
+      /// Moves a blob, with provider specific semantics. Copies in the same context, server or container.
+      /// </summary>
+      Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default);
    }
 }

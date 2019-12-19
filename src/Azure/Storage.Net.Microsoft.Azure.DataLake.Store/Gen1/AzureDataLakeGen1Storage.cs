@@ -240,5 +240,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
       }
 
       #endregion
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default) => throw new NotImplementedException();
    }
 }

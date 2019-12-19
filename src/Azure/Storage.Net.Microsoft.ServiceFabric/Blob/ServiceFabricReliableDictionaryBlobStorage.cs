@@ -256,5 +256,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
       {
          return StoragePath.Normalize(fullPath, false);
       }
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default) => throw new NotImplementedException();
    }
 }
