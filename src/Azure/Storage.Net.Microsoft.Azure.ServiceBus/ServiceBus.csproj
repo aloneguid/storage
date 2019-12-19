@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
    <PropertyGroup>
-      <TargetFrameworks>netstandard2.0</TargetFrameworks>
+      <TargetFramework>netstandard2.0</TargetFramework>
       <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
       <AssemblyTitle>Storage.Net.Microsoft.Azure.ServiceBus</AssemblyTitle>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
