@@ -119,6 +119,10 @@ stages:
       inputs:
         filePath: 'infra/infraset.ps1'
         arguments: '-JsonString ''$(InfraOutput)'''
+    - task: PowerShell@2
+      inputs:
+        filePath: 'infra/infraset.ps1'
+        arguments: '-JsonString ''$(InfraOutput)'' -Organisation ''aloneguid'' -Project ''AllPublic'' -GroupId 8 -Pat $(Pat)'
         failOnStderr: true
         pwsh: true
 
