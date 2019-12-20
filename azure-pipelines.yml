@@ -110,7 +110,7 @@ stages:
       displayName: 'set var set'
       inputs:
         filePath: 'infra/infraset.ps1'
-        arguments: '-JsonString ''$(InfraOutput)'' -Organisation ''aloneguid'' -Project ''AllPublic'' -GroupId 8 -Pat $(Pat)'
+        arguments: '-JsonString ''$(InfraOutput)'' -Organisation ''aloneguid'' -Project ''AllPublic'' -GroupId ''8'' -Pat ''$(Pat)'''
         failOnStderr: true
         pwsh: true
 
