@@ -19,8 +19,6 @@
       <PackageId>Storage.Net.Microsoft.Azure.DataLake.Storage.Gen1</PackageId>
       <AssemblyName>Storage.Net.Microsoft.Azure.DataLake.Storage.Gen1</AssemblyName>
       <RootNamespace>Storage.Net.Microsoft.Azure.DataLake.Storage.Gen1</RootNamespace>
-      <PackageLicenseFile>LICENSE</PackageLicenseFile>
-      <PackageIcon>storage.png</PackageIcon>
    </PropertyGroup>
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -34,15 +32,5 @@
    </ItemGroup>
    <ItemGroup>
       <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
-   </ItemGroup>
-   <ItemGroup>
-     <None Include="..\..\..\LICENSE">
-       <Pack>True</Pack>
-       <PackagePath></PackagePath>
-     </None>
-     <None Include="..\..\..\storage.png">
-       <Pack>True</Pack>
-       <PackagePath></PackagePath>
-     </None>
    </ItemGroup>
 </Project>

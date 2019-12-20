@@ -6,9 +6,6 @@
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
       <Description>FTP bindings for Storage.Net</Description>
-      <PackageIcon>storage.png</PackageIcon>
-      <PackageIconUrl />
-      <PackageLicenseFile>LICENSE</PackageLicenseFile>
    </PropertyGroup>
 
    <ItemGroup>
@@ -22,17 +19,6 @@
 
    <ItemGroup>
       <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
-   </ItemGroup>
-
-   <ItemGroup>
-     <None Include="..\..\..\LICENSE">
-       <Pack>True</Pack>
-       <PackagePath></PackagePath>
-     </None>
-     <None Include="..\..\..\storage.png">
-       <Pack>True</Pack>
-       <PackagePath></PackagePath>
-     </None>
    </ItemGroup>
 
 </Project>

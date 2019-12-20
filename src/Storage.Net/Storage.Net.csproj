@@ -19,8 +19,6 @@
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
-      <PackageLicenseFile>LICENSE</PackageLicenseFile>
-      <PackageIcon>storage.png</PackageIcon>
    </PropertyGroup>
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -36,15 +34,5 @@
       <PackageReference Include="NetBox" Version="2.3.5" />
       <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
       <PackageReference Include="System.Text.Json" Version="4.7.0" />
-   </ItemGroup>
-   <ItemGroup>
-     <None Include="..\..\LICENSE">
-       <Pack>True</Pack>
-       <PackagePath></PackagePath>
-     </None>
-     <None Include="..\..\storage.png">
-       <Pack>True</Pack>
-       <PackagePath></PackagePath>
-     </None>
    </ItemGroup>
 </Project>

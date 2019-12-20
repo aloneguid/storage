@@ -24,9 +24,6 @@ namespace Storage.Net.SFtp
          return null;
       }
 
-      public IMessenger CreateMessenger(StorageConnectionString connectionString)
-      {
-         throw new NotImplementedException();
-      }
+      public IMessenger CreateMessenger(StorageConnectionString connectionString) => null;
    }
 }

@@ -19,8 +19,6 @@
       <AssemblyName>Storage.Net.Microsoft.Azure.KeyVault</AssemblyName>
       <RootNamespace>Storage.Net.Microsoft.Azure.KeyVault</RootNamespace>
       <LangVersion>latest</LangVersion>
-      <PackageLicenseFile>LICENSE</PackageLicenseFile>
-      <PackageIcon>storage.png</PackageIcon>
    </PropertyGroup>
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -31,15 +29,5 @@
    </ItemGroup>
    <ItemGroup>
       <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
-   </ItemGroup>
-   <ItemGroup>
-     <None Include="..\..\..\LICENSE">
-       <Pack>True</Pack>
-       <PackagePath></PackagePath>
-     </None>
-     <None Include="..\..\..\storage.png">
-       <Pack>True</Pack>
-       <PackagePath></PackagePath>
-     </None>
    </ItemGroup>
 </Project>
