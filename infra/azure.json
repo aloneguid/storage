@@ -4,7 +4,7 @@
     "parameters": {
         "tag" : {
             "defaultValue": "develop",
-            "type": "String"  
+            "type": "string"  
         }
     },
     "variables": {
@@ -13,9 +13,6 @@
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "tags": {
-                "tag": "[parameters('tag')]"
-            },
             "apiVersion": "2019-04-01",
             "name": "[variables('storName')]",
             "location": "[resourceGroup().location]",
@@ -46,5 +43,15 @@
                 "accessTier": "Hot"
             }
         }
-    ]
+    ],
+    "outputs": {
+        "storName" : {
+            "type": "string",
+            "value": "[variables('storName')]"
+        },
+        "storKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storName')), providers('Microsoft.Storage', 'storageAccount').apiVersions[0]).keys[0].value]"
+        }
+    }
 }
