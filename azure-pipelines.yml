@@ -88,8 +88,7 @@ stages:
       inputs:
         ArtifactName: nuget
       
-- stage: Infra
-  displayName: 'Build Test Infrastructure'
+- stage: Integration
   dependsOn: []
   jobs:
   - job: Infra
@@ -122,11 +121,9 @@ stages:
         failOnStderr: true
         pwsh: true
 
-- stage: Integration
-  dependsOn: [ 'Infra' ]
-  jobs:
   - job: Blobs
     displayName: 'Blobs'
+    dependsOn: [ 'Infra' ]
     pool:
       vmImage: $(vmImage)
     steps:
@@ -138,6 +135,7 @@ stages:
         projects: test/Storage.Net.Tests.Integration/Storage.Net.Tests.Integration.csproj
         arguments: '-c release --filter Category=Blobs'
   - job: Messaging
+    dependsOn: [ 'Infra' ]
     displayName: 'Messaging'
     pool:
       vmImage: $(vmImage)
