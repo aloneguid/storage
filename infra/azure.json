@@ -5,10 +5,15 @@
         "tag" : {
             "defaultValue": "develop",
             "type": "string"  
+        },
+        "keyVaultObjectId": {
+            "defaultValue": "848e837f-9331-45f3-8baa-ce6003ae2e5f",
+            "type": "string"
         }
     },
     "variables": {
-        "storName" : "[concat('stor', uniqueString(parameters('tag')))]"
+        "storName" : "[concat('stor', uniqueString(parameters('tag')))]",
+        "kvName": "[concat('kv', uniqueString(parameters('tag')))]"
     },
     "resources": [
         {
@@ -42,6 +47,77 @@
                 },
                 "accessTier": "Hot"
             }
+        },
+
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2016-10-01",
+            "name": "[variables('kvName')]",
+            "location": "northeurope",
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[parameters('keyVaultObjectId')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "Decrypt",
+                                "Encrypt",
+                                "UnwrapKey",
+                                "WrapKey",
+                                "Verify",
+                                "Sign",
+                                "Purge"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List",
+                                "Set",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "Purge"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "ManageContacts",
+                                "ManageIssuers",
+                                "GetIssuers",
+                                "ListIssuers",
+                                "SetIssuers",
+                                "DeleteIssuers",
+                                "Purge"
+                            ]
+                        }
+                    }
+                ],
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": true,
+                "enabledForTemplateDeployment": true
+            }
         }
     ],
     "outputs": {
@@ -52,6 +128,14 @@
         "Azure.Storage.Key": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+        },
+        "Azure.KeyVault.TenantId": {
+            "type": "string",
+            "value": "[resourceGroup().tenantId]"
+        },
+        "Azure.KeyVault.Uri": {
+            "type": "string",
+            "value": "not sure"
         }
     }
 }
