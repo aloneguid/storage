@@ -45,11 +45,11 @@
         }
     ],
     "outputs": {
-        "storName" : {
+        "Azure.Storage.Name" : {
             "type": "string",
             "value": "[variables('storName')]"
         },
-        "storKey": {
+        "Azure.Storage.Key": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
         }
