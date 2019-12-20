@@ -118,6 +118,7 @@ stages:
     - task: PowerShell@2
       inputs:
         filePath: 'infra/infraset.ps1'
+        arguments: '-JsonString ''$(InfraOutput)'''
         failOnStderr: true
         pwsh: true
 
