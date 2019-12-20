@@ -60,12 +60,14 @@ function SetOrCreate(
     $vo = $VariableSet.variables.$Name
 
     if($null -eq $vo) {
+        Write-Host "  creating new member"
         # create 'value' object
         $vo = New-Object -TypeName psobject
         $vo | Add-Member value $value
         
         $VariableSet.variables | Add-Member $Name $vo
     } else {
+        Write-Host "  updating to $Value"
         $vo.value = $Value
     }
 }
