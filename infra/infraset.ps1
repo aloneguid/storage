@@ -51,9 +51,37 @@ function Set-AzPipelinesVariableGroup(
 
 }
 
+function SetOrCreate(
+    $VariableSet,
+    [string]$Name,
+    [string]$Value
+)
+{
+    $vo = $VariableSet.variables.$Name
+
+    if($null -eq $vo) {
+        # create 'value' object
+        $vo = New-Object -TypeName psobject
+        $vo | Add-Member value $value
+        
+        $VariableSet.variables | Add-Member $Name $vo
+    } else {
+        $vo.value = $Value
+    }
+}
+
 Write-Host "reading var set..."
 $vset = Get-AzPipelinesVariableGroup -Organisation $Organisation -Project $Project -GroupId $GroupId -Pat $Pat
 Write-Host "vset: $vset"
+
+$Json = ConvertFrom-Json $JsonString
+foreach($armMember in $Json | Get-Member -MemberType NoteProperty) {
+    $name = $armMember.Name
+    $value = $Json.$name.value
+
+    Write-Host "arm| $name = $value"
+}
+
 
 Write-Host "json: $JsonString"
 
