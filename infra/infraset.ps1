@@ -57,6 +57,6 @@ Write-Host "vset: $vset"
 
 Write-Host "json: $JsonString"
 
-$vset.variables.ArmOutput = '$JsonString'
+$vset.variables.ArmOutput = "$($JsonString)"
 Write-Host "upating var set..."
 Set-AzPipelinesVariableGroup -Organisation $Organisation -Project $Project -GroupId $GroupId -Pat $Pat -VariableGroup $vset
