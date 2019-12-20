@@ -87,8 +87,9 @@ stages:
       displayName: 'publish nugets as artifacts'
       inputs:
         ArtifactName: nuget
-
-- stage: Integration
+      
+- stage: Infra
+  displayName: 'Build Test Infrastructure'
   dependsOn: []
   jobs:
   - job: Infra
@@ -109,12 +110,22 @@ stages:
     - task: PowerShell@2
       inputs:
         targetType: 'inline'
-        script: 'Write-Host $InfraOutput'
+        script: |
+          $var = ConvertFrom-Json '$(InfraOutput)'
+          $var
+        failOnStderr: true
+        pwsh: true
+    - task: PowerShell@2
+      inputs:
+        filePath: 'infra/infraset.ps1'
+        arguments: '-JsonString ''$(InfraOutput)'''
         failOnStderr: true
         pwsh: true
 
+- stage: Integration
+  dependsOn: [ 'Infra' ]
+  jobs:
   - job: Blobs
-    dependsOn: [ 'Infra' ]
     displayName: 'Blobs'
     pool:
       vmImage: $(vmImage)
@@ -127,7 +138,6 @@ stages:
         projects: test/Storage.Net.Tests.Integration/Storage.Net.Tests.Integration.csproj
         arguments: '-c release --filter Category=Blobs'
   - job: Messaging
-    dependsOn: [ 'Infra' ]
     displayName: 'Messaging'
     pool:
       vmImage: $(vmImage)
