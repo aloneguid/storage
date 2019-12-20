@@ -135,7 +135,7 @@
         },
         "Azure.KeyVault.Uri": {
             "type": "string",
-            "value": "not sure"
+            "value": "[concat('https://', variables('kvName'), '.vault.azure.net/')]"
         }
     }
 }
