@@ -51,7 +51,7 @@
         },
         "storKey": {
             "type": "string",
-            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storName')), providers('Microsoft.Storage', 'storageAccount').apiVersions[0]).keys[0].value]"
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
         }
     }
 }
