@@ -90,6 +90,20 @@ stages:
 - stage: Integration
   dependsOn: []
   jobs:
+  - job: Infra
+    steps:
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: 'PAYG (personal)'
+        subscriptionId: 'e692471f-4dba-4d86-8940-ce6cca371941'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: 'vstsstoragenet'
+        location: 'North Europe'
+        templateLocation: 'Linked artifact'
+        csmFile: 'infra/azure.json'
+        deploymentMode: 'Incremental'
+
   - job: Blobs
     displayName: 'Blobs'
     pool:
