@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{D1BF1B
 		..\doc\blobs.md = ..\doc\blobs.md
 		..\build.ini = ..\build.ini
 		JsonExtensions.cs = JsonExtensions.cs
+		..\LICENSE = ..\LICENSE
 		..\README.md = ..\README.md
 		..\doc\storagenet.vsdx = ..\doc\storagenet.vsdx
 	EndProjectSection
