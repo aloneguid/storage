@@ -113,6 +113,7 @@ stages:
         pwsh: true
 
   - job: Blobs
+    condition: false
     dependsOn: [ 'Infra' ]
     displayName: 'Blobs'
     pool:
@@ -126,6 +127,7 @@ stages:
         projects: test/Storage.Net.Tests.Integration/Storage.Net.Tests.Integration.csproj
         arguments: '-c release --filter Category=Blobs'
   - job: Messaging
+    condition: false
     dependsOn: [ 'Infra' ]
     displayName: 'Messaging'
     pool:
