@@ -106,6 +106,12 @@ stages:
         csmFile: 'infra/azure.json'
         deploymentMode: 'Incremental'
         deploymentOutputs: 'InfraOutput'
+    - task: PowerShell@2
+      inputs:
+        targetType: 'inline'
+        script: 'Write-Host $InfraOutput'
+        failOnStderr: true
+        pwsh: true
 
   - job: Blobs
     dependsOn: [ 'Infra' ]
