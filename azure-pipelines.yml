@@ -114,6 +114,7 @@ stages:
           $var
         failOnStderr: true
         pwsh: true
+    
     - task: PowerShell@2
       inputs:
         filePath: 'infra/infraset.ps1'
