@@ -74,17 +74,15 @@ Write-Host "reading var set..."
 $vset = Get-AzPipelinesVariableGroup -Organisation $Organisation -Project $Project -GroupId $GroupId -Pat $Pat
 Write-Host "vset: $vset"
 
+# enumerate arm output variables and update/create them in the variable set
 $Json = ConvertFrom-Json $JsonString
 foreach($armMember in $Json | Get-Member -MemberType NoteProperty) {
     $name = $armMember.Name
     $value = $Json.$name.value
 
     Write-Host "arm| $name = $value"
+    SetOrCreate $vset $name $value
 }
 
-
-Write-Host "json: $JsonString"
-
-$vset.variables.ArmOutput = "$($JsonString)"
 Write-Host "upating var set..."
 Set-AzPipelinesVariableGroup -Organisation $Organisation -Project $Project -GroupId $GroupId -Pat $Pat -VariableGroup $vset
