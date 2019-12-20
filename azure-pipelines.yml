@@ -92,6 +92,7 @@ stages:
   dependsOn: []
   jobs:
   - job: Infra
+    displayName: 'Build Test Infrastructure'
     steps:
     - task: AzureResourceManagerTemplateDeployment@3
       inputs:
@@ -107,6 +108,7 @@ stages:
         deploymentOutputs: 'InfraOutput'
 
   - job: Blobs
+    dependsOn: [ 'Infra' ]
     displayName: 'Blobs'
     pool:
       vmImage: $(vmImage)
@@ -119,6 +121,7 @@ stages:
         projects: test/Storage.Net.Tests.Integration/Storage.Net.Tests.Integration.csproj
         arguments: '-c release --filter Category=Blobs'
   - job: Messaging
+    dependsOn: [ 'Infra' ]
     displayName: 'Messaging'
     pool:
       vmImage: $(vmImage)
