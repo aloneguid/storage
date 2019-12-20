@@ -131,7 +131,7 @@
         },
         "Azure.KeyVault.TenantId": {
             "type": "string",
-            "value": "[resourceGroup().tenantId]"
+            "value": "?"
         },
         "Azure.KeyVault.Uri": {
             "type": "string",
