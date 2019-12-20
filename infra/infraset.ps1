@@ -52,7 +52,7 @@ function Set-AzPipelinesVariableGroup(
 }
 
 Write-Host "reading var set..."
-$vset = Get-AzPipelinesVariableGroup -Organisation $Organisation -Project $Project -GroupId $GroupId -Pat $Par
+$vset = Get-AzPipelinesVariableGroup -Organisation $Organisation -Project $Project -GroupId $GroupId -Pat $Pat
 Write-Host "vset: $vset"
 
 Write-Host "json: $JsonString"
