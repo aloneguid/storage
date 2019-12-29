@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Storage;
@@ -19,12 +18,58 @@ namespace Storage.Net.Microsoft.Azure.Queues
       private readonly ConcurrentDictionary<string, CloudQueue> _channelNameToQueue =
          new ConcurrentDictionary<string, CloudQueue>();
 
+      /// <summary>
+      /// Initializes a new instance of <see cref="AzureStorageQueueMessenger"/>.
+      /// </summary>
+      /// <param name="accountName">
+      /// The account name to authenticate with the Azure Storage Queue service.
+      /// Must not be <see langword="null"/> or empty.
+      /// </param>
+      /// <param name="storageKey">
+      /// The key to authenticate with the Azure Storage Queue service.
+      /// Must not be <see langword="null"/> or empty.
+      /// </param>
+      /// <param name="serviceUri">
+      /// An <see cref="Uri"/> that points to an implementation of an Azure Storage Queue service.
+      /// See <see cref="AzureStorageQueueMessenger(string,string)"/> if your not sure about this parameter.
+      /// Must not be <see langword="null"/>.
+      /// </param>
+      /// <exception cref="ArgumentNullException">
+      /// Thrown if any of the arguments is <see langword="null"/> or empty.
+      /// </exception>
+      public AzureStorageQueueMessenger(
+         string accountName, string storageKey, Uri serviceUri)
+      {
+         if(string.IsNullOrEmpty(accountName))
+            throw new ArgumentNullException(nameof(accountName));
+         if(string.IsNullOrEmpty(storageKey))
+            throw new ArgumentNullException(nameof(storageKey));
+         if(serviceUri is null)
+            throw new ArgumentNullException(nameof(serviceUri));
+         
+         _client = new CloudQueueClient(serviceUri, new StorageCredentials(accountName, storageKey));
+      }
+
+      /// <summary>
+      /// Initializes a new instance of <see cref="AzureStorageQueueMessenger"/>.
+      /// </summary>
+      /// <param name="accountName">
+      /// The account name to authenticate with the Azure Storage Queue service.
+      /// Must not be <see langword="null"/> or empty.
+      /// </param>
+      /// <param name="storageKey">
+      /// The key to authenticate with the Azure Storage Queue service.
+      /// Must not be <see langword="null"/> or empty.
+      /// </param>
+      /// <exception cref="ArgumentNullException">
+      /// Thrown if any of the arguments is <see langword="null"/>.
+      /// </exception>
       public AzureStorageQueueMessenger(
          string accountName, string storageKey)
       {
-         if(accountName is null)
+         if(string.IsNullOrEmpty(accountName))
             throw new ArgumentNullException(nameof(accountName));
-         if(storageKey is null)
+         if(string.IsNullOrEmpty(storageKey))
             throw new ArgumentNullException(nameof(storageKey));
 
          var account = new CloudStorageAccount(new StorageCredentials(accountName, storageKey), true);
