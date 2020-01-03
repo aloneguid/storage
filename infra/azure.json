@@ -228,9 +228,17 @@
         }
     ],
     "outputs": {
+        "TenantId" : {
+            "type": "string",
+            "value": "todo"
+        },
         "ClientId" : {
             "type": "string",
             "value": "[parameters('keyVaultObjectId2')]"
+        },
+        "ClientSecret" : {
+            "type": "string",
+            "value": "todo"
         },
         "AzureStorageName" : {
             "type": "string",
@@ -240,23 +248,19 @@
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
         },
-        "Azure.KeyVault.TenantId": {
-            "type": "string",
-            "value": "?"
-        },
-        "Azure.KeyVault.Uri": {
+        "AzureKeyVaultUri": {
             "type": "string",
             "value": "[concat('https://', variables('kvName'), '.vault.azure.net/')]"
         },
-        "Azure.DataLake.Store.AccountName": {
+        "AzureGen1StorageName": {
             "type": "string",
             "value": "[variables('gen1Name')]"
         },
-        "Azure.DataLakeGen2.Name": {
+        "AzureGen2StorageName": {
             "type": "string",
             "value": "[variables('gen2Name')]"
         },
-        "Azure.DataLakeGen2.Key": {
+        "AzureGen2StorageKey": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('gen2Name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
         }
