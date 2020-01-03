@@ -74,6 +74,7 @@ stages:
     # we don't care if tests in other stages are not successful, we want to public this to internal testing
     - task: NuGetCommand@2
       displayName: 'push to internal feed'
+      continueOnError: true
       inputs:
         command: 'push'
         packagesToPush: '$(build.artifactstagingdirectory)/**/*.nupkg'
