@@ -123,7 +123,7 @@
                             ]
                         }
                     },
-                                        {
+                    {
                         "tenantId": "[subscription().tenantId]",
                         "objectId": "[parameters('keyVaultObjectId2')]",
                         "permissions": {
@@ -219,6 +219,10 @@
         }
     ],
     "outputs": {
+        "ClientId" : {
+            "type": "string",
+            "value": "[parameters('keyVaultObjectId2')]"
+        },
         "Azure.Storage.Name" : {
             "type": "string",
             "value": "[variables('storName')]"
