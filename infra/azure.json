@@ -6,10 +6,15 @@
             "defaultValue": "develop",
             "type": "string"  
         },
-        "keyVaultObjectId": {
+        "keyVaultObjectId1": {
             "defaultValue": "848e837f-9331-45f3-8baa-ce6003ae2e5f",
             "type": "string"
+        },
+        "keyVaultObjectId2": {
+            "defaultValue": "c8de91d4-da87-4486-adff-b9263d1c44cd",
+            "type": "string"
         }
+
     },
     "variables": {
         "storName" : "[concat('stor', uniqueString(parameters('tag')))]",
@@ -68,7 +73,59 @@
                 "accessPolicies": [
                     {
                         "tenantId": "[subscription().tenantId]",
-                        "objectId": "[parameters('keyVaultObjectId')]",
+                        "objectId": "[parameters('keyVaultObjectId1')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "Decrypt",
+                                "Encrypt",
+                                "UnwrapKey",
+                                "WrapKey",
+                                "Verify",
+                                "Sign",
+                                "Purge"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List",
+                                "Set",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "Purge"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "ManageContacts",
+                                "ManageIssuers",
+                                "GetIssuers",
+                                "ListIssuers",
+                                "SetIssuers",
+                                "DeleteIssuers",
+                                "Purge"
+                            ]
+                        }
+                    },
+                                        {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[parameters('keyVaultObjectId2')]",
                         "permissions": {
                             "keys": [
                                 "Get",
@@ -118,6 +175,7 @@
                             ]
                         }
                     }
+
                 ],
                 "enabledForDeployment": true,
                 "enabledForDiskEncryption": true,
