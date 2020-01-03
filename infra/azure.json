@@ -232,11 +232,11 @@
             "type": "string",
             "value": "[parameters('keyVaultObjectId2')]"
         },
-        "Azure.Storage.Name" : {
+        "AzureStorageName" : {
             "type": "string",
             "value": "[variables('storName')]"
         },
-        "Azure.Storage.Key": {
+        "AzureStorageKey": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
         },

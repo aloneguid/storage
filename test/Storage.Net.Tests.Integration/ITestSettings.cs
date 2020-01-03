@@ -8,10 +8,8 @@ namespace Storage.Net.Tests
    {
       #region [ Azure ]
 
-      [Option(Alias = "Azure.Storage.Name")]
       string AzureStorageName { get; }
 
-      [Option(Alias = "Azure.Storage.Key")]
       string AzureStorageKey { get; }
 
       [Option(Alias = "Azure.Storage.NativeConnectionString")]
