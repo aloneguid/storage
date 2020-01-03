@@ -96,12 +96,13 @@ stages:
     displayName: 'Build Test Infrastructure'
     steps:
     - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'Deploy Test Resources'
       inputs:
         deploymentScope: 'Resource Group'
         azureResourceManagerConnection: 'PAYG (personal)'
         subscriptionId: 'e692471f-4dba-4d86-8940-ce6cca371941'
         action: 'Create Or Update Resource Group'
-        resourceGroupName: 'vstsstoragenet'
+        resourceGroupName: 'storagenet-deleteme'
         location: 'North Europe'
         templateLocation: 'Linked artifact'
         csmFile: 'infra/azure.json'
