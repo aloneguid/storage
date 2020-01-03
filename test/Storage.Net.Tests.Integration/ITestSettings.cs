@@ -6,6 +6,17 @@ namespace Storage.Net.Tests
 {
    public interface ITestSettings
    {
+      [Option(DefaultValue = "aloneguid")]
+      string DevOpsOrgName { get; }
+
+      [Option(DefaultValue = "AllPublic")]
+      string DevOpsProject { get; }
+
+      [Option(DefaultValue = "8")]
+      string DevOpsVariableSetId { get; }
+
+      string DevOpsPat { get; }
+
       #region [ Azure ]
 
       string AzureStorageName { get; }
@@ -148,6 +159,13 @@ namespace Storage.Net.Tests
                   .UseIniFile("c:\\tmp\\integration-tests.ini")
                   .UseEnvironmentVariables()
                   .Build();
+
+               _instance = new ConfigurationBuilder<ITestSettings>()
+                  .UseIniFile("c:\\tmp\\integration-tests.ini")
+                  .UseAzureDevOpsVariableSet(_instance.DevOpsOrgName, _instance.DevOpsProject, _instance.DevOpsPat, _instance.DevOpsVariableSetId)
+                  .UseEnvironmentVariables()
+                  .Build();
+
             }
 
             return _instance;
