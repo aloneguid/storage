@@ -21,9 +21,9 @@ namespace Storage.Net.Tests.Integration.Azure
          _settings = Settings.Instance;
          _storage = StorageFactory.Blobs.AzureDataLakeStorageWithAzureAd(
             _settings.AzureDataLakeGen2Name,
-            _settings.AzureDataLakeGen2TenantId,
-            _settings.AzureDataLakeGen2PrincipalId,
-            _settings.AzureDataLakeGen2PrincipalSecret);
+            _settings.TenantId,
+            _settings.ClientId,
+            _settings.ClientSecret);
       }
 
       [Fact]
@@ -42,9 +42,9 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          IBlobStorage authInstance = StorageFactory.Blobs.AzureDataLakeStorageWithAzureAd(
             _settings.AzureDataLakeGen2Name,
-            _settings.AzureDataLakeGen2TenantId,
-            _settings.AzureDataLakeGen2PrincipalId,
-            _settings.AzureDataLakeGen2PrincipalSecret);
+            _settings.TenantId,
+            _settings.ClientId,
+            _settings.ClientSecret);
 
          //trigger any operation
          await authInstance.ListAsync();

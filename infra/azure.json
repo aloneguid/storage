@@ -230,15 +230,11 @@
     "outputs": {
         "TenantId" : {
             "type": "string",
-            "value": "todo"
+            "value": "43aaa4f9-8213-466e-8ab3-00c1f0a349ac"
         },
         "ClientId" : {
             "type": "string",
-            "value": "[parameters('keyVaultObjectId2')]"
-        },
-        "ClientSecret" : {
-            "type": "string",
-            "value": "todo"
+            "value": "b9b97277-655c-482e-b010-471ffa9f3b67"
         },
         "AzureStorageName" : {
             "type": "string",
