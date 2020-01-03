@@ -61,6 +61,9 @@
 
         {
             "type": "Microsoft.KeyVault/vaults",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
             "apiVersion": "2016-10-01",
             "name": "[variables('kvName')]",
             "location": "[resourceGroup().location]",
@@ -185,6 +188,9 @@
 
         {
             "type": "Microsoft.DataLakeStore/accounts",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
             "apiVersion": "2016-11-01",
             "name": "[variables('gen1Name')]",
             "location": "[resourceGroup().location]",
@@ -204,6 +210,9 @@
 
         {
             "type": "Microsoft.Storage/storageAccounts",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
             "apiVersion": "2019-04-01",
             "name": "[variables('gen2Name')]",
             "location": "[resourceGroup().location]",
