@@ -56,12 +56,7 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.EventHub.ConnectionString")]
       string EventHubConnectionString { get; }
 
-
-      [Option(Alias = "Azure.DataLake.Store.AccountName")]
-      string AzureDataLakeStoreAccountName { get; }
-
-      [Option(Alias = "Azure.DataLake.SubscriptionId")]
-      string AzureDataLakeSubscriptionId { get; }
+      string AzureGen1StorageName { get; }
 
       Uri AzureKeyVaultUri { get; }
 

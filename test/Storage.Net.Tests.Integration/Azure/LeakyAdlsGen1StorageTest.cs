@@ -17,7 +17,7 @@ namespace Storage.Net.Tests.Integration.Azure
          _settings = Settings.Instance;
 
          _storage = (IAzureDataLakeGen1BlobStorage)StorageFactory.Blobs.AzureDataLakeGen1StoreByClientSecret(
-            _settings.AzureDataLakeStoreAccountName,
+            _settings.AzureGen1StorageName,
             _settings.TenantId,
             _settings.ClientId,
             _settings.ClientSecret);
