@@ -40,6 +40,8 @@ namespace Storage.Net.Tests.Integration.Azure
       [Fact]
       public async Task Authenticate_with_service_principal()
       {
+         //needs to have "Storage Blob Data Owner"
+
          IBlobStorage authInstance = StorageFactory.Blobs.AzureDataLakeStorageWithAzureAd(
             _settings.AzureGen2StorageName,
             _settings.TenantId,
