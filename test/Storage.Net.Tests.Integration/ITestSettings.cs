@@ -32,11 +32,9 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.Storage.NativeConnectionString")]
       string AzureStorageNativeConnectionString { get; }
 
-      [Option(Alias = "Azure.DataLakeGen2.Name")]
-      string AzureDataLakeGen2Name { get; }
+      string AzureGen2StorageName { get; }
 
-      [Option(Alias = "Azure.DataLakeGen2.Key")]
-      string AzureDataLakeGen2Key { get; }
+      string AzureGen2StorageKey { get; }
 
       [Option(Alias = "Azure.DataLakeGen2.TestAdObjectId")]
       string AzureDataLakeGen2TestObjectId { get; }
