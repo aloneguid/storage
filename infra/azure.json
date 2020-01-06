@@ -303,7 +303,7 @@
         },
         "AzureEventHubConnectionString": {
             "type": "string",
-            "value": "[listkeys(variables('ehName'), '2014-09-01').primaryConnectionString]"
+            "value": "[listkeys(variables('ehName'), '2017-04-01').primaryConnectionString]"
         },
         "OperatorObjectId": {
             "type": "string",
