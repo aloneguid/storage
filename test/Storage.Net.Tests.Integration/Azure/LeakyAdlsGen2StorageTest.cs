@@ -20,7 +20,7 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          _settings = Settings.Instance;
          _storage = StorageFactory.Blobs.AzureDataLakeStorageWithAzureAd(
-            _settings.AzureDataLakeGen2Name,
+            _settings.AzureGen2StorageName,
             _settings.TenantId,
             _settings.ClientId,
             _settings.ClientSecret);
@@ -30,8 +30,8 @@ namespace Storage.Net.Tests.Integration.Azure
       public async Task Authenticate_with_shared_key()
       {
          IAzureDataLakeStorage authInstance =
-            StorageFactory.Blobs.AzureDataLakeStorageWithSharedKey(_settings.AzureDataLakeGen2Name,
-               _settings.AzureDataLakeGen2Key);
+            StorageFactory.Blobs.AzureDataLakeStorageWithSharedKey(_settings.AzureGen2StorageName,
+               _settings.AzureGen2StorageKey);
 
          //trigger any operation
          await authInstance.ListAsync();
@@ -41,7 +41,7 @@ namespace Storage.Net.Tests.Integration.Azure
       public async Task Authenticate_with_service_principal()
       {
          IBlobStorage authInstance = StorageFactory.Blobs.AzureDataLakeStorageWithAzureAd(
-            _settings.AzureDataLakeGen2Name,
+            _settings.AzureGen2StorageName,
             _settings.TenantId,
             _settings.ClientId,
             _settings.ClientSecret);

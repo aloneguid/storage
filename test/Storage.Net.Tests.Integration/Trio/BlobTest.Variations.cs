@@ -101,8 +101,8 @@ namespace Storage.Net.Tests.Integration.Blobs
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
          return StorageFactory.Blobs.AzureDataLakeStorageWithSharedKey(
-            settings.AzureDataLakeGen2Name,
-            settings.AzureDataLakeGen2Key);
+            settings.AzureGen2StorageName,
+            settings.AzureGen2StorageKey);
 
          //return StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(settings.AzureDataLakeGen2Name, settings.AzureDataLakeGen2Key);
       }

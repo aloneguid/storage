@@ -39,17 +39,8 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.DataLakeGen2.TestAdObjectId")]
       string AzureDataLakeGen2TestObjectId { get; }
 
-      [Option(Alias = "Azure.Storage.QueueName", DefaultValue = "local")]
-      string AzureStorageQueueName { get; }
-
       [Option(Alias = "Azure.ServiceBus.ConnectionString")]
       string ServiceBusConnectionString { get; }
-
-      [Option(DefaultValue = "testqueuelocal")]
-      string ServiceBusQueueName { get; }
-
-      [Option(DefaultValue = "testtopiclocal")]
-      string ServiceBusTopicName { get; }
 
       [Option(Alias = "Azure.EventHub.ConnectionString")]
       string EventHubConnectionString { get; }
