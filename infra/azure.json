@@ -259,7 +259,16 @@
         "AzureGen2StorageKey": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('gen2Name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+        },
+        "OperatorObjectId": {
+            "type": "string",
+            "value": "[parameters('operatorObjectId')]"
+        },
+        "TestUserObjectId": {
+            "type": "string",
+            "value": "[parameters('testUserObjectId')]"
         }
+
 
     }
 }
