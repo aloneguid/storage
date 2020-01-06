@@ -22,6 +22,7 @@
         "gen1Name": "[concat('gen1', uniqueString(parameters('tag')))]",
         "gen2Name": "[concat('gen2', uniqueString(parameters('tag')))]",
         "ehName": "[concat('eh', uniqueString(parameters('tag')))]",
+        "sbName": "[concat('sb', uniqueString(parameters('tag')))]",
 
         "ehAuthRuleResourceId": "[resourceId('Microsoft.Eventhub/namespaces/authorizationRules', variables('ehName'), 'RootManageSharedAccessKey')]"
     },
@@ -279,8 +280,41 @@
                 "partitionCount": 2,
                 "status": "Active"
             }
-        }
+        },
 
+
+        {
+            "type": "Microsoft.ServiceBus/namespaces",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
+            "apiVersion": "2018-01-01-preview",
+            "name": "[variables('storName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "properties": {
+                "zoneRedundant": false
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('sbName'), '/RootManageSharedAccessKey')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('sbName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Listen",
+                    "Manage",
+                    "Send"
+                ]
+            }
+        }
     ],
     "outputs": {
         "TenantId" : {
