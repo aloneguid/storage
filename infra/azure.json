@@ -20,7 +20,8 @@
         "storName" : "[concat('stor', uniqueString(parameters('tag')))]",
         "kvName": "[concat('kv', uniqueString(parameters('tag')))]",
         "gen1Name": "[concat('gen1', uniqueString(parameters('tag')))]",
-        "gen2Name": "[concat('gen2', uniqueString(parameters('tag')))]"
+        "gen2Name": "[concat('gen2', uniqueString(parameters('tag')))]",
+        "ehName": "[concat('eh', uniqueString(parameters('tag')))]"
     },
     "resources": [
         {
@@ -225,7 +226,45 @@
                 "isHnsEnabled": true,
                 "accessTier": "Cool"
             }
+        },
+
+        {
+            "type": "Microsoft.EventHub/namespaces",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
+            "apiVersion": "2018-01-01-preview",
+            "name": "[variables('ehName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Basic",
+                "tier": "Basic",
+                "capacity": 1
+            },
+            "properties": {
+                "zoneRedundant": false,
+                "isAutoInflateEnabled": false,
+                "maximumThroughputUnits": 0,
+                "kafkaEnabled": false
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('ehName'), '/RootManageSharedAccessKey')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', variables('ehName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Listen",
+                    "Manage",
+                    "Send"
+                ]
+            }
         }
+
     ],
     "outputs": {
         "TenantId" : {
@@ -259,6 +298,10 @@
         "AzureGen2StorageKey": {
             "type": "string",
             "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('gen2Name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+        },
+        "AzureEventHubConnectionString": {
+            "type": "string",
+            "value": "[listKeys(resourceId(concat('Microsoft.EventHub/namespaces/AuthorizationRules'), variables('ehName'), '/RootManageSharedAccessKey'), '2015-08-01').primaryConnectionString]"
         },
         "OperatorObjectId": {
             "type": "string",
