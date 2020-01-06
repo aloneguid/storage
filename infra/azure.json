@@ -6,11 +6,11 @@
             "defaultValue": "develop",
             "type": "string"  
         },
-        "keyVaultObjectId1": {
+        "operatorObjectId": {
             "defaultValue": "848e837f-9331-45f3-8baa-ce6003ae2e5f",
             "type": "string"
         },
-        "keyVaultObjectId2": {
+        "testUserObjectId": {
             "defaultValue": "ed456158-b734-4dbb-8ba7-7653206db4b9",
             "type": "string"
         }
@@ -76,7 +76,7 @@
                 "accessPolicies": [
                     {
                         "tenantId": "[subscription().tenantId]",
-                        "objectId": "[parameters('keyVaultObjectId1')]",
+                        "objectId": "[parameters('operatorObjectId')]",
                         "permissions": {
                             "keys": [
                                 "Get",
@@ -128,7 +128,7 @@
                     },
                     {
                         "tenantId": "[subscription().tenantId]",
-                        "objectId": "[parameters('keyVaultObjectId2')]",
+                        "objectId": "[parameters('testUserObjectId')]",
                         "permissions": {
                             "keys": [
                                 "Get",
