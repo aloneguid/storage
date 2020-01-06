@@ -39,8 +39,9 @@ namespace Storage.Net.Tests
       [Option(Alias = "Azure.ServiceBus.ConnectionString")]
       string ServiceBusConnectionString { get; }
 
-      [Option(Alias = "Azure.EventHub.ConnectionString")]
-      string EventHubConnectionString { get; }
+      string AzureEventHubConnectionString { get; }
+
+      string AzureStorageNativeConnectionString { get; }
 
       string AzureGen1StorageName { get; }
 

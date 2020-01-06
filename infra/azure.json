@@ -301,7 +301,7 @@
         },
         "AzureEventHubConnectionString": {
             "type": "string",
-            "value": "[listKeys(resourceId(concat('Microsoft.EventHub/namespaces/AuthorizationRules'), variables('ehName'), '/RootManageSharedAccessKey'), '2015-08-01').primaryConnectionString]"
+            "value": "[listKeys(resourceId(concat('Microsoft.EventHub/namespaces/AuthorizationRules/'), variables('ehName'), '/RootManageSharedAccessKey'), '2015-08-01').primaryConnectionString]"
         },
         "OperatorObjectId": {
             "type": "string",

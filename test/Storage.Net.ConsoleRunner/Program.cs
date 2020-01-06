@@ -16,7 +16,7 @@ namespace Storage.Net.ConsoleRunner
             .Build();
 
          using(IMessenger messenger = StorageFactory.Messages.AzureEventHub(
-            settings.EventHubConnectionString,
+            settings.AzureEventHubConnectionString,
             settings.AzureStorageNativeConnectionString,
             null,
             "consoleeventhubs", "myprefix"))
