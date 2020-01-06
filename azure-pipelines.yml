@@ -115,6 +115,14 @@ stages:
         arguments: '-JsonString ''$(InfraOutput)'' -Organisation ''aloneguid'' -Project ''AllPublic'' -GroupId ''8'' -Pat ''$(Pat)'''
         failOnStderr: true
         pwsh: true
+    - task: PowerShell@2
+      displayName: 'post configure'
+      inputs:
+        filePath: 'infra/postconfigure.ps1'
+        arguments: '-Gen1AccountName $(AzureGen1StorageName) -OperatorObjectId $(OperatorObjectId) -TestUserObjectId $(TestUserObjectId)'
+        failOnStderr: true
+        pwsh: true
+
 
   - job: Blobs
     displayName: 'Blobs'
