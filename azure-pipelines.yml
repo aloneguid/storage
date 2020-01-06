@@ -115,12 +115,15 @@ stages:
         arguments: '-JsonString ''$(InfraOutput)'' -Organisation ''aloneguid'' -Project ''AllPublic'' -GroupId ''8'' -Pat ''$(Pat)'''
         failOnStderr: true
         pwsh: true
-    - task: PowerShell@2
+    - task: AzurePowerShell@4
       displayName: 'post configure'
       inputs:
-        filePath: 'infra/postconfigure.ps1'
-        arguments: '-JsonString ''$(InfraOutput)'''
-        failOnStderr: true
+        azureSubscription: 'PAYG (personal)'
+        ScriptType: 'FilePath'
+        ScriptPath: 'infra/postconfigure.ps1'
+        ScriptArguments: '-JsonString ''$(InfraOutput)'''
+        FailOnStandardError: true
+        azurePowerShellVersion: 'LatestVersion'
         pwsh: true
 
 
