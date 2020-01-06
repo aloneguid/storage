@@ -21,7 +21,9 @@
         "kvName": "[concat('kv', uniqueString(parameters('tag')))]",
         "gen1Name": "[concat('gen1', uniqueString(parameters('tag')))]",
         "gen2Name": "[concat('gen2', uniqueString(parameters('tag')))]",
-        "ehName": "[concat('eh', uniqueString(parameters('tag')))]"
+        "ehName": "[concat('eh', uniqueString(parameters('tag')))]",
+
+        "ehAuthRuleResourceId": "[resourceId('Microsoft.Eventhub/namespaces/authorizationRules', variables('ehName'), 'RootManageSharedAccessKey')]"
     },
     "resources": [
         {
@@ -301,7 +303,7 @@
         },
         "AzureEventHubConnectionString": {
             "type": "string",
-            "value": "[listKeys(resourceId(concat('Microsoft.EventHub/namespaces/AuthorizationRules/'), variables('ehName'), '/RootManageSharedAccessKey'), '2015-08-01').primaryConnectionString]"
+            "value": "[listkeys(variables('ehName'), '2014-09-01').primaryConnectionString]"
         },
         "OperatorObjectId": {
             "type": "string",
