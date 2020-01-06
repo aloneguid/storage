@@ -119,7 +119,7 @@ stages:
       displayName: 'post configure'
       inputs:
         filePath: 'infra/postconfigure.ps1'
-        arguments: '-Gen1AccountName $(AzureGen1StorageName) -OperatorObjectId $(OperatorObjectId) -TestUserObjectId $(TestUserObjectId)'
+        arguments: '-JsonString ''$(InfraOutput)'''
         failOnStderr: true
         pwsh: true
 
