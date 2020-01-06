@@ -354,6 +354,10 @@
             "type": "string",
             "value": "[listkeys(variables('ehAuthRuleResourceId'), '2017-04-01').primaryConnectionString]"
         },
+        "AzureServiceBusConnectionString": {
+            "type": "string",
+            "value": "[listkeys(variables('sbAuthRuleResourceId'), '2017-04-01').primaryConnectionString]"
+        },
         "OperatorObjectId": {
             "type": "string",
             "value": "[parameters('operatorObjectId')]"
