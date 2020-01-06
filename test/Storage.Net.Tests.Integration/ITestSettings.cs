@@ -29,9 +29,6 @@ namespace Storage.Net.Tests
 
       string AzureStorageKey { get; }
 
-      [Option(Alias = "Azure.Storage.NativeConnectionString")]
-      string AzureStorageNativeConnectionString { get; }
-
       string AzureGen2StorageName { get; }
 
       string AzureGen2StorageKey { get; }
