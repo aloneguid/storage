@@ -33,11 +33,9 @@ namespace Storage.Net.Tests
 
       string AzureGen2StorageKey { get; }
 
-      [Option(Alias = "Azure.DataLakeGen2.TestAdObjectId")]
-      string AzureDataLakeGen2TestObjectId { get; }
+      string OperatorObjectId { get; }
 
-      [Option(Alias = "Azure.ServiceBus.ConnectionString")]
-      string ServiceBusConnectionString { get; }
+      string AzureServiceBusConnectionString { get; }
 
       string AzureEventHubConnectionString { get; }
 

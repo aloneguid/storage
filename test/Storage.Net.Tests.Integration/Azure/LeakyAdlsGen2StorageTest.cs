@@ -94,7 +94,7 @@ namespace Storage.Net.Tests.Integration.Azure
       public async Task Acl_assign_permisssions_to_file_for_user()
       {
          string path = StoragePath.Combine(Filesystem, Guid.NewGuid().ToString());
-         string userId = _settings.AzureDataLakeGen2TestObjectId;
+         string userId = _settings.OperatorObjectId;
 
          //write something
          await _storage.WriteTextAsync(path, "perm?");
@@ -119,7 +119,7 @@ namespace Storage.Net.Tests.Integration.Azure
       public async Task Acl_get_with_upn()
       {
          string path = StoragePath.Combine(Filesystem, Guid.NewGuid().ToString());
-         string userId = _settings.AzureDataLakeGen2TestObjectId;
+         string userId = _settings.OperatorObjectId;
 
          //write something
          await _storage.WriteTextAsync(path, "perm?");
@@ -142,7 +142,7 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string directoryPath = StoragePath.Combine(Filesystem, "aclnondefault");
          string filePath = StoragePath.Combine(directoryPath, Guid.NewGuid().ToString());
-         string userId = _settings.AzureDataLakeGen2TestObjectId;
+         string userId = _settings.OperatorObjectId;
 
          //write something
          await _storage.WriteTextAsync(filePath, "perm?");
@@ -168,7 +168,7 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string directoryPath = StoragePath.Combine(Filesystem, "acldefault");
          string filePath = StoragePath.Combine(directoryPath, Guid.NewGuid().ToString());
-         string userId = _settings.AzureDataLakeGen2TestObjectId;
+         string userId = _settings.OperatorObjectId;
 
          //write something
          await _storage.WriteTextAsync(filePath, "perm?");
@@ -193,7 +193,7 @@ namespace Storage.Net.Tests.Integration.Azure
       public async Task Acl_assign_non_default_permisssions_to_filesystem_for_user()
       {
          string filesystem = "aclnondefault";
-         string userId = _settings.AzureDataLakeGen2TestObjectId;
+         string userId = _settings.OperatorObjectId;
 
          //create filesystem
          await _storage.CreateFilesystemAsync(filesystem);
@@ -222,7 +222,7 @@ namespace Storage.Net.Tests.Integration.Azure
       public async Task Acl_assign_default_permisssions_to_filesystem_for_user()
       {
          string filesystem = "acldefault";
-         string userId = _settings.AzureDataLakeGen2TestObjectId;
+         string userId = _settings.OperatorObjectId;
 
          //create filesystem
          await _storage.CreateFilesystemAsync(filesystem);

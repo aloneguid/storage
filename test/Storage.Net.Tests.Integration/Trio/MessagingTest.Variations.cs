@@ -93,7 +93,7 @@ namespace Storage.Net.Tests.Integration.Messaging
    {
       protected override IMessenger CreateMessenger(ITestSettings settings)
       {
-         return StorageFactory.Messages.AzureServiceBus(settings.ServiceBusConnectionString);
+         return StorageFactory.Messages.AzureServiceBus(settings.AzureServiceBusConnectionString);
 
       }
    }
