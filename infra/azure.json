@@ -24,7 +24,8 @@
         "ehName": "[concat('eh', uniqueString(parameters('tag')))]",
         "sbName": "[concat('sb', uniqueString(parameters('tag')))]",
 
-        "ehAuthRuleResourceId": "[resourceId('Microsoft.Eventhub/namespaces/authorizationRules', variables('ehName'), 'RootManageSharedAccessKey')]"
+        "ehAuthRuleResourceId": "[resourceId('Microsoft.Eventhub/namespaces/authorizationRules', variables('ehName'), 'RootManageSharedAccessKey')]",
+        "sbAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('sbName'), 'RootManageSharedAccessKey')]"
     },
     "resources": [
         {
@@ -289,7 +290,7 @@
                 "instance": "[parameters('tag')]"
             },
             "apiVersion": "2018-01-01-preview",
-            "name": "[variables('storName')]",
+            "name": "[variables('sbName')]",
             "location": "[resourceGroup().location]",
             "sku": {
                 "name": "Standard",
