@@ -25,6 +25,8 @@ variables:
   - group: 'External Resources'
   - name: vmImage
     value: 'ubuntu-16.04'  # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml&viewFallbackFrom=vsts
+  - name: rgName
+    value: 'storagenet-deleteme'
 
 stages:
 - stage: Build
@@ -102,7 +104,7 @@ stages:
         azureResourceManagerConnection: 'PAYG (personal)'
         subscriptionId: 'e692471f-4dba-4d86-8940-ce6cca371941'
         action: 'Create Or Update Resource Group'
-        resourceGroupName: 'storagenet-deleteme'
+        resourceGroupName: $(vmImage)
         location: 'North Europe'
         templateLocation: 'Linked artifact'
         csmFile: 'infra/azure.json'
@@ -121,7 +123,7 @@ stages:
         azureSubscription: 'PAYG (personal)'
         ScriptType: 'FilePath'
         ScriptPath: 'infra/postconfigure.ps1'
-        ScriptArguments: '-JsonString ''$(InfraOutput)'''
+        ScriptArguments: '-JsonString ''$(InfraOutput)'' -RgName $(rgName)'
         FailOnStandardError: true
         azurePowerShellVersion: 'LatestVersion'
         pwsh: true
