@@ -21,8 +21,8 @@
         "kvName": "[concat('kv', uniqueString(parameters('tag')))]",
         "gen1Name": "[concat('gen1', uniqueString(parameters('tag')))]",
         "gen2Name": "[concat('gen2', uniqueString(parameters('tag')))]",
-        "ehName": "[concat('eh', uniqueString(parameters('tag')))]",
-        "sbName": "[concat('sb', uniqueString(parameters('tag')))]",
+        "ehName": "[concat('ehub', uniqueString(parameters('tag')))]",
+        "sbName": "[concat('sbus', uniqueString(parameters('tag')))]",
 
         "ehAuthRuleResourceId": "[resourceId('Microsoft.Eventhub/namespaces/authorizationRules', variables('ehName'), 'RootManageSharedAccessKey')]",
         "sbAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('sbName'), 'RootManageSharedAccessKey')]"
