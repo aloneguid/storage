@@ -214,7 +214,7 @@ namespace Storage.Net.Blobs.Files
       {
       }
 
-      public async Task WriteAsync(string fullPath, Stream dataStream, bool append, CancellationToken cancellationToken)
+      public Task WriteAsync(string fullPath, Stream dataStream, bool append, CancellationToken cancellationToken)
       {
          if(dataStream is null)
             throw new ArgumentNullException(nameof(dataStream));
@@ -224,8 +224,10 @@ namespace Storage.Net.Blobs.Files
 
          using(Stream stream = CreateStream(fullPath, !append))
          {
-            await dataStream.CopyToAsync(stream).ConfigureAwait(false);
+            dataStream.CopyTo(stream);
          }
+
+         return Task.FromResult(true);
       }
 
       /// <summary>
