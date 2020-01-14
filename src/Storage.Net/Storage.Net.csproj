@@ -19,6 +19,8 @@
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
+      <SignAssembly>true</SignAssembly>
+      <AssemblyOriginatorKeyFile>Storage.Net.snk</AssemblyOriginatorKeyFile>
    </PropertyGroup>
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -33,6 +35,6 @@
       <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.3.2" />
       <PackageReference Include="NetBox" Version="2.3.5" />
       <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
-      <PackageReference Include="System.Text.Json" Version="4.7.0"/>
+      <PackageReference Include="System.Text.Json" Version="4.7.0" />
    </ItemGroup>
 </Project>
