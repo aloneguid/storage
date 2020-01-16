@@ -19,8 +19,6 @@
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
-      <SignAssembly>true</SignAssembly>
-      <AssemblyOriginatorKeyFile>Storage.Net.snk</AssemblyOriginatorKeyFile>
    </PropertyGroup>
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
