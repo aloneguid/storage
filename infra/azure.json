@@ -1,0 +1,372 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "tag" : {
+            "defaultValue": "develop",
+            "type": "string"  
+        },
+        "operatorObjectId": {
+            "defaultValue": "848e837f-9331-45f3-8baa-ce6003ae2e5f",
+            "type": "string"
+        },
+        "testUserObjectId": {
+            "defaultValue": "ed456158-b734-4dbb-8ba7-7653206db4b9",
+            "type": "string"
+        }
+
+    },
+    "variables": {
+        "storName" : "[concat('stor', uniqueString(parameters('tag')))]",
+        "kvName": "[concat('kv', uniqueString(parameters('tag')))]",
+        "gen1Name": "[concat('gen1', uniqueString(parameters('tag')))]",
+        "gen2Name": "[concat('gen2', uniqueString(parameters('tag')))]",
+        "ehName": "[concat('ehub', uniqueString(parameters('tag')))]",
+        "sbName": "[concat('sbus', uniqueString(parameters('tag')))]",
+
+        "ehAuthRuleResourceId": "[resourceId('Microsoft.Eventhub/namespaces/authorizationRules', variables('ehName'), 'RootManageSharedAccessKey')]",
+        "sbAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('sbName'), 'RootManageSharedAccessKey')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
+            "apiVersion": "2019-04-01",
+            "name": "[variables('storName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_RAGRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "enabled": true
+                        },
+                        "blob": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
+            "apiVersion": "2016-10-01",
+            "name": "[variables('kvName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": [
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[parameters('operatorObjectId')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "Decrypt",
+                                "Encrypt",
+                                "UnwrapKey",
+                                "WrapKey",
+                                "Verify",
+                                "Sign",
+                                "Purge"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List",
+                                "Set",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "Purge"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "ManageContacts",
+                                "ManageIssuers",
+                                "GetIssuers",
+                                "ListIssuers",
+                                "SetIssuers",
+                                "DeleteIssuers",
+                                "Purge"
+                            ]
+                        }
+                    },
+                    {
+                        "tenantId": "[subscription().tenantId]",
+                        "objectId": "[parameters('testUserObjectId')]",
+                        "permissions": {
+                            "keys": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "Decrypt",
+                                "Encrypt",
+                                "UnwrapKey",
+                                "WrapKey",
+                                "Verify",
+                                "Sign",
+                                "Purge"
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List",
+                                "Set",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "Purge"
+                            ],
+                            "certificates": [
+                                "Get",
+                                "List",
+                                "Update",
+                                "Create",
+                                "Import",
+                                "Delete",
+                                "Recover",
+                                "Backup",
+                                "Restore",
+                                "ManageContacts",
+                                "ManageIssuers",
+                                "GetIssuers",
+                                "ListIssuers",
+                                "SetIssuers",
+                                "DeleteIssuers",
+                                "Purge"
+                            ]
+                        }
+                    }
+
+                ],
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": true,
+                "enabledForTemplateDeployment": true
+            }
+        },
+
+        {
+            "type": "Microsoft.DataLakeStore/accounts",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
+            "apiVersion": "2016-11-01",
+            "name": "[variables('gen1Name')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "firewallState": "Disabled",
+                "firewallAllowAzureIps": "Disabled",
+                "firewallRules": [],
+                "trustedIdProviderState": "Disabled",
+                "trustedIdProviders": [],
+                "encryptionState": "Enabled",
+                "encryptionConfig": {
+                    "type": "ServiceManaged"
+                },
+                "newTier": "Consumption"
+            }
+        },
+
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
+            "apiVersion": "2019-04-01",
+            "name": "[variables('gen2Name')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "isHnsEnabled": true,
+                "accessTier": "Cool"
+            }
+        },
+
+        {
+            "type": "Microsoft.EventHub/namespaces",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
+            "apiVersion": "2018-01-01-preview",
+            "name": "[variables('ehName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Basic",
+                "tier": "Basic",
+                "capacity": 1
+            },
+            "properties": {
+                "zoneRedundant": false,
+                "isAutoInflateEnabled": false,
+                "maximumThroughputUnits": 0,
+                "kafkaEnabled": false
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('ehName'), '/RootManageSharedAccessKey')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', variables('ehName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Listen",
+                    "Manage",
+                    "Send"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('ehName'), '/integration')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', variables('ehName'))]"
+            ],
+            "properties": {
+                "messageRetentionInDays": 1,
+                "partitionCount": 2,
+                "status": "Active"
+            }
+        },
+
+
+        {
+            "type": "Microsoft.ServiceBus/namespaces",
+            "tags": {
+                "instance": "[parameters('tag')]"
+            },
+            "apiVersion": "2018-01-01-preview",
+            "name": "[variables('sbName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "properties": {
+                "zoneRedundant": false
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/AuthorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('sbName'), '/RootManageSharedAccessKey')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('sbName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Listen",
+                    "Manage",
+                    "Send"
+                ]
+            }
+        }
+    ],
+    "outputs": {
+        "TenantId" : {
+            "type": "string",
+            "value": "43aaa4f9-8213-466e-8ab3-00c1f0a349ac"
+        },
+        "ClientId" : {
+            "type": "string",
+            "value": "b9b97277-655c-482e-b010-471ffa9f3b67"
+        },
+        "AzureStorageName" : {
+            "type": "string",
+            "value": "[variables('storName')]"
+        },
+        "AzureStorageKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+        },
+        "AzureKeyVaultUri": {
+            "type": "string",
+            "value": "[concat('https://', variables('kvName'), '.vault.azure.net/')]"
+        },
+        "AzureGen1StorageName": {
+            "type": "string",
+            "value": "[variables('gen1Name')]"
+        },
+        "AzureGen2StorageName": {
+            "type": "string",
+            "value": "[variables('gen2Name')]"
+        },
+        "AzureGen2StorageKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('gen2Name')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+        },
+        "AzureEventHubConnectionString": {
+            "type": "string",
+            "value": "[listkeys(variables('ehAuthRuleResourceId'), '2017-04-01').primaryConnectionString]"
+        },
+        "AzureServiceBusConnectionString": {
+            "type": "string",
+            "value": "[listkeys(variables('sbAuthRuleResourceId'), '2017-04-01').primaryConnectionString]"
+        },
+        "OperatorObjectId": {
+            "type": "string",
+            "value": "[parameters('operatorObjectId')]"
+        },
+        "TestUserObjectId": {
+            "type": "string",
+            "value": "[parameters('testUserObjectId')]"
+        }
+
+
+    }
+}

@@ -98,7 +98,7 @@ namespace Scenario
       public async Task RunAsync()
       {
          //create the storage using a factory method
-         IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorage(
+         IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorageWithSharedKey(
             "storage name",
             "storage key");
 
@@ -130,7 +130,7 @@ This is really simple, right? However, the code looks really long and boring. If
 ```csharp
 public async Task BlobStorage_sample2()
 {
-    IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorage(
+    IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorageWithSharedKey(
 		"storage name",
 		"storage key");
 

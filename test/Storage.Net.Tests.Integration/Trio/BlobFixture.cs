@@ -11,10 +11,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 {
    public abstract class BlobFixture : IDisposable
    {
-      private static readonly ITestSettings _settings = new ConfigurationBuilder<ITestSettings>()
-         .UseIniFile("c:\\tmp\\integration-tests.ini")
-         .UseEnvironmentVariables()
-         .Build();
+      private static readonly ITestSettings _settings = Settings.Instance;
 
       private string _testDir;
       private bool _initialised;

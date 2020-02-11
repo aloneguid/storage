@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Api.Gax;
 using Google.Apis.Auth.OAuth2;
-using Google.Apis.Storage.v1.Data;
 using Google.Cloud.Storage.V1;
 using Storage.Net.Blobs;
 using Objects = Google.Apis.Storage.v1.Data.Objects;
 using Object = Google.Apis.Storage.v1.Data.Object;
-using Storage.Net.Streaming;
 using Google;
 using System.Net;
 using System.Linq;
@@ -31,7 +28,7 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
       public GoogleCloudStorageBlobStorage(string bucketName, GoogleCredential credential = null, EncryptionKey encryptionKey = null) : base()
       {
          _client = StorageClient.Create(credential, encryptionKey);
-         this._bucketName = bucketName;
+         _bucketName = bucketName;
       }
 
       protected override async Task<IReadOnlyCollection<Blob>> ListAtAsync(string path, ListOptions options, CancellationToken cancellationToken)
@@ -43,7 +40,7 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
          var page = new List<Blob>();
          do
          {
-            Objects serviceObjects = await request.ExecuteAsync().ConfigureAwait(false);
+            Objects serviceObjects = await request.ExecuteAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if(serviceObjects.Items != null)
             {
@@ -76,6 +73,37 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
             });
 
          return await GConvert.ToBlobsAsync(objects, options);
+      }
+
+      public override async Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+      {
+         GenericValidation.CheckBlobFullPaths(blobs);
+
+         await Task.WhenAll(blobs.Select(b => SetBlobAsync(b, cancellationToken))).ConfigureAwait(false);
+      }
+
+      private async Task SetBlobAsync(Blob blob, CancellationToken cancellationToken = default)
+      {
+         Object item = await _client.GetObjectAsync(_bucketName, StoragePath.Normalize(blob.FullPath), cancellationToken: cancellationToken);
+         
+         if(item.Metadata == null)
+         {
+            item.Metadata = new Dictionary<string, string>();
+         }
+
+         foreach(KeyValuePair<string, string> metadata in blob.Metadata)
+         {
+            if(item.Metadata.ContainsKey(metadata.Key))
+            {
+               item.Metadata[metadata.Key] = metadata.Value;
+            }
+            else
+            {
+               item.Metadata.Add(metadata.Key, metadata.Value);
+            }
+         }
+
+         await _client.UpdateObjectAsync(item, cancellationToken: cancellationToken);
       }
 
       protected override async Task<Blob> GetBlobAsync(string fullPath, CancellationToken cancellationToken)

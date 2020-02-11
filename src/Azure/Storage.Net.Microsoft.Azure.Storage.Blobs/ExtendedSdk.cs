@@ -271,7 +271,7 @@ namespace Blobs
             string continuation = null;
             do
             {
-               string continuationParam = continuation == null ? null : $"&continuation={continuation}";
+               string continuationParam = continuation == null ? null : $"&continuation={continuation.UrlEncode()}";
 
                (PathList pl, IDictionary<string, string> responseHeaders) = await InvokeExtraAsync<PathList>(
                   $"{fs}?resource=filesystem&directory={relativePath.UrlEncode()}&recursive={options.Recurse}{continuationParam}",

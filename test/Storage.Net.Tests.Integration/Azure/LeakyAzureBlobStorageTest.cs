@@ -198,12 +198,12 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.DoesNotContain(containers, c => c.Name == containerName);
       }
 
-      [Fact]
+      /*[Fact]
       public async Task Analytics_has_logs_container()
       {
          IReadOnlyCollection<Blob> containers = await _native.ListAsync();
          Assert.Contains(containers, c => c.Name == "$logs");
-      }
+      }*/
 
       /*[Fact]
       public async Task Snapshots_create()

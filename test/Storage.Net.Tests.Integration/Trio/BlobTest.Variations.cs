@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Net;
-using System.Text;
-using Amazon;
 using Storage.Net.Blobs;
 using Xunit;
 
@@ -81,10 +77,10 @@ namespace Storage.Net.Tests.Integration.Blobs
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
          return StorageFactory.Blobs.AzureDataLakeGen1StoreByClientSecret(
-                  settings.AzureDataLakeStoreAccountName,
-                  settings.AzureDataLakeTenantId,
-                  settings.AzureDataLakePrincipalId,
-                  settings.AzureDataLakePrincipalSecret);
+                  settings.AzureGen1StorageName,
+                  settings.TenantId,
+                  settings.ClientId,
+                  settings.ClientSecret);
       }
    }
 
@@ -105,8 +101,8 @@ namespace Storage.Net.Tests.Integration.Blobs
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
          return StorageFactory.Blobs.AzureDataLakeStorageWithSharedKey(
-            settings.AzureDataLakeGen2Name,
-            settings.AzureDataLakeGen2Key);
+            settings.AzureGen2StorageName,
+            settings.AzureGen2StorageKey);
 
          //return StorageFactory.Blobs.AzureDataLakeGen2StoreBySharedAccessKey(settings.AzureDataLakeGen2Name, settings.AzureDataLakeGen2Key);
       }
@@ -189,10 +185,10 @@ namespace Storage.Net.Tests.Integration.Blobs
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
          return StorageFactory.Blobs.AzureKeyVault(
-                  settings.KeyVaultUri,
-                  settings.KeyVaultTenantId,
-                  settings.KeyVaultClientId,
-                  settings.KeyVaultSecret);
+                  settings.AzureKeyVaultUri,
+                  settings.TenantId,
+                  settings.ClientId,
+                  settings.ClientSecret);
       }
    }
 
@@ -222,13 +218,13 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }*/
 
-   public class AzdbfsFixture : BlobFixture
+   /*public class AzdbfsFixture : BlobFixture
    {
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
          return StorageFactory.Blobs.AzureDatabricksDbfs(settings.DatabricksBaseUri, settings.DatabricksToken, true);
       }
-   }
+   }*/
 
    /* highly experimental
    public class AzdbfsTest : BlobTest, IClassFixture<AzdbfsFixture>

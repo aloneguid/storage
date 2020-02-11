@@ -8,10 +8,7 @@ namespace Storage.Net.Tests.Integration.Messaging
 {
    public abstract class MessagingFixture : IDisposable
    {
-      private static readonly ITestSettings _settings = new ConfigurationBuilder<ITestSettings>()
-            .UseIniFile("c:\\tmp\\integration-tests.ini")
-            .UseEnvironmentVariables()
-            .Build();
+      private static readonly ITestSettings _settings = Settings.Instance;
       public readonly IMessenger Messenger;
       private readonly string _fixtureName;
       protected readonly string _testDir;

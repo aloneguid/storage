@@ -6,85 +6,44 @@ namespace Storage.Net.Tests
 {
    public interface ITestSettings
    {
+      [Option(DefaultValue = "aloneguid")]
+      string DevOpsOrgName { get; }
+
+      [Option(DefaultValue = "AllPublic")]
+      string DevOpsProject { get; }
+
+      [Option(DefaultValue = "8")]
+      string DevOpsVariableSetId { get; }
+
+      string DevOpsPat { get; }
+
+      string ClientId { get; }
+
+      string ClientSecret { get; }
+
+      string TenantId { get; }
+
       #region [ Azure ]
 
-      [Option(Alias = "Azure.Storage.Name")]
       string AzureStorageName { get; }
 
-      [Option(Alias = "Azure.Storage.Key")]
       string AzureStorageKey { get; }
 
-      [Option(Alias = "Azure.Storage.NativeConnectionString")]
+      string AzureGen2StorageName { get; }
+
+      string AzureGen2StorageKey { get; }
+
+      string OperatorObjectId { get; }
+
+      string AzureServiceBusConnectionString { get; }
+
+      string AzureEventHubConnectionString { get; }
+
       string AzureStorageNativeConnectionString { get; }
 
-      [Option(Alias = "Azure.DataLakeGen2.Name")]
-      string AzureDataLakeGen2Name { get; }
+      string AzureGen1StorageName { get; }
 
-      [Option(Alias = "Azure.DataLakeGen2.Key")]
-      string AzureDataLakeGen2Key { get; }
-
-      [Option(Alias = "Azure.DataLakeGen2.TenantId")]
-      string AzureDataLakeGen2TenantId { get; }
-
-      [Option(Alias = "Azure.DataLakeGen2.PrincipalId")]
-      string AzureDataLakeGen2PrincipalId { get; }
-
-      [Option(Alias = "Azure.DataLakeGen2.PrincipalSecret")]
-      string AzureDataLakeGen2PrincipalSecret { get; }
-
-      [Option(Alias = "Azure.DataLakeGen2.TestAdObjectId")]
-      string AzureDataLakeGen2TestObjectId { get; }
-
-      [Option(Alias = "Azure.Storage.QueueName", DefaultValue = "local")]
-      string AzureStorageQueueName { get; }
-
-      [Option(Alias = "Azure.Storage.ContainerSasUri")]
-      Uri AzureContainerSasUri { get; }
-
-      [Option(Alias = "Azure.ServiceBus.ConnectionString")]
-      string ServiceBusConnectionString { get; }
-
-      [Option(DefaultValue = "testqueuelocal")]
-      string ServiceBusQueueName { get; }
-
-      [Option(DefaultValue = "testtopiclocal")]
-      string ServiceBusTopicName { get; }
-
-      [Option(Alias = "Azure.EventHub.ConnectionString")]
-      string EventHubConnectionString { get; }
-
-      [Option(Alias = "Azure.DataLake.TenantId")]
-      string AzureDataLakeTenantId { get; }
-
-      [Option(Alias = "Azure.DataLake.PrincipalId")]
-      string AzureDataLakePrincipalId { get; }
-
-      [Option(Alias = "Azure.DataLake.PrincipalSecret")]
-      string AzureDataLakePrincipalSecret { get; }
-
-      [Option(Alias = "Azure.DataLake.Store.AccountName")]
-      string AzureDataLakeStoreAccountName { get; }
-
-      [Option(Alias = "Azure.DataLake.SubscriptionId")]
-      string AzureDataLakeSubscriptionId { get; }
-
-      [Option(Alias = "Azure.KeyVault.Uri")]
-      Uri KeyVaultUri { get; }
-
-      [Option(Alias = "Azure.KeyVault.TenantId")]
-      string KeyVaultTenantId { get; }
-
-      [Option(Alias = "Azure.KeyVault.ClientId")]
-      string KeyVaultClientId { get; }
-
-      [Option(Alias = "Azure.KeyVault.ClientSecret")]
-      string KeyVaultSecret { get; }
-
-      [Option(Alias = "Azure.Databricks.BaseUri")]
-      string DatabricksBaseUri { get; }
-
-      [Option(Alias = "Azure.Databricks.Token")]
-      string DatabricksToken { get; }
+      Uri AzureKeyVaultUri { get; }
 
       #endregion
 
@@ -150,6 +109,13 @@ namespace Storage.Net.Tests
                   .UseIniFile("c:\\tmp\\integration-tests.ini")
                   .UseEnvironmentVariables()
                   .Build();
+
+               _instance = new ConfigurationBuilder<ITestSettings>()
+                  .UseIniFile("c:\\tmp\\integration-tests.ini")
+                  .UseAzureDevOpsVariableSet(_instance.DevOpsOrgName, _instance.DevOpsProject, _instance.DevOpsPat, _instance.DevOpsVariableSetId)
+                  .UseEnvironmentVariables()
+                  .Build();
+
             }
 
             return _instance;

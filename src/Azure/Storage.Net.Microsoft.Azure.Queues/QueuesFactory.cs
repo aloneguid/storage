@@ -19,14 +19,19 @@ namespace Storage.Net
       /// Creates an instance of a publisher to Azure Storage Queues
       /// </summary>
       /// <param name="factory">Factory reference</param>
-      /// <param name="accountName">Account name</param>
-      /// <param name="storageKey">Storage key</param>
+      /// <param name="accountName">Account name. Must not be <see langword="null"/> or empty.</param>
+      /// <param name="storageKey">Storage key. Must not be <see langword="null"/> or empty.</param>
+      /// <param name="serviceUri">Alternative service uri. Pass <see langword="null"/> for default.</param>
       /// <returns>Generic message publisher interface</returns>
       public static IMessenger AzureStorageQueue(this IMessagingFactory factory,
          string accountName,
-         string storageKey)
+         string storageKey,
+         Uri serviceUri = null)
       {
-         return new AzureStorageQueueMessenger(accountName, storageKey);   //
+         if (serviceUri == null)
+            return new AzureStorageQueueMessenger(accountName, storageKey);
+         
+         return new AzureStorageQueueMessenger(accountName, storageKey, serviceUri);
       }
 
       /// <summary>

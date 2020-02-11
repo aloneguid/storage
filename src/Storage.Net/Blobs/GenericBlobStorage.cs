@@ -137,7 +137,7 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// 
       /// </summary>
-      public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+      public virtual Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
       /// <summary>
       /// Dispose any unused resources

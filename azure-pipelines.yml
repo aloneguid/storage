@@ -24,6 +24,8 @@ variables:
   - group: 'External Resources'
   - name: vmImage
     value: 'ubuntu-16.04'  # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml&viewFallbackFrom=vsts
+  - name: rgName
+    value: 'storagenet-deleteme'
 
 stages:
 - stage: Build
@@ -73,7 +75,9 @@ stages:
 
     # we don't care if tests in other stages are not successful, we want to public this to internal testing
     - task: NuGetCommand@2
+      condition: "eq(variables['Build.SourceBranch'], 'refs/heads/develop')"
       displayName: 'push to internal feed'
+      continueOnError: true
       inputs:
         command: 'push'
         packagesToPush: '$(build.artifactstagingdirectory)/**/*.nupkg'
@@ -86,12 +90,48 @@ stages:
       displayName: 'publish nugets as artifacts'
       inputs:
         ArtifactName: nuget
-
+      
 - stage: Integration
+  condition: "eq(variables['Build.SourceBranch'], 'refs/heads/develop')"
   dependsOn: []
   jobs:
+  - job: Infra
+    displayName: 'Build Test Infrastructure'
+    steps:
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'Deploy Test Azure Resources'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: 'PAYG (personal)'
+        subscriptionId: 'e692471f-4dba-4d86-8940-ce6cca371941'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: $(rgName)
+        location: 'North Europe'
+        templateLocation: 'Linked artifact'
+        csmFile: 'infra/azure.json'
+        deploymentMode: 'Incremental'
+        deploymentOutputs: 'InfraOutput'
+    - task: AzurePowerShell@4
+      displayName: 'Post Configure Resources'
+      inputs:
+        azureSubscription: 'PAYG (personal)'
+        ScriptType: 'FilePath'
+        ScriptPath: 'infra/postconfigure.ps1'
+        ScriptArguments: '-JsonString ''$(InfraOutput)'' -RgName $(rgName)'
+        FailOnStandardError: true
+        azurePowerShellVersion: 'LatestVersion'
+        pwsh: true
+    - task: PowerShell@2
+      displayName: 'Transfer Secrets to Variable Set'
+      inputs:
+        filePath: 'infra/infraset.ps1'
+        arguments: '-JsonString ''$(InfraOutput)'' -Organisation ''aloneguid'' -Project ''AllPublic'' -GroupId ''8'' -Pat ''$(Pat)'''
+        failOnStderr: true
+        pwsh: true
+
   - job: Blobs
     displayName: 'Blobs'
+    dependsOn: [ 'Infra' ]
     pool:
       vmImage: $(vmImage)
     steps:
@@ -103,6 +143,7 @@ stages:
         projects: test/Storage.Net.Tests.Integration/Storage.Net.Tests.Integration.csproj
         arguments: '-c release --filter Category=Blobs'
   - job: Messaging
+    dependsOn: [ 'Infra' ]
     displayName: 'Messaging'
     pool:
       vmImage: $(vmImage)

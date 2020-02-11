@@ -93,7 +93,7 @@ namespace Storage.Net.Tests.Integration.Messaging
    {
       protected override IMessenger CreateMessenger(ITestSettings settings)
       {
-         return StorageFactory.Messages.AzureServiceBus(settings.ServiceBusConnectionString);
+         return StorageFactory.Messages.AzureServiceBus(settings.AzureServiceBusConnectionString);
 
       }
    }
@@ -120,7 +120,7 @@ namespace Storage.Net.Tests.Integration.Messaging
    {
       protected override IMessenger CreateMessenger(ITestSettings settings)
       {
-         return StorageFactory.Messages.AzureEventHub(settings.EventHubConnectionString);
+         return StorageFactory.Messages.AzureEventHub(settings.AzureEventHubConnectionString + ";EntityPath=integration");
       }
    }
 
