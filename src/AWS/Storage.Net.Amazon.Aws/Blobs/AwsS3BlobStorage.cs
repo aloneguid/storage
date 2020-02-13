@@ -23,9 +23,11 @@ namespace Storage.Net.Amazon.Aws.Blobs
    {
       private const int ListChunkSize = 10;
       private readonly string _bucketName;
+      private readonly bool _tryCreateBucketOnInitialization;
       private readonly AmazonS3Client _client;
       private readonly TransferUtility _fileTransferUtility;
       private bool _initialised = false;
+      
 
 
       /// <summary>
@@ -63,8 +65,9 @@ namespace Storage.Net.Amazon.Aws.Blobs
       /// <summary>
       /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint
       /// </summary>
-      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string sessionToken, string bucketName, string region, string serviceUrl)
-         : this(accessKeyId, secretAccessKey, sessionToken, bucketName, CreateConfig(region, serviceUrl))
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string sessionToken, string bucketName, string region, string serviceUrl, 
+         bool tryCreateBucketOnInitialization = true)
+         : this(accessKeyId, secretAccessKey, sessionToken, bucketName, CreateConfig(region, serviceUrl), tryCreateBucketOnInitialization)
       {
       }
 
@@ -82,7 +85,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
       /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given S3 client configuration
       /// </summary>
       public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string sessionToken,
-         string bucketName, AmazonS3Config clientConfig)
+         string bucketName, AmazonS3Config clientConfig, bool tryCreateBucketOnInitialization = true)
       {
          if(accessKeyId == null)
             throw new ArgumentNullException(nameof(accessKeyId));
@@ -94,6 +97,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
             ? (AWSCredentials)new BasicAWSCredentials(accessKeyId, secretAccessKey)
             : new SessionAWSCredentials(accessKeyId, secretAccessKey, sessionToken);
 
+         _tryCreateBucketOnInitialization = tryCreateBucketOnInitialization;
          _client = new AmazonS3Client(awsCreds, clientConfig);
 
          _fileTransferUtility = new TransferUtility(_client);
@@ -103,17 +107,24 @@ namespace Storage.Net.Amazon.Aws.Blobs
       {
          if(!_initialised)
          {
-            try
+            if(_tryCreateBucketOnInitialization)
             {
-               var request = new PutBucketRequest { BucketName = _bucketName };
+               try
+               {
+                  var request = new PutBucketRequest { BucketName = _bucketName };
 
-               await _client.PutBucketAsync(request);
+                  await _client.PutBucketAsync(request);
 
-               _initialised = true;
+                  _initialised = true;
+               }
+               catch(AmazonS3Exception ex) when(ex.ErrorCode == "BucketAlreadyOwnedByYou")
+               {
+                  //ignore this error as bucket already exists
+                  _initialised = true;
+               }
             }
-            catch(AmazonS3Exception ex) when(ex.ErrorCode == "BucketAlreadyOwnedByYou")
+            else
             {
-               //ignore this error as bucket already exists
                _initialised = true;
             }
          }
