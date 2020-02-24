@@ -83,6 +83,15 @@ namespace Storage.Net.Amazon.Aws.Blobs
       /// </summary>
       public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string sessionToken,
          string bucketName, AmazonS3Config clientConfig)
+         : this(accessKeyId, secretAccessKey, sessionToken, bucketName, clientConfig, new TransferUtilityConfig())
+      {
+      }
+
+      /// <summary>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given S3 client configuration
+      /// </summary>
+      public AwsS3BlobStorage(string accessKeyId, string secretAccessKey, string sessionToken,
+         string bucketName, AmazonS3Config clientConfig, TransferUtilityConfig transferUtilityConfig)
       {
          if(accessKeyId == null)
             throw new ArgumentNullException(nameof(accessKeyId));
@@ -96,7 +105,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
          _client = new AmazonS3Client(awsCreds, clientConfig);
 
-         _fileTransferUtility = new TransferUtility(_client);
+         _fileTransferUtility = new TransferUtility(_client, transferUtilityConfig ?? new TransferUtilityConfig());
       }
 
       private async Task<AmazonS3Client> GetClientAsync()
