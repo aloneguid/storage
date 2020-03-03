@@ -218,22 +218,28 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }*/
 
-   /*public class AzdbfsFixture : BlobFixture
+#if DEBUG
+   public class AzdbfsFixture : BlobFixture
    {
+      public AzdbfsFixture() : base("storagenet")
+      {
+
+      }
+
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
-         return StorageFactory.Blobs.AzureDatabricksDbfs(settings.DatabricksBaseUri, settings.DatabricksToken, true);
+         return StorageFactory.Blobs.AzureDatabricksDbfs("https://northeurope.azuredatabricks.net", "", true);
       }
-   }*/
+   }
 
-   /* highly experimental
+   //highly experimental
    public class AzdbfsTest : BlobTest, IClassFixture<AzdbfsFixture>
    {
       public AzdbfsTest(AzdbfsFixture fixture) : base(fixture)
       {
       }
    }
-   */
+#endif
 
    public class GcpFixture : BlobFixture
    {
