@@ -181,7 +181,32 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// 
       /// </summary>
-      public virtual Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public virtual async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
+      {
+         if(!TryExplodeToMountPoint(fullPath, out IBlobStorage storage, out string relPath))
+            return null;
+
+         return await storage.OpenReadAsync(relPath, cancellationToken).ConfigureAwait(false);
+      }
+
+      private bool TryExplodeToMountPoint(string fullPath, out IBlobStorage storage, out string relPath)
+      {
+         storage = null;
+         relPath = null;
+
+         if(fullPath == null)
+            return false;
+
+         fullPath = StoragePath.Normalize(fullPath);
+
+         Blob mountPoint = _mountPoints.FirstOrDefault(mp => fullPath.StartsWith(mp.FullPath));
+         if(mountPoint == null)
+            return false;
+
+         storage = (IBlobStorage)mountPoint.Tag;
+         relPath = StoragePath.Normalize(fullPath.Substring(mountPoint.FullPath.Length));
+         return true;
+      }
 
       /// <summary>
       /// 
