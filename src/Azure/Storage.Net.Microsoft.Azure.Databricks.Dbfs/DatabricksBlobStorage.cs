@@ -16,6 +16,7 @@ namespace Storage.Net.Databricks
          var client = DatabricksClient.CreateClient(baseUri, token);
 
          Mount("dbfs", new DbfsStorage(client.Dbfs));
+         Mount("workspace", new WorkspaceStorage(client.Workspace));
       }
    }
 }

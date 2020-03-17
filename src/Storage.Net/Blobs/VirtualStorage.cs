@@ -63,7 +63,7 @@ namespace Storage.Net.Blobs
          if(!_pathToMountBlobs.TryGetValue(containerPath, out HashSet<Blob> blobs))
          {
             blobs = new HashSet<Blob>();
-            _pathToMountBlobs[path] = blobs;
+            _pathToMountBlobs[containerPath] = blobs;
          }
 
          // this is the mount
@@ -129,7 +129,12 @@ namespace Storage.Net.Blobs
                }
                else
                {
-                  mountPoints.Add(blob);
+                  //mountPoints.Add(blob);
+
+                  if(!StoragePath.IsRootPath(blob.FullPath))
+                  {
+                     result.Add(blob);
+                  }
                }
             }
 
