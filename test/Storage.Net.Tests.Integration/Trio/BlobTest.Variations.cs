@@ -228,7 +228,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
-         return StorageFactory.Blobs.AzureDatabricksDbfs("https://northeurope.azuredatabricks.net", "", true);
+         return StorageFactory.Blobs.Databricks("https://northeurope.azuredatabricks.net", "");
       }
    }
 

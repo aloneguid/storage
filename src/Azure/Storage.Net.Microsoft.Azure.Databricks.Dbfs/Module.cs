@@ -2,7 +2,7 @@
 using Storage.Net.ConnectionString;
 using Storage.Net.Messaging;
 
-namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
+namespace Storage.Net.Databricks
 {
    class Module : IExternalModule, IConnectionFactory
    {
@@ -14,10 +14,8 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
          {
             connectionString.GetRequired("baseUri", true, out string baseUri);
             connectionString.GetRequired("token", true, out string token);
-            string isReadOnlyString = connectionString.Get("isReadOnly");
-            bool.TryParse(isReadOnlyString, out bool isReadOnly);
 
-            return new AzureDatabricksDbfsBlobStorage(baseUri, token, isReadOnly);
+            return new DatabricksBlobStorage(baseUri, token);
          }
 
          return null;

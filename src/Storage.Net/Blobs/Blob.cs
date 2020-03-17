@@ -89,6 +89,8 @@ namespace Storage.Net.Blobs
       /// </summary>
       public Dictionary<string, string> Metadata { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+      internal object Tag { get; set; }
+
       /// <summary>
       /// Tries to add properties in pairs when value is not null
       /// </summary>
@@ -137,10 +139,19 @@ namespace Storage.Net.Blobs
       public Blob(string fullPath, BlobItemKind kind = BlobItemKind.File)
       {
          string path = StoragePath.Normalize(fullPath);
-         string[] parts = StoragePath.Split(path);
 
-         Name = parts.Last();
-         FolderPath = StoragePath.GetParent(path);
+         if(StoragePath.IsRootPath(path))
+         {
+            Name = StoragePath.RootFolderPath;
+            FolderPath = StoragePath.RootFolderPath;
+         }
+         else
+         {
+            string[] parts = StoragePath.Split(path);
+
+            Name = parts.Last();
+            FolderPath = StoragePath.GetParent(path);
+         }
 
          Kind = kind;
       }
