@@ -23,7 +23,23 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          IReadOnlyCollection<Blob> roots = await _storage.ListAsync();
 
-         Assert.Equal(2, roots.Count);
+         Assert.Equal(2, roots.Count); // dbfs + notebooks
+      }
+
+      [Fact]
+      public async Task List_dbfs_root()
+      {
+         IReadOnlyCollection<Blob> roots = await _storage.ListAsync("/dbfs");
+
+         Assert.True(roots.Count > 0);
+      }
+
+      [Fact]
+      public async Task List_notebooks_root()
+      {
+         IReadOnlyCollection<Blob> roots = await _storage.ListAsync("/notebooks");
+
+         Assert.True(roots.Count > 0);
       }
    }
 }

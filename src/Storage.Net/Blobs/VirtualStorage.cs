@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,6 +16,7 @@ namespace Storage.Net.Blobs
    public class VirtualStorage : IBlobStorage
    {
       private readonly ConcurrentDictionary<string, HashSet<Blob>> _pathToMountBlobs = new ConcurrentDictionary<string, HashSet<Blob>>();
+      private readonly List<Blob> _mountPoints = new List<Blob>();
 
       /// <summary>
       /// Creates an instance
@@ -37,6 +39,9 @@ namespace Storage.Net.Blobs
             throw new ArgumentNullException(nameof(storage));
 
          path = StoragePath.Normalize(path);
+
+         _mountPoints.Add(new Blob(path) { Tag = storage });
+
          string absPath = null;
 
          string[] parts = StoragePath.Split(path);
@@ -119,8 +124,6 @@ namespace Storage.Net.Blobs
          //mount folders/points
          if(_pathToMountBlobs.TryGetValue(options.FolderPath, out HashSet<Blob> mounts))
          {
-            var mountPoints = new List<Blob>();
-
             foreach(Blob blob in mounts)
             {
                if(blob.Tag == null)
@@ -137,15 +140,6 @@ namespace Storage.Net.Blobs
                   }
                }
             }
-
-            foreach(Blob mountPoint in mountPoints)
-            {
-               IBlobStorage storage = (IBlobStorage)mountPoint.Tag;
-
-               IReadOnlyCollection<Blob> items = await storage.ListAsync(options, cancellationToken);
-
-               result.AddRange(items);
-            }
          }
 
          /*
@@ -159,6 +153,27 @@ namespace Storage.Net.Blobs
           * 
           * 
           */
+
+         //find mount points
+
+         List<Blob> mountPoints = _mountPoints.Where(mp => options.FolderPath.StartsWith(mp.FullPath)).ToList();
+
+         foreach(Blob mountPoint in mountPoints)
+         {
+            IBlobStorage storage = (IBlobStorage)mountPoint.Tag;
+
+            string relPath = options.FolderPath.Substring(mountPoint.FullPath.Length);
+
+            ListOptions mountOptions = options.Clone();
+            mountOptions.FolderPath = StoragePath.Normalize(relPath);
+
+            IReadOnlyCollection<Blob> mountResults = await storage.ListAsync(mountOptions, cancellationToken);
+            foreach(Blob blob in mountResults)
+            {
+               blob.PrependPath(mountPoint.FullPath);
+            }
+            result.AddRange(mountResults);
+         }
 
          return result;
       }

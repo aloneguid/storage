@@ -173,7 +173,7 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// Returns true if this item is a folder and it's a root folder
       /// </summary>
-      public bool IsRootFolder => Kind == BlobItemKind.Folder && StoragePath.IsRootPath(FolderPath);
+      public bool IsRootFolder => Kind == BlobItemKind.Folder && StoragePath.IsRootPath(FullPath);
 
       /// <summary>
       /// Full blob info, i.e type, id and path
@@ -297,6 +297,18 @@ namespace Storage.Net.Blobs
                }
             }
          }
+      }
+
+      /// <summary>
+      /// Prepends path to this blob's path without modifying blob's properties
+      /// </summary>
+      /// <param name="path"></param>
+      public void PrependPath(string path)
+      {
+         if(path == null || StoragePath.IsRootPath(path))
+            return;
+
+         FolderPath = StoragePath.Combine(path, FolderPath);
       }
    }
 }
