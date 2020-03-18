@@ -55,7 +55,7 @@ stages:
       displayName: 'build all'
       inputs:
         projects: src/storage.sln
-        arguments: '-c release /p:Version=$(v)'
+        arguments: '-c release /p:Version=$(pv)'
 
     - task: CopyFiles@2
       displayName: 'copy generated nugets'
