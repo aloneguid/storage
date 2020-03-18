@@ -14,7 +14,7 @@ namespace Storage.Net
       /// </summary>
       /// <param name="factory"></param>
       /// <returns></returns>
-      public static IModulesFactory UseAzureDatabricksDbfsStorage(this IModulesFactory factory)
+      public static IModulesFactory UseAzureDatabricksStorage(this IModulesFactory factory)
       {
          return factory.Use(new Module());
       }
