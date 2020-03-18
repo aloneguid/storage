@@ -4,8 +4,10 @@ using Storage.Net.Blobs;
 
 namespace Storage.Net.Databricks
 {
-   class DatabricksBlobStorage : VirtualStorage
+   class DatabricksBlobStorage : VirtualStorage, IDatabricksStorage
    {
+      private readonly DatabricksClient _nativeClient;
+
       public DatabricksBlobStorage(string baseUri, string token)
       {
          if(baseUri is null)
@@ -13,10 +15,12 @@ namespace Storage.Net.Databricks
          if(token is null)
             throw new ArgumentNullException(nameof(token));
 
-         var client = DatabricksClient.CreateClient(baseUri, token);
+         _nativeClient = DatabricksClient.CreateClient(baseUri, token);
 
-         Mount("dbfs", new DbfsStorage(client.Dbfs));
-         Mount("workspace", new WorkspaceStorage(client.Workspace));
+         Mount("dbfs", new DbfsStorage(_nativeClient.Dbfs));
+         Mount("workspace", new WorkspaceStorage(_nativeClient.Workspace));
       }
+
+      public DatabricksClient GetMicrosoftAzureDatabrickClientLibraryClient() => _nativeClient;
    }
 }
