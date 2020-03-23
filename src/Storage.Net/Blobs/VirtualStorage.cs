@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
+using NetBox.Extensions;
 
 namespace Storage.Net.Blobs
 {
@@ -13,7 +14,7 @@ namespace Storage.Net.Blobs
    /// Allows to combine several storage providers (or even of the same type) in one virtual storage interface.
    /// Providers are distinguished using a prefix. Essentially this allows to mount providers in a virtual filesystem.
    /// </summary>
-   public class VirtualStorage : IBlobStorage
+   public class VirtualStorage : IVirtualStorage
    {
       private readonly ConcurrentDictionary<string, HashSet<Blob>> _pathToMountBlobs = new ConcurrentDictionary<string, HashSet<Blob>>();
       private readonly List<Blob> _mountPoints = new List<Blob>();
@@ -85,13 +86,115 @@ namespace Storage.Net.Blobs
          }
       }
 
+      class MpTag : MpTag<object>
+      {
+      }
+
+      class MpTag<T>
+      {
+         public string fullPath;
+         public string relPath;
+         public T result;
+      }
+
+      private Dictionary<IBlobStorage, List<MpTag<T>>> Explode<T>(
+         IEnumerable<string> fullPaths,
+         out Dictionary<string, MpTag<T>> fullPathToTag)
+      {
+         var dic1 = new Dictionary<IBlobStorage, List<MpTag<T>>>();
+         fullPathToTag = new Dictionary<string, MpTag<T>>();
+         //var fullToRel = new Dictionary<string, string>();
+
+         foreach(string fp in fullPaths)
+         {
+            if(!TryExplodeToMountPoint(fp, out IBlobStorage storage, out string relPath))
+            {
+               fullPathToTag[fp] = null;
+            }
+            else
+            {
+               if(!dic1.TryGetValue(storage, out List<MpTag<T>> tags))
+               {
+                  tags = new List<MpTag<T>>();
+                  dic1[storage] = tags;
+               }
+
+               var tag = new MpTag<T> { fullPath = fp, relPath = relPath };
+
+               tags.Add(tag);
+               fullPathToTag[fp] = tag;
+            }
+         }
+         return dic1;
+      }
+
+      private Dictionary<IBlobStorage, List<string>> Explode(IEnumerable<string> fullPaths)
+      {
+         var map = new Dictionary<IBlobStorage, List<string>>();
+
+         foreach(string fp in fullPaths)
+         {
+            if(TryExplodeToMountPoint(fp, out IBlobStorage storage, out string relPath))
+            { 
+               if(!map.TryGetValue(storage, out List<string> relPaths))
+               {
+                  relPaths = new List<string>();
+                  map[storage] = relPaths;
+               }
+
+               relPaths.Add(relPath);
+            }
+         }
+         return map;
+      }
+
+      private async Task ExecuteAsync(
+         IEnumerable<string> fullPaths,
+         Func<IBlobStorage, IEnumerable<string>, Task> action)
+      {
+         Dictionary<IBlobStorage, List<string>> map = Explode(fullPaths);
+
+         IEnumerable<Task> tasks = map.Select(pair => action(pair.Key, pair.Value));
+
+         await Task.WhenAll(tasks).ConfigureAwait(false);
+      }
+
+      private async Task<IReadOnlyCollection<TResult>> ExecuteAsync<TResult>(
+         IEnumerable<string> fullPaths,
+         Func<IBlobStorage, IEnumerable<string>, Task<IReadOnlyCollection<TResult>>> action)
+      {
+         Dictionary<IBlobStorage, List<MpTag<TResult>>> dic = Explode<TResult>(
+            fullPaths,
+            out Dictionary<string, MpTag<TResult>> fullPathToTag);
+
+         // execute and assign result
+         foreach(KeyValuePair<IBlobStorage, List<MpTag<TResult>>> pair in dic)
+         {
+            IEnumerable<string> rps = pair.Value.Select(v => v.relPath);
+
+            IReadOnlyCollection<TResult> br = await action(pair.Key, rps);
+
+            foreach(Tuple<TResult, MpTag<TResult>> doublePair in EnumerableEx.MultiIterate(br, pair.Value))
+            {
+               doublePair.Item2.result = doublePair.Item1;
+            }
+         }
+
+         // collect full result
+         return fullPaths.Select(fp => fullPathToTag[fp].result).ToList();
+      }
+
       /// <summary>
       /// 
       /// </summary>
       /// <param name="fullPaths"></param>
       /// <param name="cancellationToken"></param>
       /// <returns></returns>
-      public virtual Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public virtual Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
+      {
+         return ExecuteAsync(fullPaths, (storage, paths) => storage.DeleteAsync(paths, cancellationToken));
+      }
+
 
       /// <summary>
       /// 
@@ -104,12 +207,22 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// 
       /// </summary>
-      public virtual Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public virtual Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
+      {
+         return ExecuteAsync(
+            fullPaths,
+            (storage, fps) => storage.ExistsAsync(fps, cancellationToken));
+      }
 
       /// <summary>
       /// 
       /// </summary>
-      public virtual Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public virtual Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
+      {
+         return ExecuteAsync(
+            fullPaths,
+            (storage, fps) => storage.GetBlobsAsync(fps, cancellationToken));
+      }
 
       /// <summary>
       /// 
@@ -208,19 +321,31 @@ namespace Storage.Net.Blobs
          return true;
       }
 
-      /// <summary>
-      /// 
-      /// </summary>
-      public virtual Task<ITransaction> OpenTransactionAsync() => throw new NotImplementedException();
+
 
       /// <summary>
       /// 
       /// </summary>
-      public virtual Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public virtual Task<ITransaction> OpenTransactionAsync() => null;
 
       /// <summary>
       /// 
       /// </summary>
-      public virtual Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public virtual Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
+      {
+         throw new NotImplementedException();
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      public virtual async Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+      {
+         if(!TryExplodeToMountPoint(fullPath, out IBlobStorage storage, out string relPath))
+            return;
+
+
+         await storage.WriteAsync(relPath, dataStream, append, cancellationToken).ConfigureAwait(false);
+      }
    }
 }

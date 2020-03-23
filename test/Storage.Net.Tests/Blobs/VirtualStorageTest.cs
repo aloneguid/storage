@@ -10,7 +10,7 @@ namespace Storage.Net.Tests.Blobs
 {
    public class VirtualStorageTest
    {
-      private readonly VirtualStorage _vs = new VirtualStorage();
+      private readonly IVirtualStorage _vs = StorageFactory.Blobs.Virtual();
       private readonly IBlobStorage _ms0 = StorageFactory.Blobs.InMemory();
       private readonly IBlobStorage _ms1 = StorageFactory.Blobs.InMemory();
       private readonly IBlobStorage _ms2 = StorageFactory.Blobs.InMemory();
@@ -41,6 +41,15 @@ namespace Storage.Net.Tests.Blobs
          Assert.Equal(2, all.Count);   // "mnt" folder
          Assert.Equal(new Blob("/mnt", BlobItemKind.Folder), all.First());
          Assert.Equal(new Blob("1.txt"), all.Skip(1).First());
+      }
+
+      [Fact]
+      public async Task Mass_exists_calls_both_mounts()
+      {
+         await _ms1.WriteTextAsync("ms1.txt", "dfadf");
+         await _ms2.WriteTextAsync("ms2.txt", "dfafsdf");
+
+         await _vs.ExistsAsync(new[] { "/mnt/ms1/ms1.txt", "/mnt/ms2/ms2.txt" });
       }
    }
 }

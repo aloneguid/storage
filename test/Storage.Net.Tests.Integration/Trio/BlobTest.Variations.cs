@@ -259,4 +259,23 @@ namespace Storage.Net.Tests.Integration.Blobs
 
       }
    }
+
+   public class VirtualStorageFixture : BlobFixture
+   {
+      protected override IBlobStorage CreateStorage(ITestSettings settings)
+      {
+         IVirtualStorage vs = StorageFactory.Blobs.Virtual();
+         vs.Mount("/", StorageFactory.Blobs.InMemory());
+         vs.Mount("/mnt/s0", StorageFactory.Blobs.InMemory());
+         return vs;
+      }
+   }
+
+   public class VirtualStorageTest : BlobTest, IClassFixture<VirtualStorageFixture>
+   {
+      public VirtualStorageTest(VirtualStorageFixture fixture): base(fixture)
+      {
+
+      }
+   }
 }
