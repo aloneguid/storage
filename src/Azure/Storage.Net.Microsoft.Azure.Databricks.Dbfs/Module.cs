@@ -10,7 +10,7 @@ namespace Storage.Net.Databricks
 
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == KnownPrefix.DatabricksDbfs)
+         if(connectionString.Prefix == KnownPrefix.Databricks)
          {
             connectionString.GetRequired("baseUri", true, out string baseUri);
             connectionString.GetRequired("token", true, out string token);

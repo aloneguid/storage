@@ -58,5 +58,11 @@ namespace Storage.Net.Tests.Integration.Azure
          string dbcSource = await _storage.ReadTextAsync(notebook + "#dbc");
 
       }
+
+      [Fact]
+      public async Task Import_notebook()
+      {
+         await _storage.WriteTextAsync("/workspace/integration/one/mine.scala", $"import sys # generated {DateTime.Now}");
+      }
    }
 }
