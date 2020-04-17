@@ -42,6 +42,7 @@ namespace Storage.Net.Databricks
          if(fullPath is null)
             throw new ArgumentNullException(nameof(fullPath));
 
+
          //parse optional format
          ExportFormat exportFormat = ExportFormat.SOURCE;
          int hashIdx = fullPath.LastIndexOf("#");
@@ -55,7 +56,10 @@ namespace Storage.Net.Databricks
             }
          }
 
-         byte[] notebookBytes = await _api.Export(StoragePath.Normalize(fullPath, true), exportFormat);
+         //notebooks are passed with extensions at the end (.py, .scala etc.) so you need to remove them first
+         string path = Path.ChangeExtension(fullPath, null);   // removes extension
+
+         byte[] notebookBytes = await _api.Export(StoragePath.Normalize(path, true), exportFormat);
          return new MemoryStream(notebookBytes);
       }
 
