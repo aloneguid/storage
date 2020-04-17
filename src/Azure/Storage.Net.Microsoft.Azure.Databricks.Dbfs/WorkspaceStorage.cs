@@ -25,7 +25,7 @@ namespace Storage.Net.Databricks
       {
          IEnumerable<ObjectInfo> objects = await _api.List(StoragePath.Normalize(path, true)).ConfigureAwait(false);
 
-         return objects.Select(ToBlob).ToList();
+         return objects.Select(ToBlob).Where(b => b != null).ToList();
       }
 
       /// <summary>
@@ -78,12 +78,43 @@ namespace Storage.Net.Databricks
 
       private Blob ToBlob(ObjectInfo oi)
       {
-         var blob = new Blob(oi.Path, oi.ObjectType == ObjectType.DIRECTORY ? BlobItemKind.Folder : BlobItemKind.File);
-         blob.TryAddProperties(
-            "ObjectId", oi.ObjectId,
-            "ObjectType", oi.ObjectType,
-            "Language", oi.Language);
-         return blob;
+         if(oi.ObjectType == ObjectType.DIRECTORY)
+         {
+            var blob = new Blob(oi.Path, BlobItemKind.Folder);
+            blob.TryAddProperties(
+               "ObjectId", oi.ObjectId,
+               "ObjectType", oi.ObjectType);
+            return blob;
+         }
+         else if(oi.ObjectType == ObjectType.NOTEBOOK)
+         {
+            string path = oi.Path;
+
+            switch(oi.Language.Value)
+            {
+               case Language.PYTHON:
+                  path += ".py";
+                  break;
+               case Language.SCALA:
+                  path += ".scala";
+                  break;
+               case Language.R:
+                  path += ".r";
+                  break;
+               case Language.SQL:
+                  path += ".sql";
+                  break;
+            }
+
+            var blob = new Blob(path, BlobItemKind.File);
+            blob.TryAddProperties(
+               "ObjectId", oi.ObjectId,
+               "ObjectType", oi.ObjectType,
+               "Language", oi.Language.Value);
+            return blob;
+         }
+
+         return null;
       }
 
       private static void GetImportParameters(string path, out ExportFormat exportFormat, out Language? language)
