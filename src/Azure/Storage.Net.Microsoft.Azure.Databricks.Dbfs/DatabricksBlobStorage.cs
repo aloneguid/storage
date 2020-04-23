@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Azure.Databricks.Client;
 using Storage.Net.Blobs;
 
@@ -7,6 +8,7 @@ namespace Storage.Net.Databricks
    class DatabricksBlobStorage : VirtualStorage, IDatabricksStorage
    {
       private readonly DatabricksClient _nativeClient;
+      private readonly SecretStorage _ss;
 
       public DatabricksBlobStorage(string baseUri, string token)
       {
@@ -19,8 +21,15 @@ namespace Storage.Net.Databricks
 
          Mount("dbfs", new DbfsStorage(_nativeClient.Dbfs));
          Mount("workspace", new WorkspaceStorage(_nativeClient.Workspace));
+         Mount("secrets", _ss = new SecretStorage(_nativeClient.Secrets));
       }
 
       public DatabricksClient GetMicrosoftAzureDatabrickClientLibraryClient() => _nativeClient;
+
+      public Task CreateSecretsScope(string name, string initialManagePrincipal = null)
+      {
+         return _ss.CreateSecretsScope(name, initialManagePrincipal);
+
+      }
    }
 }

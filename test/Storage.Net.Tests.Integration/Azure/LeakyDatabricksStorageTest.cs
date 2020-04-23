@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Databricks.Client;
 using Storage.Net.Blobs;
+using Storage.Net.Databricks;
 using Xunit;
 
 namespace Storage.Net.Tests.Integration.Azure
@@ -12,12 +13,12 @@ namespace Storage.Net.Tests.Integration.Azure
    [Trait("Category", "Blobs")]
    public class LeakyDatabricksStorageTest
    {
-      private readonly IBlobStorage _storage;
+      private readonly IDatabricksStorage _storage;
 
       public LeakyDatabricksStorageTest()
       {
          ITestSettings settings = Settings.Instance;
-         _storage = StorageFactory.Blobs.Databricks(settings.DatabricksBaseUri, settings.DatabricksToken);
+         _storage = (IDatabricksStorage)StorageFactory.Blobs.Databricks(settings.DatabricksBaseUri, settings.DatabricksToken);
       }
 
       [Fact]
@@ -63,6 +64,20 @@ namespace Storage.Net.Tests.Integration.Azure
       public async Task Import_notebook()
       {
          await _storage.WriteTextAsync("/workspace/integration/one/mine.scala", $"import sys # generated {DateTime.Now}");
+      }
+
+      [Fact]
+      public async Task List_secret_scopes()
+      {
+         await _storage.CreateSecretsScope("ivan");
+
+         IReadOnlyCollection<Blob> scopes = await _storage.ListAsync("/secrets");
+      }
+
+      [Fact]
+      public async Task Put_secret()
+      {
+         await _storage.WriteTextAsync("secrets/ivan/tag", "secret");
       }
    }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Databricks.Client;
+﻿using System.Threading.Tasks;
+using Microsoft.Azure.Databricks.Client;
 using Storage.Net.Blobs;
 
 namespace Storage.Net.Databricks
@@ -13,5 +14,14 @@ namespace Storage.Net.Databricks
       /// </summary>
       /// <returns></returns>
       DatabricksClient GetMicrosoftAzureDatabrickClientLibraryClient();
+
+      /// <summary>
+      /// Crates a new secret scope. If scope already exists the call succeeds silently.
+      /// Note also that scopes are created automatically when you try to write a secret (/secrets/scope_name/key).
+      /// </summary>
+      /// <param name="name"></param>
+      /// <param name="initialManagePrincipal"></param>
+      /// <returns></returns>
+      Task CreateSecretsScope(string name, string initialManagePrincipal = null);
    }
 }
