@@ -1,5 +1,6 @@
 ﻿using System;
 using Azure.Storage;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
 
 namespace Storage.Net.Microsoft.Azure.Storage.Blobs
@@ -40,6 +41,24 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          sas.SetPermissions((BlobContainerSasPermissions)(int)Permissions);
 
          string query = sas.ToSasQueryParameters(sasSigningCredentials).ToString();
+         return query;
+      }
+      internal string ToSasQuery(UserDelegationKey userDelegationKey, string accountName, string containerName)
+      {
+         if(userDelegationKey is null)
+            throw new ArgumentNullException(nameof(userDelegationKey));
+
+         var sas = new BlobSasBuilder
+         {
+            BlobContainerName = containerName,
+            Protocol = SasProtocol.Https,
+            StartsOn = StartTime,
+            ExpiresOn = ExpiryTime
+         };
+
+         sas.SetPermissions((BlobSasPermissions)(int)Permissions);
+
+         string query = sas.ToSasQueryParameters(userDelegationKey, accountName).ToString();
          return query;
       }
    }

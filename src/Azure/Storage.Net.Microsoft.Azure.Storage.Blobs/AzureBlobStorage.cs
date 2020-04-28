@@ -26,6 +26,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
    {
       private const int BrowserParallelism = 10;
       private readonly BlobServiceClient _client;
+      private readonly string _accountName;
       private readonly StorageSharedKeyCredential _sasSigningCredentials;
       private readonly string _containerName;
       private readonly ConcurrentDictionary<string, BlobContainerClient> _containerNameToContainerClient =
@@ -38,6 +39,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          string containerName = null)
       {
          _client = blobServiceClient ?? throw new ArgumentNullException(nameof(blobServiceClient));
+         _accountName = accountName ?? throw new ArgumentNullException(nameof(accountName));
          _sasSigningCredentials = sasSigningCredentials;
          _containerName = containerName;
          
@@ -302,24 +304,32 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          return Task.FromResult(sas);
       }
 
-      public Task<string> GetContainerSasAsync(
+      public async Task<string> GetContainerSasAsync(
          string containerName,
          ContainerSasPolicy containerSasPolicy,
          bool includeUrl = true,
          CancellationToken cancellationToken = default)
       {
-         string sas = containerSasPolicy.ToSasQuery(_sasSigningCredentials, containerName);
-
+         string sas;
+         if(_sasSigningCredentials != null)
+         {
+            sas = containerSasPolicy.ToSasQuery(_sasSigningCredentials, containerName);
+         }
+         else
+         {
+            UserDelegationKey userDelegationKey = await _client.GetUserDelegationKeyAsync(containerSasPolicy.StartTime, containerSasPolicy.ExpiryTime);
+            sas = containerSasPolicy.ToSasQuery(userDelegationKey, _accountName, containerName);
+         }
          if(includeUrl)
          {
             string url = _client.Uri.ToString();
             url += containerName;
             url += "/?";
             url += sas;
-            return Task.FromResult(url);
+            return url;
          }
 
-         return Task.FromResult(sas);
+         return sas;
       }
 
       public async Task<string> GetBlobSasAsync(
@@ -332,9 +342,17 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
             blobSasPolicy = new BlobSasPolicy(DateTime.UtcNow, TimeSpan.FromHours(1)) { Permissions = BlobSasPermission.Read };
 
          (BlobContainerClient container, string path) = await GetPartsAsync(fullPath, false).ConfigureAwait(false);
-
-         string sas = blobSasPolicy.ToSasQuery(_sasSigningCredentials, container.Name, path);
-
+         string sas;
+         if(_sasSigningCredentials != null)
+         {
+            sas = blobSasPolicy.ToSasQuery(_sasSigningCredentials, container.Name, path);
+         }
+         else
+         {
+            UserDelegationKey userDelegationKey = await _client.GetUserDelegationKeyAsync(blobSasPolicy.StartTime, blobSasPolicy.ExpiryTime);
+            sas = blobSasPolicy.ToSasQuery(userDelegationKey, _accountName, container.Name, path);
+         }
+         
          if(includeUrl)
          {
             string url = _client.Uri.ToString();
