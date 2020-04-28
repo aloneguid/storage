@@ -186,3 +186,4 @@ stages:
               tag: '$(Build.BuildNumber)'
               changeLogCompareToRelease: 'lastFullRelease'
               changeLogType: 'issueBased'
+              changeLogLabels:
