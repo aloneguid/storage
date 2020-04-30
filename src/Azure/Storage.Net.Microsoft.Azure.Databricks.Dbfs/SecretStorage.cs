@@ -63,14 +63,29 @@ namespace Storage.Net.Databricks
       public override async Task WriteAsync(
          string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
       {
-         string[] parts = StoragePath.Split(fullPath);
-         if(parts.Length != 2) throw new ArgumentException($"path should contain exactly scope and secret name", nameof(fullPath));
-
-         string scopeName = parts[0];
-         string secretName = parts[1];
+         GetScopeAndKey(fullPath, out string scope, out string key);
          byte[] data = dataStream.ToByteArray();
 
-         await _api.PutSecret(data, scopeName, secretName);
+         await _api.PutSecret(data, scope, key);
+      }
+
+      public override Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
+      {
+         //just a sanity check
+         GetScopeAndKey(fullPath, out _, out _);
+
+         // return phrase "[REDACTED]" as there is no technical capability to read secret values in Databricks
+         return Task.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes("[REDACTED]")));
+      }
+
+      private static void GetScopeAndKey(string path, out string scope, out string key)
+      {
+         string[] parts = StoragePath.Split(path);
+         if(parts.Length != 2)
+            throw new ArgumentException($"path should contain exactly scope and secret name", nameof(path));
+
+         scope = parts[0];
+         key = parts[1];
       }
    }
 }
