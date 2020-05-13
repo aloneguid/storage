@@ -22,6 +22,7 @@ namespace Storage.Net.Databricks
          Mount("dbfs", new DbfsStorage(_nativeClient.Dbfs));
          Mount("workspace", new WorkspaceStorage(_nativeClient.Workspace));
          Mount("secrets", _ss = new SecretStorage(_nativeClient.Secrets));
+         Mount("jobs", new JobsStorage(_nativeClient.Jobs));
       }
 
       public DatabricksClient GetMicrosoftAzureDatabrickClientLibraryClient() => _nativeClient;

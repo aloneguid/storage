@@ -98,5 +98,13 @@ namespace Storage.Net.Tests.Integration.Azure
 
          Assert.Equal("[REDACTED]", value1);
       }
+
+      [Fact]
+      public async Task List_jobs()
+      {
+         IReadOnlyCollection<Blob> jobs = await _storage.ListAsync("/jobs");
+
+         Assert.True(jobs.Count > 0);
+      }
    }
 }
