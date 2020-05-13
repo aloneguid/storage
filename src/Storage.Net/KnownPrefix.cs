@@ -11,9 +11,9 @@
       public static string AwsS3 = "aws.s3";
 
       /// <summary>
-      /// Azure Databricks DBFS
+      /// Databricks on Azure or AWS
       /// </summary>
-      public static string DatabricksDbfs = "azure.databricks.dbfs";
+      public static string Databricks = "databricks";
 
       /// <summary>
       /// Azure Data Lake Gen 1

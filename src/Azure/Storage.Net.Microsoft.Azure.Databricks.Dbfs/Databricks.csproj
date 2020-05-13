@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-     <PackageId>Storage.Net.Microsoft.Azure.Databricks.Dbfs</PackageId>
+     <PackageId>Storage.Net.Databricks</PackageId>
      <GenerateDocumentationFile>true</GenerateDocumentationFile>
      <LangVersion>latest</LangVersion>
      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
      <WarningsAsErrors />
-     <Description>Extension to Storage.Net that provides a read-only filesystem access to Azure Databricks.</Description>
-     <AssemblyName>Storage.Net.Microsoft.Azure.Databricks.Dbfs</AssemblyName>
-     <RootNamespace>Storage.Net.Microsoft.Azure.Databricks.Dbfs</RootNamespace>
+     <Description>Extension to Storage.Net that provides access to various aspects of Databricks, such as DBFS, secrets, clusters, workbooks and so on. Azure and AWS are fully supported.</Description>
+     <AssemblyName>Storage.Net.Databricks</AssemblyName>
+     <RootNamespace>Storage.Net.Databricks</RootNamespace>
   </PropertyGroup>
 
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -17,7 +17,7 @@
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="Microsoft.Azure.Databricks.Client" Version="1.1.924.1" />
+      <PackageReference Include="Microsoft.Azure.Databricks.Client" Version="1.1.1526.2" />
      <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
    </ItemGroup>
 
