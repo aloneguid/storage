@@ -27,7 +27,11 @@ variables:
   - name: rgName
     value: 'storagenet-deleteme'
   - name: v
-    value: '9.2.6'
+    value: '9.3.0'
+  - name: av
+    value: '9.0.0'
+  - name: pv
+    value: '9.3.0'
 
 stages:
 - stage: Build
@@ -38,7 +42,7 @@ stages:
 
     steps:
 
-    - script: echo "##vso[build.updatebuildnumber]$(v)"
+    - script: echo "##vso[build.updatebuildnumber]$(pv)"
 
     - task: DotNetCoreCLI@2
       displayName: 'Unit Tests'
@@ -46,13 +50,13 @@ stages:
       inputs:
         command: 'test'
         projects: 'test/Storage.Net.Tests/Storage.Net.Tests.csproj'
-        arguments: '-c release /p:Version=$(v) /p:PackageLicenseUrl="https://github.com/aloneguid/storage/blob/master/LICENSE" /p:Authors="Ivan Gavryliuk (@aloneguid)" /p:PackageIconUrl="http://i.isolineltd.com/nuget/storage.png"'
+        arguments: '-c release /p:Version=$(pv) /p:FileVersion=$(v) /p:AssemblyVersion=$(av) /p:PackageLicenseUrl="https://github.com/aloneguid/storage/blob/master/LICENSE" /p:Authors="Ivan Gavryliuk (@aloneguid)" /p:PackageIconUrl="http://i.isolineltd.com/nuget/storage.png"'
 
     - task: DotNetCoreCLI@2
       displayName: 'build all'
       inputs:
         projects: src/storage.sln
-        arguments: '-c release /p:Version=$(v)'
+        arguments: '-c release /p:Version=$(pv) /p:FileVersion=$(v) /p:AssemblyVersion=$(av) /p:PackageLicenseUrl="https://github.com/aloneguid/storage/blob/master/LICENSE" /p:Authors="Ivan Gavryliuk (@aloneguid)" /p:PackageIconUrl="http://i.isolineltd.com/nuget/storage.png"'
 
     - task: CopyFiles@2
       displayName: 'copy generated nugets'
@@ -66,7 +70,7 @@ stages:
 
     # we don't care if tests in other stages are not successful, we want to public this to internal testing
     - task: NuGetCommand@2
-      condition: "eq(variables['Build.SourceBranch'], 'refs/heads/develop')"
+      condition: "eq(variables['Build.SourceBranch'], 'refs/heads/databricks')"
       displayName: 'push to internal feed'
       continueOnError: true
       inputs:

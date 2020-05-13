@@ -3,31 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Databricks.Client;
 using Storage.Net.Blobs;
 using FileInfo = Microsoft.Azure.Databricks.Client.FileInfo;
 
-namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
+namespace Storage.Net.Databricks
 {
-   class AzureDatabricksDbfsBlobStorage : IBlobStorage
+   class DbfsStorage : IBlobStorage
    {
-      private readonly DatabricksClient _client;
       private readonly IDbfsApi _dbfs;
-      private readonly bool _isReadOnly;
 
-      public AzureDatabricksDbfsBlobStorage(string baseUri, string token, bool isReadOnly)
+      public DbfsStorage(IDbfsApi dbfsApi)
       {
-         if(baseUri is null)
-            throw new ArgumentNullException(nameof(baseUri));
-         if(token is null)
-            throw new ArgumentNullException(nameof(token));
-
-         _client = DatabricksClient.CreateClient(baseUri, token);
-         _dbfs = _client.Dbfs;
-         _isReadOnly = isReadOnly;
+         _dbfs = dbfsApi;
       }
 
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
@@ -55,7 +45,7 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
          {
             await _dbfs.GetStatus(fullPath);
          }
-         catch(ClientApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+         catch(ClientApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
             return false;
          }
@@ -112,7 +102,7 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
          {
             objects = await _dbfs.List(StoragePath.Normalize(path, true));
          }
-         catch(ClientApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+         catch(ClientApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
             objects = new List<FileInfo>();
          }
@@ -141,7 +131,7 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
          {
             await _dbfs.Download(fullPath, ms);
          }
-         catch(ClientApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound || ex.StatusCode == HttpStatusCode.BadRequest)
+         catch(ClientApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound || ex.StatusCode == HttpStatusCode.BadRequest)
          {
             return null;
          }
@@ -170,14 +160,6 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
       public void Dispose()
       {
 
-      }
-
-      private void CheckReadOnly()
-      {
-         if(_isReadOnly)
-         {
-            throw new InvalidOperationException("file system is read-only");
-         }
       }
    }
 }

@@ -89,6 +89,8 @@ namespace Storage.Net.Blobs
       /// </summary>
       public Dictionary<string, string> Metadata { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+      internal object Tag { get; set; }
+
       /// <summary>
       /// Tries to add properties in pairs when value is not null
       /// </summary>
@@ -137,10 +139,19 @@ namespace Storage.Net.Blobs
       public Blob(string fullPath, BlobItemKind kind = BlobItemKind.File)
       {
          string path = StoragePath.Normalize(fullPath);
-         string[] parts = StoragePath.Split(path);
 
-         Name = parts.Last();
-         FolderPath = StoragePath.GetParent(path);
+         if(StoragePath.IsRootPath(path))
+         {
+            Name = StoragePath.RootFolderPath;
+            FolderPath = StoragePath.RootFolderPath;
+         }
+         else
+         {
+            string[] parts = StoragePath.Split(path);
+
+            Name = parts.Last();
+            FolderPath = StoragePath.GetParent(path);
+         }
 
          Kind = kind;
       }
@@ -162,7 +173,7 @@ namespace Storage.Net.Blobs
       /// <summary>
       /// Returns true if this item is a folder and it's a root folder
       /// </summary>
-      public bool IsRootFolder => Kind == BlobItemKind.Folder && StoragePath.IsRootPath(FolderPath);
+      public bool IsRootFolder => Kind == BlobItemKind.Folder && StoragePath.IsRootPath(FullPath);
 
       /// <summary>
       /// Full blob info, i.e type, id and path
@@ -286,6 +297,18 @@ namespace Storage.Net.Blobs
                }
             }
          }
+      }
+
+      /// <summary>
+      /// Prepends path to this blob's path without modifying blob's properties
+      /// </summary>
+      /// <param name="path"></param>
+      public void PrependPath(string path)
+      {
+         if(path == null || StoragePath.IsRootPath(path))
+            return;
+
+         FolderPath = StoragePath.Combine(path, FolderPath);
       }
    }
 }
