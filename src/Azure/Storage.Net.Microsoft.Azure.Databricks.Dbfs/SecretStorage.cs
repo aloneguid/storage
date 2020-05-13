@@ -39,16 +39,18 @@ namespace Storage.Net.Databricks
       protected override async Task<IReadOnlyCollection<Blob>> ListAtAsync(
          string path, ListOptions options, CancellationToken cancellationToken)
       {
+         var r = new List<Blob>();
 
+         // listing from "/secrets"
          if(StoragePath.IsRootPath(path))
          {
-            var r = new List<Blob>();
             IEnumerable<SecretScope> scopes = await _api.ListScopes();
             foreach(SecretScope scope in scopes)
             {
                var scopeBlob = new Blob(scope.Name, BlobItemKind.Folder);
                scopeBlob.TryAddProperties(
-                  "Backend", scope.BackendType);
+                  "Backend", scope.BackendType,
+                  "ObjectType", "secretScope");
 
                IEnumerable<AclItem> acl = await _api.ListSecretAcl(scope.Name);
                scopeBlob.Properties.Add("ACL", string.Join(";", acl.Select(a => $"{a.Principal}:{a.Permission}")));
@@ -57,7 +59,19 @@ namespace Storage.Net.Databricks
             return r;
          }
 
-         return null;
+         // listing from "/secrets/[scope name]
+
+         string scopeName = StoragePath.Split(path)[0];
+         List<SecretMetadata> secretNames = (await _api.ListSecrets(scopeName)).ToList();
+         foreach(SecretMetadata sm in secretNames)
+         {
+            var sb = new Blob(scopeName, sm.Key, BlobItemKind.File);
+            sb.LastModificationTime = sm.LastUpdatedTimestamp;
+            sb.TryAddProperties(
+               "ObjectType", "secret");
+            r.Add(sb);
+         }
+         return r;
       }
 
       public override async Task WriteAsync(

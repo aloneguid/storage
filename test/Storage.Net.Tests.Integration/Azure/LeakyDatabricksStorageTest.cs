@@ -72,12 +72,31 @@ namespace Storage.Net.Tests.Integration.Azure
          await _storage.CreateSecretsScope("ivan");
 
          IReadOnlyCollection<Blob> scopes = await _storage.ListAsync("/secrets");
+
+         Assert.True(scopes.Count > 0);
+         Assert.Contains("ivan", scopes.Select(s => s.Name));
+      }
+
+      [Fact]
+      public async Task List_secrets()
+      {
+         await _storage.CreateSecretsScope("ivan");
+         await _storage.WriteTextAsync("/secrets/ivan/one", "dfadfd");
+
+         IReadOnlyCollection<Blob> secrets = await _storage.ListAsync("/secrets/ivan");
+         Assert.True(secrets.Count > 0);
       }
 
       [Fact]
       public async Task Put_secret()
       {
-         await _storage.WriteTextAsync("secrets/ivan/tag", "secret");
+         string value = Guid.NewGuid().ToString();
+
+         await _storage.WriteTextAsync("secrets/ivan/tag", value);
+
+         string value1 = await _storage.ReadTextAsync("secrets/ivan/tag");
+
+         Assert.Equal("[REDACTED]", value1);
       }
    }
 }
