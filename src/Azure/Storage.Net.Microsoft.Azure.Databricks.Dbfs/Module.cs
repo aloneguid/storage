@@ -1,4 +1,5 @@
-﻿using Storage.Net.Blobs;
+﻿using Newtonsoft.Json;
+using Storage.Net.Blobs;
 using Storage.Net.ConnectionString;
 using Storage.Net.Messaging;
 
@@ -22,5 +23,14 @@ namespace Storage.Net.Databricks
       }
 
       public IMessenger CreateMessenger(StorageConnectionString connectionString) => null;
+
+      internal static string AsDbJson(object obj)
+      {
+         if(obj == null)
+            return string.Empty;
+
+         return JsonConvert.SerializeObject(obj, Formatting.Indented,
+            new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+      }
    }
 }

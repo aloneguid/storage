@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Databricks.Client;
+using Newtonsoft.Json;
 using Storage.Net.Blobs;
 
 namespace Storage.Net.Databricks
@@ -39,7 +40,7 @@ namespace Storage.Net.Databricks
             List<Run> runs = runsList.Runs.ToList();
             offset += runs.Count;
 
-            rr.AddRange(runs.Select(r => ToBlob(jobName, jobId.Value, r)));
+            rr.AddRange(runs.Select(r => ToBlob(jobName, r)));
          }
          while(runsList.HasMore);
 
@@ -69,14 +70,15 @@ namespace Storage.Net.Databricks
             "ObjectType", "job",
             "Id", dbJob.JobId,
             "CreatorUserName", dbJob.CreatorUserName,
-            "Settings", dbJob.Settings);
+            "Settings", Module.AsDbJson(dbJob.Settings));
 
          return blob;
       }
 
-      private static Blob ToBlob(string jobName, long jobId, Run dbRun)
-      {
+      private static Blob ToBlob(string jobName, Run dbRun)
+        {
          var blob = new Blob(jobName, dbRun.RunId.ToString(), BlobItemKind.File);
+         blob.LastModificationTime = dbRun.EndTime ?? dbRun.StartTime;
          blob.TryAddProperties(
             "StartTime", dbRun.StartTime,
             "EndTime", dbRun.EndTime,
@@ -86,10 +88,12 @@ namespace Storage.Net.Databricks
             "NumberInJob", dbRun.NumberInJob,
             "RunId", dbRun.RunId,
             "RunPageUrl", dbRun.RunPageUrl,
-            "Schedule", dbRun.Schedule,
+            "Schedule", Module.AsDbJson(dbRun.Schedule),
             "SetupDuration", dbRun.SetupDuration,
-            "State", dbRun.State,
-            "Task", dbRun.Task,
+            "LifeCycleState", dbRun.State.LifeCycleState,
+            "ResultState", dbRun.State.ResultState,
+            "StateMessage", dbRun.State.StateMessage,
+            "Task", Module.AsDbJson(dbRun.Task),
             "Trigger", dbRun.Trigger);
          return blob;
       }
