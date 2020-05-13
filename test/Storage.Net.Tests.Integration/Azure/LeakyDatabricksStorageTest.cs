@@ -106,5 +106,15 @@ namespace Storage.Net.Tests.Integration.Azure
 
          Assert.True(jobs.Count > 0);
       }
+
+      [Fact]
+      public async Task List_job_runs()
+      {
+         Blob job = (await _storage.ListAsync("/jobs")).First();
+
+         IReadOnlyCollection<Blob> runs = await _storage.ListAsync(job);
+
+         Assert.True(runs.Count > 0);
+      }
    }
 }

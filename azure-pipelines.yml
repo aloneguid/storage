@@ -32,7 +32,7 @@ variables:
   - name: av
     value: '9.0.0'
   - name: pv
-    value: '9.3.4-alpha-06'
+    value: '9.3.4-alpha-07'
 
 stages:
 - stage: Build

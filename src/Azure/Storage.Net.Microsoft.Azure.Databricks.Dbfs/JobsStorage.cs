@@ -27,6 +27,37 @@ namespace Storage.Net.Databricks
             return jobs.Select(ToBlob).ToList();
          }
 
+         // need job ID here - find by job name (crap!)
+         var rr = new List<Blob>();
+         string jobName = StoragePath.Split(path)[0];
+         long? jobId = await GetJobIdFromJobNameAsync(jobName);
+         RunList runsList;
+         int offset = 0;
+         do
+         {
+            runsList = await _jobs.RunsList(jobId, offset, 500, false, false);
+            List<Run> runs = runsList.Runs.ToList();
+            offset += runs.Count;
+
+            rr.AddRange(runs.Select(r => ToBlob(jobName, jobId.Value, r)));
+         }
+         while(runsList.HasMore);
+
+         return rr;
+      }
+
+      private async Task<long?> GetJobIdFromJobNameAsync(string jobName)
+      {
+         IEnumerable<Job> allJobs = await _jobs.List();
+
+         foreach(Job j in allJobs)
+         {
+            if(j.Settings.Name == jobName)
+            {
+               return j.JobId;
+            }
+         }
+
          return null;
       }
 
@@ -40,6 +71,26 @@ namespace Storage.Net.Databricks
             "CreatorUserName", dbJob.CreatorUserName,
             "Settings", dbJob.Settings);
 
+         return blob;
+      }
+
+      private static Blob ToBlob(string jobName, long jobId, Run dbRun)
+      {
+         var blob = new Blob(jobName, dbRun.RunId.ToString(), BlobItemKind.File);
+         blob.TryAddProperties(
+            "StartTime", dbRun.StartTime,
+            "EndTime", dbRun.EndTime,
+            "ExecutionDuration", dbRun.ExecutionDuration,
+            "IsCompleted", dbRun.IsCompleted,
+            "JobId", dbRun.JobId,
+            "NumberInJob", dbRun.NumberInJob,
+            "RunId", dbRun.RunId,
+            "RunPageUrl", dbRun.RunPageUrl,
+            "Schedule", dbRun.Schedule,
+            "SetupDuration", dbRun.SetupDuration,
+            "State", dbRun.State,
+            "Task", dbRun.Task,
+            "Trigger", dbRun.Trigger);
          return blob;
       }
    }
