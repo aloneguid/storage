@@ -1,8 +1,9 @@
-﻿using Storage.Net.Blobs;
+﻿using Newtonsoft.Json;
+using Storage.Net.Blobs;
 using Storage.Net.ConnectionString;
 using Storage.Net.Messaging;
 
-namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
+namespace Storage.Net.Databricks
 {
    class Module : IExternalModule, IConnectionFactory
    {
@@ -10,19 +11,26 @@ namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
 
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
       {
-         if(connectionString.Prefix == KnownPrefix.DatabricksDbfs)
+         if(connectionString.Prefix == KnownPrefix.Databricks)
          {
             connectionString.GetRequired("baseUri", true, out string baseUri);
             connectionString.GetRequired("token", true, out string token);
-            string isReadOnlyString = connectionString.Get("isReadOnly");
-            bool.TryParse(isReadOnlyString, out bool isReadOnly);
 
-            return new AzureDatabricksDbfsBlobStorage(baseUri, token, isReadOnly);
+            return new DatabricksBlobStorage(baseUri, token);
          }
 
          return null;
       }
 
       public IMessenger CreateMessenger(StorageConnectionString connectionString) => null;
+
+      internal static string AsDbJson(object obj)
+      {
+         if(obj == null)
+            return string.Empty;
+
+         return JsonConvert.SerializeObject(obj, Formatting.Indented,
+            new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+      }
    }
 }

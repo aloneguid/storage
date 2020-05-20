@@ -4,7 +4,7 @@ using System.Text;
 using Storage.Net.Blobs;
 using FileInfo = Microsoft.Azure.Databricks.Client.FileInfo;
 
-namespace Storage.Net.Microsoft.Azure.Databricks.Dbfs
+namespace Storage.Net.Databricks
 {
    static class DConvert
    {

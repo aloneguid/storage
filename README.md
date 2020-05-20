@@ -14,7 +14,7 @@ It also implements in-memory and on-disk versions of all the abstractions for fa
 
 ![Comic Why](doc/comic-why.png)
 
-Storage.Net is used by some big **Fotrune 500** companies, large, medium and small businesses, open-source projects and even desktop applications like this one:
+Storage.Net is used by some big **Fortune 500** companies, large, medium and small businesses, open-source projects and even desktop applications like this one:
 
 <a href='//www.microsoft.com/store/apps/9NKV1D43NLL3?cid=storebadge&ocid=badge'>
    <img src='https://assets.windowsphone.com/85864462-9c82-451e-9355-a3d5f874397a/English_get-it-from-MS_InvariantCulture_Default.png' alt='English badge' style='width: 284px; height: 104px;' width='284' height='104'/>

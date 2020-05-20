@@ -83,6 +83,16 @@ namespace Storage.Net
       }
 
       /// <summary>
+      /// Creates a virtual storage where you can mount other storage providers to a specific virtual directory
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <returns></returns>
+      public static IVirtualStorage Virtual(this IBlobStorageFactory factory)
+      {
+         return new VirtualStorage();
+      }
+
+      /// <summary>
       /// Creates a message publisher which holds messages in memory.
       /// </summary>
       /// <param name="factory"></param>
