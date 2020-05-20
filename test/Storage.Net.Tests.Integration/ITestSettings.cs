@@ -93,6 +93,10 @@ namespace Storage.Net.Tests
       string FtpPassword { get; }
 
       #endregion
+
+      string DatabricksBaseUri { get; set; }
+
+      string DatabricksToken { get; set; }
    }
 
    public static class Settings

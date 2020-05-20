@@ -51,7 +51,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GCP", "GCP", "{7060A53B-F04
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Storage.Net.Gcp.CloudStorage", "GCP\Storage.Net.Gcp.CloudStorage\Storage.Net.Gcp.CloudStorage.csproj", "{A79A5CE0-83F3-44E2-A88D-D51D7A3EE8F5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Databricks.Dbfs", "Azure\Storage.Net.Microsoft.Azure.Databricks.Dbfs\Databricks.Dbfs.csproj", "{8EED860F-4D6C-4EAE-97D3-62925E7336E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Databricks", "Azure\Storage.Net.Microsoft.Azure.Databricks.Dbfs\Databricks.csproj", "{8EED860F-4D6C-4EAE-97D3-62925E7336E0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blobs", "Azure\Storage.Net.Microsoft.Azure.Storage.Blobs\Blobs.csproj", "{6F4E9CCC-DEB7-4D40-B2BA-4914171D26B2}"
 EndProject
