@@ -181,6 +181,7 @@ namespace Storage.Net.Blobs.Files
          if(!Directory.Exists(_directoryFullName)) Directory.CreateDirectory(_directoryFullName);
          string path = GetFilePath(fullPath);
 
+         Directory.CreateDirectory(Path.GetDirectoryName(path));
          Stream s = overwrite ? File.Create(path) : File.OpenWrite(path);
          s.Seek(0, SeekOrigin.End);
          return s;

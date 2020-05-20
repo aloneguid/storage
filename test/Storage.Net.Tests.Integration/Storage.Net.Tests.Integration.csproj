@@ -20,7 +20,7 @@
    </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Databricks.Dbfs\Databricks.Dbfs.csproj" />
+    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Databricks.Dbfs\Databricks.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.DataLake.Store\DataLakeGen1.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.EventHub\EventHub.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.KeyVault\KeyVault.csproj" />

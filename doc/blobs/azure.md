@@ -2,6 +2,8 @@
 
 In order to use Microsoft Azure blob or file storage you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.Storage.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage/) package first. The provider wraps around the standard Microsoft Storage SDK.
 
+For Storage.Net v9 use the according specific package Blobs [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.Storage.Blobs.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.Storage.Blobs/) wich is available for v9.
+
 ## File Shares
 
 To create file share by storage name and key:
