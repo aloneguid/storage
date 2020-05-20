@@ -1,6 +1,6 @@
 ﻿using System;
 using Storage.Net.Blobs;
-using Storage.Net.Microsoft.Azure.Databricks.Dbfs;
+using Storage.Net.Databricks;
 
 namespace Storage.Net
 {
@@ -14,7 +14,7 @@ namespace Storage.Net
       /// </summary>
       /// <param name="factory"></param>
       /// <returns></returns>
-      public static IModulesFactory UseAzureDatabricksDbfsStorage(this IModulesFactory factory)
+      public static IModulesFactory UseAzureDatabricksStorage(this IModulesFactory factory)
       {
          return factory.Use(new Module());
       }
@@ -25,14 +25,11 @@ namespace Storage.Net
       /// <param name="factory"></param>
       /// <param name="baseUri"></param>
       /// <param name="token"></param>
-      /// <param name="isReadOnly">When true, all the write operations will throw <see cref="InvalidOperationException"/></param>
-      /// <returns></returns>
-      public static IBlobStorage AzureDatabricksDbfs(this IBlobStorageFactory factory,
+      public static IBlobStorage Databricks(this IBlobStorageFactory factory,
          string baseUri,
-         string token,
-         bool isReadOnly)
+         string token)
       {
-         return new AzureDatabricksDbfsBlobStorage(baseUri, token, isReadOnly);
+         return new DatabricksBlobStorage(baseUri, token);
       }
    }
 }

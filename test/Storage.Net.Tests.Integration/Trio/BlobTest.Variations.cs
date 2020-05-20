@@ -219,23 +219,23 @@ namespace Storage.Net.Tests.Integration.Blobs
    }*/
 
 #if DEBUG
-   public class AzdbfsFixture : BlobFixture
+   public class DatabricksFixture : BlobFixture
    {
-      public AzdbfsFixture() : base("storagenet")
+      public DatabricksFixture() : base("dbfs/storagenet")
       {
 
       }
 
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
-         return StorageFactory.Blobs.AzureDatabricksDbfs("https://northeurope.azuredatabricks.net", "", true);
+         return StorageFactory.Blobs.Databricks(settings.DatabricksBaseUri, settings.DatabricksToken);
       }
    }
 
    //highly experimental
-   public class AzdbfsTest : BlobTest, IClassFixture<AzdbfsFixture>
+   public class DatabricksTest : BlobTest, IClassFixture<DatabricksFixture>
    {
-      public AzdbfsTest(AzdbfsFixture fixture) : base(fixture)
+      public DatabricksTest(DatabricksFixture fixture) : base(fixture)
       {
       }
    }
@@ -255,6 +255,25 @@ namespace Storage.Net.Tests.Integration.Blobs
    public class GcpTest : BlobTest, IClassFixture<GcpFixture>
    {
       public GcpTest(GcpFixture fixture) : base(fixture)
+      {
+
+      }
+   }
+
+   public class VirtualStorageFixture : BlobFixture
+   {
+      protected override IBlobStorage CreateStorage(ITestSettings settings)
+      {
+         IVirtualStorage vs = StorageFactory.Blobs.Virtual();
+         vs.Mount("/", StorageFactory.Blobs.InMemory());
+         vs.Mount("/mnt/s0", StorageFactory.Blobs.InMemory());
+         return vs;
+      }
+   }
+
+   public class VirtualStorageTest : BlobTest, IClassFixture<VirtualStorageFixture>
+   {
+      public VirtualStorageTest(VirtualStorageFixture fixture): base(fixture)
       {
 
       }
