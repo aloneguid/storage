@@ -48,6 +48,7 @@ namespace Storage.Net
       /// <param name="bucketName">Bucket name</param>
       /// <param name="region">Region endpoint</param>
       /// <param name="serviceUrl">S3-compatible service location</param>
+      /// <param name="tryCreateBucketOnInitialization">Flag to control whether an aws bucket should be created when client is initialized</param>
       /// <returns>A reference to the created storage</returns>
       public static IBlobStorage AwsS3(this IBlobStorageFactory factory,
          string accessKeyId,
@@ -55,9 +56,10 @@ namespace Storage.Net
          string sessionToken,
          string bucketName,
          string region,
-         string serviceUrl = null)
+         string serviceUrl = null,
+         bool tryCreateBucketOnInitialization = true)
       {
-         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, sessionToken, bucketName, region, serviceUrl);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, sessionToken, bucketName, region, serviceUrl, tryCreateBucketOnInitialization);
       }
 
       /// <summary>
@@ -69,15 +71,17 @@ namespace Storage.Net
       /// <param name="sessionToken">Optional. Only required when using session credentials.</param>
       /// <param name="bucketName">Bucket name</param>
       /// <param name="clientConfig">S3 client configuration</param>
+      /// <param name="tryCreateBucketOnInitialization">Flag to control whether an aws bucket should be created when client is initialized</param>
       /// <returns>A reference to the created storage</returns>
       public static IBlobStorage AwsS3(this IBlobStorageFactory factory,
          string accessKeyId,
          string secretAccessKey,
          string sessionToken,
          string bucketName,
-         AmazonS3Config clientConfig)
+         AmazonS3Config clientConfig,
+         bool tryCreateBucketOnInitialization = true)
       {
-         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, sessionToken, bucketName, clientConfig);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, sessionToken, bucketName, clientConfig, tryCreateBucketOnInitialization);
       }
 
 #if !NET16
