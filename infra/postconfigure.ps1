@@ -21,6 +21,8 @@ Set-AzDataLakeStoreItemAclEntry -Account $Gen1AccountName -Path / -AceType User 
 
 #Write-Host "settings permissions for Data Lake Gen 2 ($Gen2AccountName)..."
 #see https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-powershell
-#New-AzRoleAssignment -ObjectId $TestUserObjectId `
-#    -RoleDefinitionName "Storage Blob Data Contributor" `
-#    -ResourceGroupName $RgName
+<#
+New-AzRoleAssignment -ObjectId $TestUserObjectId `
+    -RoleDefinitionName "Storage Blob Data Contributor" `
+    -ResourceGroupName $RgName
+#>

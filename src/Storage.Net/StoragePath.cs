@@ -71,12 +71,12 @@ namespace Storage.Net
 
       /// <summary>
       /// Normalizes path. Normalisation makes sure that:
-      /// - When path is null returns root path '/'
+      /// - When path is null or empty returns root path '/'
       /// - path separators are trimmed from both ends
       /// </summary>
       /// <param name="path"></param>
-      /// <param name="includeTrailingRoot">When true, includes trailing '/' as path prefix</param>
-      public static string Normalize(string path, bool includeTrailingRoot = false)
+      /// <param name="removeTrailingSlash"></param>
+      public static string Normalize(string path, bool removeTrailingSlash = false)
       {
          if (StoragePath.IsRootPath(path)) return RootFolderPath;
 
@@ -100,9 +100,9 @@ namespace Storage.Net
          }
          path = string.Join(PathSeparatorString, r);
 
-         return includeTrailingRoot ?
-            PathSeparatorString + path
-            : path;
+         return removeTrailingSlash
+            ? path
+            : PathSeparatorString + path;
       }
 
       /// <summary>

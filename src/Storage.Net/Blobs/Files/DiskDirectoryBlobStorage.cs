@@ -181,6 +181,7 @@ namespace Storage.Net.Blobs.Files
          if(!Directory.Exists(_directoryFullName)) Directory.CreateDirectory(_directoryFullName);
          string path = GetFilePath(fullPath);
 
+         Directory.CreateDirectory(Path.GetDirectoryName(path));
          Stream s = overwrite ? File.Create(path) : File.OpenWrite(path);
          s.Seek(0, SeekOrigin.End);
          return s;
@@ -220,7 +221,7 @@ namespace Storage.Net.Blobs.Files
             throw new ArgumentNullException(nameof(dataStream));
          GenericValidation.CheckBlobFullPath(fullPath);
 
-         fullPath = StoragePath.Normalize(fullPath, false);
+         fullPath = StoragePath.Normalize(fullPath);
 
          using(Stream stream = CreateStream(fullPath, !append))
          {
@@ -237,7 +238,7 @@ namespace Storage.Net.Blobs.Files
       {
          GenericValidation.CheckBlobFullPath(fullPath);
 
-         fullPath = StoragePath.Normalize(fullPath, false);
+         fullPath = StoragePath.Normalize(fullPath);
          Stream result = OpenStream(fullPath);
 
          return Task.FromResult(result);
@@ -254,7 +255,7 @@ namespace Storage.Net.Blobs.Files
          {
             GenericValidation.CheckBlobFullPath(fullPath);
 
-            string path = GetFilePath(StoragePath.Normalize(fullPath, false));
+            string path = GetFilePath(StoragePath.Normalize(fullPath));
             if(File.Exists(path))
             {
                File.Delete(path);
@@ -281,7 +282,7 @@ namespace Storage.Net.Blobs.Files
 
             foreach(string fullPath in fullPaths)
             {
-               bool exists = File.Exists(GetFilePath(StoragePath.Normalize(fullPath, false)));
+               bool exists = File.Exists(GetFilePath(StoragePath.Normalize(fullPath)));
                result.Add(exists);
             }
          }
@@ -337,7 +338,7 @@ namespace Storage.Net.Blobs.Files
 
       private void EnrichWithMetadata(Blob blob)
       {
-         string path = GetFilePath(StoragePath.Normalize(blob.FullPath, false));
+         string path = GetFilePath(StoragePath.Normalize(blob.FullPath));
 
          if (!File.Exists(path)) return;
 

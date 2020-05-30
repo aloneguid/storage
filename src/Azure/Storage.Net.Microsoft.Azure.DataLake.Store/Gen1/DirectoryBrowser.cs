@@ -108,7 +108,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
          int maxEntries, string listAfter, string listBefore, UserGroupRepresentation userIdFormat = UserGroupRepresentation.ObjectID, CancellationToken cancelToken = default)
       {
          //ADLS requires a root prefix
-         path = StoragePath.Normalize(path, true);
+         path = StoragePath.Normalize(path);
 
          var resp = new OperationResponse();
          List<DirectoryEntry> page = await Core.ListStatusAsync(path, listAfter, listBefore, maxEntries, userIdFormat, _client,

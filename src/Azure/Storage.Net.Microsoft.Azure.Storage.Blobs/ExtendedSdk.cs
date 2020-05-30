@@ -262,7 +262,7 @@ namespace Blobs
          string[] parts = StoragePath.Split(path);
 
          string fs = parts[0];
-         string relativePath = StoragePath.Combine(parts.Skip(1));
+         string relativePath = StoragePath.Normalize(StoragePath.Combine(parts.Skip(1)), true);
 
          var list = new List<Gen2Path>();
 
@@ -416,8 +416,9 @@ namespace Blobs
          }
 
          sb
-          .AppendLine()
-          .AppendLine("Headers:");
+            .AppendLine()
+            .AppendLine("Headers:");
+
          foreach(HttpHeader responseHeader in response.Headers)
          {
             sb
@@ -445,7 +446,7 @@ namespace Blobs
 
          filesystemName = parts[0];
 
-         relativePath = StoragePath.Combine(parts.Skip(1));
+         relativePath = StoragePath.Normalize(StoragePath.Combine(parts.Skip(1)), true);
       }
 
    }

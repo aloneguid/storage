@@ -7,7 +7,7 @@ namespace Storage.Net.Tests.Integration.Blobs
 {
    public class AzureBlobStorageFixture : BlobFixture
    {
-      public AzureBlobStorageFixture() : base("lakeyv12/")
+      public AzureBlobStorageFixture() : base("lakeyv12")
       {
       }
 
@@ -218,22 +218,28 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
    }*/
 
-   /*public class AzdbfsFixture : BlobFixture
+#if DEBUG
+   public class DatabricksFixture : BlobFixture
    {
+      public DatabricksFixture() : base("dbfs/storagenet")
+      {
+
+      }
+
       protected override IBlobStorage CreateStorage(ITestSettings settings)
       {
-         return StorageFactory.Blobs.AzureDatabricksDbfs(settings.DatabricksBaseUri, settings.DatabricksToken, true);
+         return StorageFactory.Blobs.Databricks(settings.DatabricksBaseUri, settings.DatabricksToken);
       }
-   }*/
+   }
 
-   /* highly experimental
-   public class AzdbfsTest : BlobTest, IClassFixture<AzdbfsFixture>
+   //highly experimental
+   public class DatabricksTest : BlobTest, IClassFixture<DatabricksFixture>
    {
-      public AzdbfsTest(AzdbfsFixture fixture) : base(fixture)
+      public DatabricksTest(DatabricksFixture fixture) : base(fixture)
       {
       }
    }
-   */
+#endif
 
    public class GcpFixture : BlobFixture
    {
@@ -249,6 +255,25 @@ namespace Storage.Net.Tests.Integration.Blobs
    public class GcpTest : BlobTest, IClassFixture<GcpFixture>
    {
       public GcpTest(GcpFixture fixture) : base(fixture)
+      {
+
+      }
+   }
+
+   public class VirtualStorageFixture : BlobFixture
+   {
+      protected override IBlobStorage CreateStorage(ITestSettings settings)
+      {
+         IVirtualStorage vs = StorageFactory.Blobs.Virtual();
+         vs.Mount("/", StorageFactory.Blobs.InMemory());
+         vs.Mount("/mnt/s0", StorageFactory.Blobs.InMemory());
+         return vs;
+      }
+   }
+
+   public class VirtualStorageTest : BlobTest, IClassFixture<VirtualStorageFixture>
+   {
+      public VirtualStorageTest(VirtualStorageFixture fixture): base(fixture)
       {
 
       }

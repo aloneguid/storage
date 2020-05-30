@@ -49,7 +49,7 @@ namespace Storage.Net.Blobs.Files
 
          foreach(string fullPath in fullPaths)
          {
-            string nid = StoragePath.Normalize(fullPath, false);
+            string nid = StoragePath.Normalize(fullPath);
 
             ZipArchiveEntry entry = zipArchive.GetEntry(nid);
 
@@ -66,7 +66,7 @@ namespace Storage.Net.Blobs.Files
 
          foreach(string fullPath in fullPaths)
          {
-            string nid = StoragePath.Normalize(fullPath, false);
+            string nid = StoragePath.Normalize(fullPath);
 
             try
             {
@@ -146,7 +146,7 @@ namespace Storage.Net.Blobs.Files
 
       public Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
       {
-         fullPath = StoragePath.Normalize(fullPath, false);
+         fullPath = StoragePath.Normalize(fullPath);
 
          ZipArchive archive = GetArchive(false);
          if(archive == null)
@@ -169,7 +169,7 @@ namespace Storage.Net.Blobs.Files
          if(dataStream is null)
             throw new ArgumentNullException(nameof(dataStream));
 
-         fullPath = StoragePath.Normalize(fullPath, false);
+         fullPath = StoragePath.Normalize(fullPath);
 
          using(var ms = new MemoryStream())
          {
@@ -193,7 +193,7 @@ namespace Storage.Net.Blobs.Files
 
          foreach(string fullPath in fullPaths)
          {
-            string nid = StoragePath.Normalize(fullPath, false);
+            string nid = StoragePath.Normalize(fullPath);
 
             ZipArchiveEntry entry = archive.GetEntry(nid);
             if(entry != null)

@@ -77,7 +77,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
 
       private static string FormatFolderPrefix(string folderPath)
       {
-         folderPath = StoragePath.Normalize(folderPath);
+         folderPath = StoragePath.Normalize(folderPath).Substring(1);
 
          if(StoragePath.IsRootPath(folderPath))
             return null;

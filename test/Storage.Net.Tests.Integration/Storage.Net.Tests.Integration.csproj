@@ -20,7 +20,6 @@
    </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Databricks.Dbfs\Databricks.Dbfs.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.DataLake.Store\DataLakeGen1.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.EventHub\EventHub.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.KeyVault\KeyVault.csproj" />
@@ -29,6 +28,7 @@
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Storage.Blobs\Blobs.csproj" />
     <ProjectReference Include="..\..\src\Azure\Storage.Net.Microsoft.Azure.Storage.Files\Files.csproj" />
     <ProjectReference Include="..\..\src\GCP\Storage.Net.Gcp.CloudStorage\Storage.Net.Gcp.CloudStorage.csproj" />
+    <ProjectReference Include="..\..\src\General\Storage.Net.Databricks\Databricks.csproj" />
     <ProjectReference Include="..\..\src\General\Storage.Net.Ftp\Storage.Net.Ftp.csproj" />
     <ProjectReference Include="..\..\src\Storage.Net\Storage.Net.csproj" />
     <ProjectReference Include="..\..\src\AWS\Storage.Net.Amazon.Aws\Storage.Net.Amazon.Aws.csproj" />

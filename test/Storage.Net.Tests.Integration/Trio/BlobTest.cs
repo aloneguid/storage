@@ -54,7 +54,7 @@ namespace Storage.Net.Tests.Integration.Blobs
       [Fact]
       public async Task List_All_DoesntCrash()
       {
-         await _storage.ListAsync(new ListOptions { Recurse = true });
+         await _storage.ListAsync();
       }
 
       [Fact]
@@ -178,6 +178,7 @@ namespace Storage.Net.Tests.Integration.Blobs
          //dump compare
          IReadOnlyCollection<Blob> files = await _storage.ListFilesAsync(new ListOptions
          {
+            FolderPath = _blobPrefix,
             Recurse = true
          });
          Assert.Contains(files, f => f.FullPath == id1 && f.Kind == BlobItemKind.File);
@@ -185,6 +186,7 @@ namespace Storage.Net.Tests.Integration.Blobs
          //server-side filtering
          files = await _storage.ListFilesAsync(new ListOptions
          {
+            FolderPath = _blobPrefix,
             Recurse = true,
             BrowseFilter = id => (id.Kind != BlobItemKind.File || id.FullPath == id1)
          });

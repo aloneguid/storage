@@ -45,7 +45,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
          if(blob == null)
             return;
 
-         GetObjectMetadataResponse obj = await client.GetObjectMetadataAsync(bucketName, blob.FullPath, cancellationToken).ConfigureAwait(false);
+         GetObjectMetadataResponse obj = await client.GetObjectMetadataAsync(bucketName, blob.FullPath.Substring(1), cancellationToken).ConfigureAwait(false);
 
          AddMetadata(blob, obj.Metadata);
       }
@@ -122,6 +122,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
          //prefix is absolute too
          result.AddRange(
             response.CommonPrefixes
+               .Where(p => !StoragePath.IsRootPath(p))
                .Select(p => new Blob(p, BlobItemKind.Folder)));
 
          return result;

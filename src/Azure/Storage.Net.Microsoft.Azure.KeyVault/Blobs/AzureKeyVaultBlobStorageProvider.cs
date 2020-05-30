@@ -87,7 +87,7 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
       public async Task WriteAsync(string fullPath, Stream dataStream, bool append, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
-         ValidateSecretName(fullPath);
+         fullPath = NormaliseSecretName(fullPath);
          if (append) throw new ArgumentException("appending to secrets is not supported", nameof(append));
 
          byte[] data = dataStream.ToByteArray();
@@ -98,7 +98,7 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken)
       {
          GenericValidation.CheckBlobFullPath(fullPath);
-         ValidateSecretName(fullPath);
+         fullPath = NormaliseSecretName(fullPath);
 
          try
          {
@@ -123,6 +123,8 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
 
       private async Task DeleteAsync(string fullPath, CancellationToken cancellationToken)
       {
+         fullPath = NormaliseSecretName(fullPath);
+
          try
          {
             await _client.StartDeleteSecretAsync(fullPath, cancellationToken).ConfigureAwait(false);
@@ -142,6 +144,10 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
 
       private async Task<bool> ExistsAsync(string fullPath)
       {
+         GenericValidation.CheckBlobFullPath(fullPath);
+
+         fullPath = NormaliseSecretName(fullPath);
+
          try
          {
             await _client.GetSecretAsync(fullPath).ConfigureAwait(false);
@@ -168,6 +174,8 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
 
       private async Task<Blob> GetBlobAsync(string fullPath)
       {
+         fullPath = NormaliseSecretName(fullPath);
+
          try
          {
             Response<KeyVaultSecret> secret = await _client.GetSecretAsync(fullPath).ConfigureAwait(false);
@@ -182,12 +190,16 @@ namespace Storage.Net.Microsoft.Azure.KeyVault.Blobs
 
       #endregion
 
-      private static void ValidateSecretName(string fullPath)
+      private static string NormaliseSecretName(string fullPath)
       {
+         fullPath = StoragePath.Normalize(fullPath).Substring(1);
+
          if(!secretNameRegex.IsMatch(fullPath))
          {
             throw new NotSupportedException($"secret '{fullPath}' does not match expected pattern '^[0-9a-zA-Z-]+$'");
          }
+
+         return fullPath;
       }
 
       public void Dispose()

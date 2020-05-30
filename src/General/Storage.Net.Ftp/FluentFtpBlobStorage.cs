@@ -136,7 +136,7 @@ namespace Storage.Net.Ftp
          var results = new List<Blob>();
          foreach(string path in ids)
          {
-            string cpath = StoragePath.Normalize(path, true);
+            string cpath = StoragePath.Normalize(path);
             string parentPath = StoragePath.GetParent(cpath);
 
             FtpListItem[] all = await client.GetListingAsync(parentPath).ConfigureAwait(false);

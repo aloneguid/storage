@@ -36,8 +36,18 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
             "Crc32", go.Crc32c,
             "ETag", go.ETag,
             "EventBaseHold", go.EventBasedHold.ToString(),
-            "Generation", go.Generation.ToString());
-         //todo: more to come
+            "Generation", go.Generation.ToString(),
+            "Id", go.Id,
+            "KmsKeyName", go.KmsKeyName,
+            "MediaLink", go.MediaLink,
+            "Metageneration", go.Metageneration,
+            "Owner", go.Owner,
+            "RetentionExpirationTime", go.RetentionExpirationTime,
+            "StorageClass", go.StorageClass,
+            "TemporaryHold", go.TemporaryHold,
+            "TimeCreated", go.TimeCreated,
+            "TimeDeleted", go.TimeDeleted,
+            "TimeStorageClassUpdated", go.TimeStorageClassUpdated);
 
          return blob;
       }

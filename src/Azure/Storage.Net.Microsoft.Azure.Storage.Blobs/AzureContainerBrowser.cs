@@ -70,7 +70,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
       private static string FormatFolderPrefix(string folderPath)
       {
-         folderPath = StoragePath.Normalize(folderPath);
+         folderPath = StoragePath.Normalize(folderPath).Substring(1);
 
          if(StoragePath.IsRootPath(folderPath))
             return null;

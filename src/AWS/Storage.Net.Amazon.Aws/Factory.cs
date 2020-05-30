@@ -6,6 +6,7 @@ using Storage.Net.Blobs;
 using Storage.Net.Messaging;
 using Storage.Net.Amazon.Aws;
 using Storage.Net.ConnectionString;
+using Amazon.S3.Transfer;
 
 namespace Storage.Net
 {
@@ -69,15 +70,17 @@ namespace Storage.Net
       /// <param name="sessionToken">Optional. Only required when using session credentials.</param>
       /// <param name="bucketName">Bucket name</param>
       /// <param name="clientConfig">S3 client configuration</param>
+      /// <param name="transferUtilityConfig">S3 transfer utility configuration</param>
       /// <returns>A reference to the created storage</returns>
       public static IBlobStorage AwsS3(this IBlobStorageFactory factory,
          string accessKeyId,
          string secretAccessKey,
          string sessionToken,
          string bucketName,
-         AmazonS3Config clientConfig)
+         AmazonS3Config clientConfig,
+         TransferUtilityConfig transferUtilityConfig = null)
       {
-         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, sessionToken, bucketName, clientConfig);
+         return new AwsS3BlobStorage(accessKeyId, secretAccessKey, sessionToken, bucketName, clientConfig, transferUtilityConfig);
       }
 
 #if !NET16

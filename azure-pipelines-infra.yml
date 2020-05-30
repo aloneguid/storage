@@ -1,0 +1,49 @@
+
+variables:
+  - group: 'External Resources'
+  - name: vmImage
+    value: 'ubuntu-latest'  # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml&viewFallbackFrom=vsts
+  - name: rgName
+    value: 'storagenet-deleteme'
+
+stages:
+- stage: Main
+  jobs:
+  - job: Main
+    pool:
+      vmImage: $(vmImage)
+
+    steps:
+
+    - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'Deploy Test Azure Resources'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: 'PAYG (personal)'
+        subscriptionId: 'e692471f-4dba-4d86-8940-ce6cca371941'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: $(rgName)
+        location: 'North Europe'
+        templateLocation: 'Linked artifact'
+        csmFile: 'infra/azure.json'
+        deploymentMode: 'Incremental'
+        deploymentOutputs: 'InfraOutput'
+
+    - task: AzurePowerShell@4
+      displayName: 'Post Configure Resources'
+      inputs:
+        azureSubscription: 'PAYG (personal)'
+        ScriptType: 'FilePath'
+        ScriptPath: 'infra/postconfigure.ps1'
+        ScriptArguments: '-JsonString ''$(InfraOutput)'' -RgName $(rgName)'
+        FailOnStandardError: true
+        azurePowerShellVersion: 'LatestVersion'
+        pwsh: true
+
+    - task: PowerShell@2
+      displayName: 'Transfer Secrets to Variable Set'
+      inputs:
+        filePath: 'infra/infraset.ps1'
+        arguments: '-JsonString ''$(InfraOutput)'' -Organisation ''aloneguid'' -Project ''AllPublic'' -GroupId ''8'' -Pat ''$(Pat)'''
+        failOnStderr: true
+        pwsh: true
