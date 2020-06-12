@@ -476,6 +476,12 @@ namespace Storage.Net.Blobs
          {
             string fullPath = StoragePath.Combine(folderPath, dummyFileName ?? ".empty");
 
+            // Check if the file already exists before we try to create it
+            if(await blobStorage.ExistsAsync(fullPath))
+            {
+               return;
+            }
+
             await blobStorage.WriteTextAsync(
                fullPath,
                "created as a workaround by Storage.Net when creating an empty parent folder",
