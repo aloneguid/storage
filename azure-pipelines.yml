@@ -27,11 +27,11 @@ variables:
   - name: rgName
     value: 'storagenet-deleteme'
   - name: v
-    value: '9.3.0'
+    value: '9.2.0'
   - name: av
     value: '9.0.0'
   - name: pv
-    value: '9.3.0-preview-01'
+    value: '9.2.7-preview-03'
 
 stages:
 - stage: Build
@@ -77,7 +77,7 @@ stages:
         command: 'push'
         packagesToPush: '$(build.artifactstagingdirectory)/**/*.nupkg'
         nuGetFeedType: 'internal'
-        publishVstsFeed: '4bab84c0-90f7-4425-afc6-ba077aa9757e/0efacfd4-9b7e-4cfb-90c0-07824d6fbbf3'
+        publishVstsFeed: '34dffbbb-3f23-4f93-9019-e579bf50a1ff'
         allowPackageConflicts: true
 
 
