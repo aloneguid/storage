@@ -1,4 +1,6 @@
-﻿using Storage.Net.Blobs;
+﻿using System;
+using Azure.Storage.Blobs;
+using Storage.Net.Blobs;
 using Storage.Net.ConnectionString;
 using Storage.Net.Messaging;
 
@@ -6,6 +8,14 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 {
    class Module : IExternalModule, IConnectionFactory
    {
+      private readonly Func<BlobClientOptions> _optionsFactory;
+
+      public Module()
+      {
+      }
+
+      public Module(Func<BlobClientOptions> optionsFactory) => _optionsFactory = optionsFactory;
+
       public IConnectionFactory ConnectionFactory => this;
 
       public IBlobStorage CreateBlobStorage(StorageConnectionString connectionString)
@@ -14,7 +24,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          {
             if(connectionString.Parameters.ContainsKey(KnownParameter.IsLocalEmulator))
             {
-               return StorageFactory.Blobs.AzureBlobStorageWithLocalEmulator();
+               return StorageFactory.Blobs.AzureBlobStorageWithLocalEmulator(_optionsFactory);
             }
 
             connectionString.GetRequired(KnownParameter.AccountName, true, out string accountName);
@@ -22,7 +32,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
             string sharedKey = connectionString.Get(KnownParameter.KeyOrPassword);
             if(!string.IsNullOrEmpty(sharedKey))
             {
-               return StorageFactory.Blobs.AzureBlobStorageWithSharedKey(accountName, sharedKey);
+               return StorageFactory.Blobs.AzureBlobStorageWithSharedKey(accountName, sharedKey, _optionsFactory);
             }
 
             string tenantId = connectionString.Get(KnownParameter.TenantId);
@@ -31,12 +41,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
                connectionString.GetRequired(KnownParameter.ClientId, true, out string clientId);
                connectionString.GetRequired(KnownParameter.ClientSecret, true, out string clientSecret);
 
-               return StorageFactory.Blobs.AzureBlobStorageWithAzureAd(accountName, tenantId, clientId, clientSecret);
+               return StorageFactory.Blobs.AzureBlobStorageWithAzureAd(accountName, tenantId, clientId, clientSecret, _optionsFactory);
             }
 
             if(connectionString.Parameters.ContainsKey(KnownParameter.MsiEnabled))
             {
-               return StorageFactory.Blobs.AzureBlobStorageWithMsi(accountName);
+               return StorageFactory.Blobs.AzureBlobStorageWithMsi(accountName, _optionsFactory);
             }
          }
          else if(connectionString.Prefix == KnownPrefix.AzureDataLakeGen2 || connectionString.Prefix == KnownPrefix.AzureDataLake)
@@ -46,7 +56,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
             string sharedKey = connectionString.Get(KnownParameter.KeyOrPassword);
             if(!string.IsNullOrEmpty(sharedKey))
             {
-               return StorageFactory.Blobs.AzureDataLakeStorageWithSharedKey(accountName, sharedKey);
+               return StorageFactory.Blobs.AzureDataLakeStorageWithSharedKey(accountName, sharedKey, _optionsFactory);
             }
 
             string tenantId = connectionString.Get(KnownParameter.TenantId);
@@ -55,12 +65,12 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
                connectionString.GetRequired(KnownParameter.ClientId, true, out string clientId);
                connectionString.GetRequired(KnownParameter.ClientSecret, true, out string clientSecret);
 
-               return StorageFactory.Blobs.AzureDataLakeStorageWithAzureAd(accountName, tenantId, clientId, clientSecret);
+               return StorageFactory.Blobs.AzureDataLakeStorageWithAzureAd(accountName, tenantId, clientId, clientSecret, _optionsFactory);
             }
 
             if(connectionString.Parameters.ContainsKey(KnownParameter.MsiEnabled))
             {
-               return StorageFactory.Blobs.AzureDataLakeStorageWithMsi(accountName);
+               return StorageFactory.Blobs.AzureDataLakeStorageWithMsi(accountName, _optionsFactory);
             }
 
          }

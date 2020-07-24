@@ -3,7 +3,6 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Storage;
 using Azure.Storage.Blobs;
-using Azure.Storage.Sas;
 using Storage.Net.ConnectionString;
 using Storage.Net.Microsoft.Azure.Storage.Blobs;
 
@@ -23,9 +22,25 @@ namespace Storage.Net
       }
 
       /// <summary>
+      /// Register Azure module.
+      /// </summary>
+      public static IModulesFactory UseAzureBlobStorage(this IModulesFactory factory, Func<BlobClientOptions> optionsFactory)
+      {
+         return factory.Use(new Module(optionsFactory));
+      }
+
+      /// <summary>
       /// Connect to local emulator
       /// </summary>
       public static IAzureBlobStorage AzureBlobStorageWithLocalEmulator(this IBlobStorageFactory factory)
+      {
+         return AzureBlobStorageWithLocalEmulator(factory, null);
+      }
+
+      /// <summary>
+      /// Connect to local emulator
+      /// </summary>
+      public static IAzureBlobStorage AzureBlobStorageWithLocalEmulator(this IBlobStorageFactory factory, Func<BlobClientOptions> optionsFactory)
       {
          var credential = new StorageSharedKeyCredential(
             "devstoreaccount1",
@@ -33,7 +48,8 @@ namespace Storage.Net
 
          var client = new BlobServiceClient(
             new Uri("http://127.0.0.1:10000/devstoreaccount1"),
-            credential);
+            credential,
+            optionsFactory?.Invoke());
 
          return new AzureBlobStorage(client, "devstoreaccount1", credential);
       }
@@ -46,6 +62,18 @@ namespace Storage.Net
          string key,
          Uri serviceUri = null)
       {
+         return AzureBlobStorageWithSharedKey(factory, accountName, key, null, serviceUri);
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      public static IAzureBlobStorage AzureBlobStorageWithSharedKey(this IBlobStorageFactory factory,
+         string accountName,
+         string key,
+         Func<BlobClientOptions> optionsFactory,
+         Uri serviceUri = null)
+      {
          if(accountName is null)
             throw new ArgumentNullException(nameof(accountName));
          if(key is null)
@@ -53,7 +81,7 @@ namespace Storage.Net
 
          var credential = new StorageSharedKeyCredential(accountName, key);
 
-         var client = new BlobServiceClient(serviceUri ?? GetServiceUri(accountName), credential);
+         var client = new BlobServiceClient(serviceUri ?? GetServiceUri(accountName), credential, optionsFactory?.Invoke());
 
          return new AzureBlobStorage(client, accountName, credential);
       }
@@ -66,6 +94,18 @@ namespace Storage.Net
          string key,
          Uri serviceUri = null)
       {
+         return AzureDataLakeStorageWithSharedKey(factory, accountName, key, null, serviceUri);
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      public static IAzureDataLakeStorage AzureDataLakeStorageWithSharedKey(this IBlobStorageFactory factory,
+         string accountName,
+         string key,
+         Func<BlobClientOptions> optionsFactory,
+         Uri serviceUri = null)
+      {
          if(accountName is null)
             throw new ArgumentNullException(nameof(accountName));
          if(key is null)
@@ -73,7 +113,7 @@ namespace Storage.Net
 
          var credential = new StorageSharedKeyCredential(accountName, key);
 
-         var client = new BlobServiceClient(serviceUri ?? GetServiceUri(accountName), credential);
+         var client = new BlobServiceClient(serviceUri ?? GetServiceUri(accountName), credential, optionsFactory?.Invoke());
 
          return new AzureDataLakeStorage(client, accountName, credential);
       }
@@ -95,6 +135,29 @@ namespace Storage.Net
          string applicationSecret,
          string activeDirectoryAuthEndpoint = "https://login.microsoftonline.com/")
       {
+         return AzureBlobStorageWithAzureAd(factory, accountName, tenantId, applicationId, applicationSecret, null,
+            activeDirectoryAuthEndpoint);
+      }
+
+      /// <summary>
+      /// Create Azure Blob Storage with AAD authentication
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="accountName"></param>
+      /// <param name="tenantId"></param>
+      /// <param name="applicationId"></param>
+      /// <param name="applicationSecret"></param>
+      /// <param name="optionsFactory"></param>
+      /// <param name="activeDirectoryAuthEndpoint"></param>
+      /// <returns></returns>
+      public static IAzureBlobStorage AzureBlobStorageWithAzureAd(this IBlobStorageFactory factory,
+         string accountName,
+         string tenantId,
+         string applicationId,
+         string applicationSecret,
+         Func<BlobClientOptions> optionsFactory,
+         string activeDirectoryAuthEndpoint = "https://login.microsoftonline.com/")
+      {
          if(accountName is null)
             throw new ArgumentNullException(nameof(accountName));
          if(tenantId is null)
@@ -109,14 +172,14 @@ namespace Storage.Net
          // Create a token credential that can use our Azure Active
          // Directory application to authenticate with Azure Storage
          TokenCredential credential =
-             new ClientSecretCredential(
-                 tenantId,
-                 applicationId,
-                 applicationSecret,
-                 new TokenCredentialOptions() { AuthorityHost = new Uri(activeDirectoryAuthEndpoint) });
+            new ClientSecretCredential(
+               tenantId,
+               applicationId,
+               applicationSecret,
+               new TokenCredentialOptions() { AuthorityHost = new Uri(activeDirectoryAuthEndpoint) });
 
          // Create a client that can authenticate using our token credential
-         var client = new BlobServiceClient(GetServiceUri(accountName), credential);
+         var client = new BlobServiceClient(GetServiceUri(accountName), credential, optionsFactory?.Invoke());
 
          return new AzureBlobStorage(client, accountName);
       }
@@ -138,6 +201,29 @@ namespace Storage.Net
          string applicationSecret,
          string activeDirectoryAuthEndpoint = "https://login.microsoftonline.com/")
       {
+         return AzureDataLakeStorageWithAzureAd(factory, accountName, tenantId, applicationId, applicationSecret, null,
+            activeDirectoryAuthEndpoint);
+      }
+
+      /// <summary>
+      /// Create Azure Data Lake Gen 2 Storage with AAD authentication
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="accountName"></param>
+      /// <param name="tenantId"></param>
+      /// <param name="applicationId"></param>
+      /// <param name="applicationSecret"></param>
+      /// <param name="optionsFactory"></param>
+      /// <param name="activeDirectoryAuthEndpoint"></param>
+      /// <returns></returns>
+      public static IAzureDataLakeStorage AzureDataLakeStorageWithAzureAd(this IBlobStorageFactory factory,
+         string accountName,
+         string tenantId,
+         string applicationId,
+         string applicationSecret,
+         Func<BlobClientOptions> optionsFactory,
+         string activeDirectoryAuthEndpoint = "https://login.microsoftonline.com/")
+      {
          if(accountName is null)
             throw new ArgumentNullException(nameof(accountName));
          if(tenantId is null)
@@ -152,14 +238,14 @@ namespace Storage.Net
          // Create a token credential that can use our Azure Active
          // Directory application to authenticate with Azure Storage
          TokenCredential credential =
-             new ClientSecretCredential(
-                 tenantId,
-                 applicationId,
-                 applicationSecret,
-                 new TokenCredentialOptions() { AuthorityHost = new Uri(activeDirectoryAuthEndpoint) });
+            new ClientSecretCredential(
+               tenantId,
+               applicationId,
+               applicationSecret,
+               new TokenCredentialOptions() { AuthorityHost = new Uri(activeDirectoryAuthEndpoint) });
 
          // Create a client that can authenticate using our token credential
-         var client = new BlobServiceClient(GetServiceUri(accountName), credential);
+         var client = new BlobServiceClient(GetServiceUri(accountName), credential, optionsFactory?.Invoke());
 
          return new AzureDataLakeStorage(client, accountName);
       }
@@ -171,7 +257,18 @@ namespace Storage.Net
          string accountName,
          TokenCredential tokenCredential)
       {
-         var client = new BlobServiceClient(GetServiceUri(accountName), tokenCredential);
+         return AzureBlobStorageWithTokenCredential(factory, accountName, tokenCredential, null);
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      public static IAzureBlobStorage AzureBlobStorageWithTokenCredential(this IBlobStorageFactory factory,
+         string accountName,
+         TokenCredential tokenCredential,
+         Func<BlobClientOptions> optionsFactory)
+      {
+         var client = new BlobServiceClient(GetServiceUri(accountName), tokenCredential, optionsFactory?.Invoke());
 
          return new AzureBlobStorage(client, accountName);
       }
@@ -185,9 +282,23 @@ namespace Storage.Net
       public static IAzureBlobStorage AzureBlobStorageWithSas(this IBlobStorageFactory factory,
          string sas)
       {
+         return AzureBlobStorageWithSas(factory, sas, null);
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="sas"></param>
+      /// <param name="optionsFactory"></param>
+      /// <returns></returns>
+      public static IAzureBlobStorage AzureBlobStorageWithSas(this IBlobStorageFactory factory,
+         string sas,
+         Func<BlobClientOptions> optionsFactory)
+      {
          TryParseSasUrl(sas, out string accountName, out string containerName, out string sasQuery);
 
-         var client = new BlobServiceClient(new Uri(sas));
+         var client = new BlobServiceClient(new Uri(sas), optionsFactory?.Invoke());
 
          return new AzureBlobStorage(client, accountName, containerName: containerName);
       }
@@ -203,14 +314,28 @@ namespace Storage.Net
          string accountName,
          string clientId = null)
       {
+         return AzureBlobStorageWithMsi(factory, accountName, null, clientId);
+      }
+
+      /// <summary>
+      /// Creates Azure Blob Storage with Managed Identity
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="accountName"></param>
+      /// <param name="optionsFactory"></param>
+      /// <param name="clientId"></param>
+      /// <returns></returns>
+      public static IAzureBlobStorage AzureBlobStorageWithMsi(this IBlobStorageFactory factory,
+         string accountName,
+         Func<BlobClientOptions> optionsFactory,
+         string clientId = null)
+      {
          TokenCredential credential = new ManagedIdentityCredential(clientId, null);
 
-         var client = new BlobServiceClient(GetServiceUri(accountName), credential);
+         var client = new BlobServiceClient(GetServiceUri(accountName), credential, optionsFactory?.Invoke());
 
          return new AzureBlobStorage(client, accountName);
       }
-
-
 
       /// <summary>
       /// Creates Azure Data Lake Gen 2 Storage with Managed Identity
@@ -223,13 +348,28 @@ namespace Storage.Net
          string accountName,
          string clientId = null)
       {
+         return AzureDataLakeStorageWithMsi(factory, accountName, null, clientId);
+      }
+
+      /// <summary>
+      /// Creates Azure Data Lake Gen 2 Storage with Managed Identity
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="accountName"></param>
+      /// <param name="optionsFactory"></param>
+      /// <param name="clientId"></param>
+      /// <returns></returns>
+      public static IAzureDataLakeStorage AzureDataLakeStorageWithMsi(this IBlobStorageFactory factory,
+         string accountName,
+         Func<BlobClientOptions> optionsFactory,
+         string clientId = null)
+      {
          TokenCredential credential = new ManagedIdentityCredential(clientId, null);
 
-         var client = new BlobServiceClient(GetServiceUri(accountName), credential);
+         var client = new BlobServiceClient(GetServiceUri(accountName), credential, optionsFactory?.Invoke());
 
          return new AzureDataLakeStorage(client, accountName);
       }
-
 
       /*
       /// <summary>
