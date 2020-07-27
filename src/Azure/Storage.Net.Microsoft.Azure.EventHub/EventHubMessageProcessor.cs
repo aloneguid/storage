@@ -49,7 +49,7 @@ namespace Storage.Net.Microsoft.Azure.EventHub
 
       public async Task StartAsync()
       {
-         await _host.RegisterEventProcessorFactoryAsync(this);
+         await _host.RegisterEventProcessorFactoryAsync(this).ConfigureAwait(false);
       }
    }
 }

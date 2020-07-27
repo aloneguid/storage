@@ -22,7 +22,7 @@ namespace Storage.Net.Amazon.Aws.Messaging
       private readonly string _serviceUrl;
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       /// <param name="accessKeyId"></param>
       /// <param name="secretAccessKey"></param>
@@ -108,7 +108,7 @@ namespace Storage.Net.Amazon.Aws.Messaging
 
             try
             {
-               await _client.SendMessageBatchAsync(request, cancellationToken);
+               await _client.SendMessageBatchAsync(request, cancellationToken).ConfigureAwait(false);
             }
             catch(AmazonSQSException ex) when(ex.ErrorCode == "AWS.SimpleQueueService.NonExistentQueue")
             {

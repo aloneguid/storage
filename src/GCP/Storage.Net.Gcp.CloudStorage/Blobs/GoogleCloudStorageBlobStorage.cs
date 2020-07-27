@@ -72,7 +72,7 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
                Delimiter = options.Recurse ? null : "/"
             });
 
-         return await GConvert.ToBlobsAsync(objects, options);
+         return await GConvert.ToBlobsAsync(objects, options).ConfigureAwait(false);
       }
 
       public override async Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
@@ -84,8 +84,8 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
 
       private async Task SetBlobAsync(Blob blob, CancellationToken cancellationToken = default)
       {
-         Object item = await _client.GetObjectAsync(_bucketName, NormalisePath(blob.FullPath), cancellationToken: cancellationToken);
-         
+         Object item = await _client.GetObjectAsync(_bucketName, NormalisePath(blob.FullPath), cancellationToken: cancellationToken).ConfigureAwait(false);
+
          if(item.Metadata == null)
          {
             item.Metadata = new Dictionary<string, string>();
@@ -103,7 +103,7 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
             }
          }
 
-         await _client.UpdateObjectAsync(item, cancellationToken: cancellationToken);
+         await _client.UpdateObjectAsync(item, cancellationToken: cancellationToken).ConfigureAwait(false);
       }
 
       protected override async Task<Blob> GetBlobAsync(string fullPath, CancellationToken cancellationToken)
@@ -115,7 +115,7 @@ namespace Storage.Net.Gcp.CloudStorage.Blobs
             Object obj = await _client.GetObjectAsync(_bucketName, fullPath,
                new GetObjectOptions
                {
-                  //todo  
+                  //todo
                },
                cancellationToken).ConfigureAwait(false);
 

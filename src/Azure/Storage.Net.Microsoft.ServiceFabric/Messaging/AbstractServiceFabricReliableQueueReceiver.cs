@@ -33,9 +33,9 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
       {
          using (var tx = new ServiceFabricTransaction(_stateManager, null))
          {
-            IReliableState collection = await GetCollectionAsync();
+            IReliableState collection = await GetCollectionAsync().ConfigureAwait(false);
 
-            return await GetMessageCountAsync(collection, tx);
+            return await GetMessageCountAsync(collection, tx).ConfigureAwait(false);
          }
       }
 
@@ -74,13 +74,13 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
             {
                using (var tx = new ServiceFabricTransaction(_stateManager, null))
                {
-                  IReliableState collection = await GetCollectionAsync();
+                  IReliableState collection = await GetCollectionAsync().ConfigureAwait(false);
 
                   var messages = new List<QueueMessage>();
 
                   while (messages.Count < maxBatchSize)
                   {
-                     ConditionalValue<byte[]> message = await TryDequeueAsync(tx, collection, cancellationToken);
+                     ConditionalValue<byte[]> message = await TryDequeueAsync(tx, collection, cancellationToken).ConfigureAwait(false);
                      if (message.HasValue)
                      {
                         QueueMessage qm = QueueMessage.FromByteArray(message.Value);
@@ -96,10 +96,10 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
                   //make the call before committing the transaction
                   if (messages.Count > 0)
                   {
-                     await onMessage(messages, cancellationToken);
+                     await onMessage(messages, cancellationToken).ConfigureAwait(false);
                   }
 
-                  await tx.CommitAsync();
+                  await tx.CommitAsync().ConfigureAwait(false);
                }
             }
             catch(Exception ex)
@@ -107,7 +107,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
                Trace.Fail($"failed to listen to messages on queue '{_queueName}'", ex.ToString());
             }
 
-            await Task.Delay(_scanInterval);
+            await Task.Delay(_scanInterval).ConfigureAwait(false);
          }
 
          Trace.TraceInformation("queue '{0}' scanner exited", _queueName);

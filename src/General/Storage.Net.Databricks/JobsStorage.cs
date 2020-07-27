@@ -25,7 +25,7 @@ namespace Storage.Net.Databricks
       {
          if(StoragePath.IsRootPath(path))
          {
-            IEnumerable<Job> jobs = await _jobs.List();
+            IEnumerable<Job> jobs = await _jobs.List().ConfigureAwait(false);
 
             // convert in parallel as they need to fetch extra info per item
             return await Task.WhenAll(jobs.Select(j => ToBlobAsync(j))).ConfigureAwait(false);
@@ -34,8 +34,8 @@ namespace Storage.Net.Databricks
          // list runs
          // need job ID here - find by job name (crap!)
          string jobName = StoragePath.Split(path)[0];
-         long? jobId = await GetJobIdFromJobNameAsync(jobName);
-         IReadOnlyCollection<Run> allRuns = await GetAllJobRunsAsync(jobId.Value);
+         long? jobId = await GetJobIdFromJobNameAsync(jobName).ConfigureAwait(false);
+         IReadOnlyCollection<Run> allRuns = await GetAllJobRunsAsync(jobId.Value).ConfigureAwait(false);
          List<Blob> rr = allRuns.Select(r => ToBlob(jobName, r)).ToList();
          rr.Reverse();
          return rr;
@@ -68,7 +68,7 @@ namespace Storage.Net.Databricks
          {
             if(long.TryParse(parts[1], out long runId))
             {
-               IEnumerable<ViewItem> exportedViews = await _jobs.RunsExport(runId, ViewsToExport.ALL);
+               IEnumerable<ViewItem> exportedViews = await _jobs.RunsExport(runId, ViewsToExport.ALL).ConfigureAwait(false);
                if(exportedViews == null)
                   return null;
 
@@ -85,7 +85,7 @@ namespace Storage.Net.Databricks
 
       private async Task<long?> GetJobIdFromJobNameAsync(string jobName)
       {
-         IEnumerable<Job> allJobs = await _jobs.List();
+         IEnumerable<Job> allJobs = await _jobs.List().ConfigureAwait(false);
 
          foreach(Job j in allJobs)
          {
@@ -118,7 +118,7 @@ namespace Storage.Net.Databricks
             "EmailNotificationsJson", Module.AsDbJson(dbJob.Settings?.EmailNotifications));
 
          // get last run
-         Run lastRun = (await _jobs.RunsList(dbJob.JobId, 0, 1)).Runs.FirstOrDefault();
+         Run lastRun = (await _jobs.RunsList(dbJob.JobId, 0, 1).ConfigureAwait(false)).Runs.FirstOrDefault();
          if(lastRun != null)
          {
             AddProperties(blob, lastRun, "LastRun");

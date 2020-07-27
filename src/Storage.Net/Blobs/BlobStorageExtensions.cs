@@ -32,7 +32,7 @@ namespace Storage.Net.Blobs
          ListOptions options,
          CancellationToken cancellationToken = default)
       {
-         IReadOnlyCollection<Blob> all = await blobStorage.ListAsync(options, cancellationToken);
+         IReadOnlyCollection<Blob> all = await blobStorage.ListAsync(options, cancellationToken).ConfigureAwait(false);
 
          return all.Where(i => i!= null && i.IsFile).ToList();
       }
@@ -91,13 +91,13 @@ namespace Storage.Net.Blobs
          Encoding textEncoding = null,
          CancellationToken cancellationToken = default)
       {
-         Stream src = await provider.OpenReadAsync(fullPath, cancellationToken);
+         Stream src = await provider.OpenReadAsync(fullPath, cancellationToken).ConfigureAwait(false);
          if (src == null) return null;
 
          var ms = new MemoryStream();
          using (src)
          {
-            await src.CopyToAsync(ms);
+            await src.CopyToAsync(ms).ConfigureAwait(false);
          }
 
          return (textEncoding ?? Encoding.UTF8).GetString(ms.ToArray());
@@ -120,7 +120,7 @@ namespace Storage.Net.Blobs
       {
          using (Stream s = text.ToMemoryStream(textEncoding ?? Encoding.UTF8))
          {
-            await provider.WriteAsync(fullPath, s, false, cancellationToken);
+            await provider.WriteAsync(fullPath, s, false, cancellationToken).ConfigureAwait(false);
          }
       }
 
@@ -134,7 +134,7 @@ namespace Storage.Net.Blobs
       public static async Task<bool> ExistsAsync(this IBlobStorage blobStorage,
          string fullPath, CancellationToken cancellationToken = default)
       {
-         IEnumerable<bool> r = await blobStorage.ExistsAsync(new[] { fullPath }, cancellationToken);
+         IEnumerable<bool> r = await blobStorage.ExistsAsync(new[] { fullPath }, cancellationToken).ConfigureAwait(false);
          return r.First();
       }
 
@@ -170,7 +170,7 @@ namespace Storage.Net.Blobs
       public static async Task<Blob> GetBlobAsync(this IBlobStorage storage,
          string fullPath, CancellationToken cancellationToken = default)
       {
-         return (await storage.GetBlobsAsync(new[] { fullPath }, cancellationToken)).First();
+         return (await storage.GetBlobsAsync(new[] { fullPath }, cancellationToken).ConfigureAwait(false)).First();
       }
 
       /// <summary>
@@ -207,13 +207,13 @@ namespace Storage.Net.Blobs
       /// </summary>
       public static async Task<byte[]> ReadBytesAsync(this IBlobStorage storage, string fullPath, CancellationToken cancellationToken = default)
       {
-         Stream src = await storage.OpenReadAsync(fullPath, cancellationToken);
+         Stream src = await storage.OpenReadAsync(fullPath, cancellationToken).ConfigureAwait(false);
          if (src == null) return null;
 
          var ms = new MemoryStream();
          using (src)
          {
-            await src.CopyToAsync(ms);
+            await src.CopyToAsync(ms).ConfigureAwait(false);
          }
 
          return ms.ToArray();
@@ -240,12 +240,12 @@ namespace Storage.Net.Blobs
          if (targetStream == null)
             throw new ArgumentNullException(nameof(targetStream));
 
-         Stream src = await provider.OpenReadAsync(fullPath, cancellationToken);
+         Stream src = await provider.OpenReadAsync(fullPath, cancellationToken).ConfigureAwait(false);
          if (src == null) return;
 
          using (src)
          {
-            await src.CopyToAsync(targetStream, BufferSize, cancellationToken);
+            await src.CopyToAsync(targetStream, BufferSize, cancellationToken).ConfigureAwait(false);
          }
       }
 
@@ -264,15 +264,15 @@ namespace Storage.Net.Blobs
          this IBlobStorage provider,
          string fullPath, string filePath, CancellationToken cancellationToken = default)
       {
-         Stream src = await provider.OpenReadAsync(fullPath, cancellationToken);
+         Stream src = await provider.OpenReadAsync(fullPath, cancellationToken).ConfigureAwait(false);
          if (src == null) return;
 
          using (src)
          {
             using (Stream dest = File.Create(filePath))
             {
-               await src.CopyToAsync(dest, BufferSize, cancellationToken);
-               await dest.FlushAsync();
+               await src.CopyToAsync(dest, BufferSize, cancellationToken).ConfigureAwait(false);
+               await dest.FlushAsync().ConfigureAwait(false);
             }
          }
       }
@@ -290,7 +290,7 @@ namespace Storage.Net.Blobs
       {
          using (Stream src = File.OpenRead(filePath))
          {
-            await provider.WriteAsync(fullPath, src, false, cancellationToken);
+            await provider.WriteAsync(fullPath, src, false, cancellationToken).ConfigureAwait(false);
          }
       }
 
@@ -338,7 +338,7 @@ namespace Storage.Net.Blobs
          Encoding encoding = null,
          CancellationToken cancellationToken = default)
       {
-         string jsonText = await storage.ReadTextAsync(fullPath, encoding, cancellationToken);
+         string jsonText = await storage.ReadTextAsync(fullPath, encoding, cancellationToken).ConfigureAwait(false);
          if(string.IsNullOrEmpty(jsonText))
             return default;
 
@@ -392,14 +392,14 @@ namespace Storage.Net.Blobs
          if(blob.MD5 != null)
             return blob.MD5;
 
-         blob = await blobStorage.GetBlobAsync(blob.FullPath, cancellationToken);
+         blob = await blobStorage.GetBlobAsync(blob.FullPath, cancellationToken).ConfigureAwait(false);
 
          if(blob.MD5 != null)
             return blob.MD5;
 
          //hash definitely not supported, calculate it manually
 
-         using(Stream s = await blobStorage.OpenReadAsync(blob.FullPath, cancellationToken))
+         using(Stream s = await blobStorage.OpenReadAsync(blob.FullPath, cancellationToken).ConfigureAwait(false))
          {
             if(s == null)
                return null;
@@ -470,7 +470,7 @@ namespace Storage.Net.Blobs
       {
          if(blobStorage is IHierarchicalBlobStorage hierarchicalBlobStorage)
          {
-            await hierarchicalBlobStorage.CreateFolderAsync(folderPath, cancellationToken);
+            await hierarchicalBlobStorage.CreateFolderAsync(folderPath, cancellationToken).ConfigureAwait(false);
          }
          else
          {
@@ -480,7 +480,7 @@ namespace Storage.Net.Blobs
                fullPath,
                "created as a workaround by Storage.Net when creating an empty parent folder",
                null,
-               cancellationToken);
+               cancellationToken).ConfigureAwait(false);
          }
       }
 

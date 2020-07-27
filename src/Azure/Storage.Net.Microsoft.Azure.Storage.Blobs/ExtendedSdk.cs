@@ -64,7 +64,7 @@ namespace Blobs
          FilesystemList response = await InvokeAsync<FilesystemList>(
             "?resource=account",
             RequestMethod.Get,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
          return response.Filesystems;
       }
@@ -116,7 +116,7 @@ namespace Blobs
             new Dictionary<string, string>
             {
                ["x-ms-acl"] = accessControl.ToString()
-            });
+            }).ConfigureAwait(false);
       }
 
       public async Task<AccessControl> GetAccessControlAsync(
@@ -129,7 +129,7 @@ namespace Blobs
          (Void _, IDictionary<string, string> headers) = await InvokeExtraAsync<Void>(
             $"{filesystemName}/{relativePath}?action=getAccessControl&upn={getUpn}",
             RequestMethod.Head,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
          headers.TryGetValue("x-ms-owner", out string owner);
          headers.TryGetValue("x-ms-group", out string group);
