@@ -122,7 +122,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
             return response.Value.Content;
          }
-         catch(RequestFailedException ex) when (ex.ErrorCode == "BlobNotFound")
+         catch(RequestFailedException ex) when(ex.ErrorCode == "BlobNotFound")
          {
             return null;
          }
@@ -144,11 +144,25 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
          try
          {
-            await client.UploadAsync(
-               new StorageSourceStream(dataStream),
-               cancellationToken: cancellationToken).ConfigureAwait(false);
+            // Azure throws a Not supported exception if the stream cannot seek or be read. This happens from rename events where
+            // the source stream is an Azure.Core.Pipeline.RetriableStream.RetriableStreamImpl
+            if(!dataStream.CanRead || !dataStream.CanSeek)
+            {
+               using(var copyStr = new MemoryStream())
+               {
+                  await dataStream.CopyToAsync(copyStr);
+                  copyStr.Seek(0, SeekOrigin.Begin);
+                  await client.UploadAsync(new StorageSourceStream(copyStr), cancellationToken: cancellationToken).ConfigureAwait(false);
+               }
+            }
+            else
+            {
+               await client.UploadAsync(
+                  new StorageSourceStream(dataStream),
+                  cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
          }
-         catch(RequestFailedException ex) when (ex.ErrorCode == "OperationNotAllowedInCurrentState")
+         catch(RequestFailedException ex) when(ex.ErrorCode == "OperationNotAllowedInCurrentState")
          {
             //happens when trying to write to a non-file object i.e. folder
          }
@@ -254,7 +268,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
             if(!ignoreErrors)
                throw;
          }
-         catch(RequestFailedException ex) when (ex.ErrorCode == "BlobNotFound")
+         catch(RequestFailedException ex) when(ex.ErrorCode == "BlobNotFound")
          {
             if(!ignoreErrors)
                throw;
@@ -549,7 +563,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
                   await container.GetPropertiesAsync().ConfigureAwait(false);
 
                }
-               catch(RequestFailedException ex) when (ex.ErrorCode == "ContainerNotFound")
+               catch(RequestFailedException ex) when(ex.ErrorCode == "ContainerNotFound")
                {
                   if(createContainer)
                   {
