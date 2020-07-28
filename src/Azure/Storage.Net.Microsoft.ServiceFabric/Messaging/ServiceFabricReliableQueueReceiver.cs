@@ -23,14 +23,14 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
 
       protected override async Task<IReliableState> GetCollectionAsync()
       {
-         return await _stateManager.GetOrAddAsync<IReliableQueue<byte[]>>(_queueName);
+         return await _stateManager.GetOrAddAsync<IReliableQueue<byte[]>>(_queueName).ConfigureAwait(false);
       }
 
       protected override async Task<int> GetMessageCountAsync(IReliableState reliableState, ServiceFabricTransaction transaction)
       {
          IReliableQueue<byte[]> collection = (IReliableQueue<byte[]>)reliableState;
 
-         long count = await collection.GetCountAsync(transaction.Tx);
+         long count = await collection.GetCountAsync(transaction.Tx).ConfigureAwait(false);
 
          return (int)count;
       }
@@ -39,7 +39,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
       {
          IReliableQueue<byte[]> collection = (IReliableQueue<byte[]>)collectionBase;
 
-         ConditionalValue<byte[]> message = await collection.TryDequeueAsync(tx.Tx, TimeSpan.FromSeconds(4), cancellationToken);
+         ConditionalValue<byte[]> message = await collection.TryDequeueAsync(tx.Tx, TimeSpan.FromSeconds(4), cancellationToken).ConfigureAwait(false);
 
          return message;
       }

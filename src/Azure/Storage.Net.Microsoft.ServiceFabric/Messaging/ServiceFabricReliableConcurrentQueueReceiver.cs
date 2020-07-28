@@ -32,14 +32,14 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
       {
          IReliableConcurrentQueue<byte[]> collection = (IReliableConcurrentQueue<byte[]>)collectionBase;
 
-         ConditionalValue<byte[]> message = await collection.TryDequeueAsync(tx.Tx, cancellationToken, TimeSpan.FromSeconds(4));
+         ConditionalValue<byte[]> message = await collection.TryDequeueAsync(tx.Tx, cancellationToken, TimeSpan.FromSeconds(4)).ConfigureAwait(false);
 
          return message;
       }
 
       protected override async Task<IReliableState> GetCollectionAsync()
       {
-         return await _stateManager.GetOrAddAsync<IReliableConcurrentQueue<byte[]>>(_queueName);
+         return await _stateManager.GetOrAddAsync<IReliableConcurrentQueue<byte[]>>(_queueName).ConfigureAwait(false);
       }
    }
 }

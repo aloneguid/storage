@@ -180,7 +180,7 @@ namespace Storage.Net.Blobs
          foreach(string fp in fullPaths)
          {
             if(TryExplodeToMountPoint(fp, out IBlobStorage storage, out string relPath))
-            { 
+            {
                if(!map.TryGetValue(storage, out List<string> relPaths))
                {
                   relPaths = new List<string>();
@@ -239,7 +239,7 @@ namespace Storage.Net.Blobs
          {
             IEnumerable<string> rps = pair.Value.Select(v => v.relPath);
 
-            IReadOnlyCollection<TResult> br = await action(pair.Key, rps);
+            IReadOnlyCollection<TResult> br = await action(pair.Key, rps).ConfigureAwait(false);
 
             foreach(Tuple<TResult, MpTag<TResult>> doublePair in EnumerableEx.MultiIterate(br, pair.Value))
             {
@@ -252,7 +252,7 @@ namespace Storage.Net.Blobs
       }
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       /// <param name="fullPaths"></param>
       /// <param name="cancellationToken"></param>
@@ -264,7 +264,7 @@ namespace Storage.Net.Blobs
 
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       public virtual void Dispose()
       {
@@ -272,7 +272,7 @@ namespace Storage.Net.Blobs
       }
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       public virtual Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
@@ -282,7 +282,7 @@ namespace Storage.Net.Blobs
       }
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       public virtual Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
@@ -292,7 +292,7 @@ namespace Storage.Net.Blobs
       }
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       public async virtual Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options = null, CancellationToken cancellationToken = default)
       {
@@ -325,13 +325,13 @@ namespace Storage.Net.Blobs
          /*
           * abs path:
           * /f1/f2/f3/f4/f5
-          * 
+          *
           * mount: /f1
           * list:  /f1/f2/f3/f4
-          * 
+          *
           * strip mount - /f2/f3/f4 - list from mount
-          * 
-          * 
+          *
+          *
           */
 
          //find mount points
@@ -347,7 +347,7 @@ namespace Storage.Net.Blobs
             ListOptions mountOptions = options.Clone();
             mountOptions.FolderPath = StoragePath.Normalize(relPath);
 
-            IReadOnlyCollection<Blob> mountResults = await storage.ListAsync(mountOptions, cancellationToken);
+            IReadOnlyCollection<Blob> mountResults = await storage.ListAsync(mountOptions, cancellationToken).ConfigureAwait(false);
             foreach(Blob blob in mountResults)
             {
                blob.PrependPath(mountPoint.FullPath);
@@ -370,7 +370,7 @@ namespace Storage.Net.Blobs
       }
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       public virtual async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
       {
@@ -382,7 +382,7 @@ namespace Storage.Net.Blobs
 
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       public virtual Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
       {
@@ -410,13 +410,13 @@ namespace Storage.Net.Blobs
 
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       public virtual Task<ITransaction> OpenTransactionAsync() => null;
 
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       public virtual async Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
       {

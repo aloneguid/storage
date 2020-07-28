@@ -40,7 +40,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
          _client = blobServiceClient ?? throw new ArgumentNullException(nameof(blobServiceClient));
          _sasSigningCredentials = sasSigningCredentials;
          _containerName = containerName;
-         
+
       }
 
       #region [ Interface Methods ]
@@ -420,7 +420,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
          try
          {
-            await logsProps;
+            await logsProps.ConfigureAwait(false);
             r.Add(logsContainerClient);
          }
          catch(RequestFailedException ex) when(ex.ErrorCode == "ContainerNotFound")
@@ -451,7 +451,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
       protected virtual async Task DeleteAsync(string fullPath, CancellationToken cancellationToken)
       {
-         (BlobContainerClient container, string path) = await GetPartsAsync(fullPath, false);
+         (BlobContainerClient container, string path) = await GetPartsAsync(fullPath, false).ConfigureAwait(false);
 
          if(StoragePath.IsRootPath(path))
          {

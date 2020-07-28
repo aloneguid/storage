@@ -15,7 +15,7 @@ namespace Storage.Net.Messaging
       private readonly IPollingPolicy _pollingPolicy;
 
       /// <summary>
-      /// 
+      ///
       /// </summary>
       protected PollingMessageReceiver()
       {
@@ -73,7 +73,7 @@ namespace Storage.Net.Messaging
             IReadOnlyCollection<QueueMessage> messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
             while(messages != null && messages.Count > 0)
             {
-               await callback(messages, cancellationToken);
+               await callback(messages, cancellationToken).ConfigureAwait(false);
 
                messages = await ReceiveMessagesSafeAsync(maxBatchSize, cancellationToken).ConfigureAwait(false);
 

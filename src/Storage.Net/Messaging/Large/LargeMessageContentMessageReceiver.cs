@@ -19,19 +19,19 @@ namespace Storage.Net.Messaging.Large
 
       public async Task ConfirmMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
-         await _parentReceiver.ConfirmMessagesAsync(messages, cancellationToken);
+         await _parentReceiver.ConfirmMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
 
          foreach(QueueMessage message in messages)
          {
-            await DeleteBlobAsync(message);
+            await DeleteBlobAsync(message).ConfigureAwait(false);
          }
       }
 
       public async Task DeadLetterAsync(QueueMessage message, string reason, string errorDescription, CancellationToken cancellationToken = default)
       {
-         await _parentReceiver.DeadLetterAsync(message, reason, errorDescription, cancellationToken);
+         await _parentReceiver.DeadLetterAsync(message, reason, errorDescription, cancellationToken).ConfigureAwait(false);
 
-         await DeleteBlobAsync(message);
+         await DeleteBlobAsync(message).ConfigureAwait(false);
       }
 
       private async Task DeleteBlobAsync(QueueMessage message)
@@ -40,7 +40,7 @@ namespace Storage.Net.Messaging.Large
 
          message.Properties.Remove(QueueMessage.LargeMessageContentHeaderName);
 
-         await _offloadStorage.DeleteAsync(fileId);
+         await _offloadStorage.DeleteAsync(fileId).ConfigureAwait(false);
       }
 
       public void Dispose()
@@ -68,11 +68,11 @@ namespace Storage.Net.Messaging.Large
          {
             if (!message.Properties.TryGetValue(QueueMessage.LargeMessageContentHeaderName, out string fileId)) continue;
 
-            message.Content = await _offloadStorage.ReadBytesAsync(fileId, cancellationToken);
+            message.Content = await _offloadStorage.ReadBytesAsync(fileId, cancellationToken).ConfigureAwait(false);
          }
 
          //now that messages are augmented pass them to parent
-         await onParentMessagesAsync(messages, cancellationToken);
+         await onParentMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
       }
 
       public Task KeepAliveAsync(QueueMessage message, TimeSpan? timeToLive = null, CancellationToken cancellationToken = default) =>

@@ -32,14 +32,14 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
 
          using (ServiceFabricTransaction tx = GetTransaction())
          {
-            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
+            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync().ConfigureAwait(false);
 
             global::Microsoft.ServiceFabric.Data.IAsyncEnumerable<KeyValuePair<string, byte[]>> enumerable =
-               await coll.CreateEnumerableAsync(tx.Tx);
+               await coll.CreateEnumerableAsync(tx.Tx).ConfigureAwait(false);
 
             using (global::Microsoft.ServiceFabric.Data.IAsyncEnumerator<KeyValuePair<string, byte[]>> enumerator = enumerable.GetAsyncEnumerator())
             {
-               while (await enumerator.MoveNextAsync(cancellationToken))
+               while (await enumerator.MoveNextAsync(cancellationToken).ConfigureAwait(false))
                {
                   KeyValuePair<string, byte[]> current = enumerator.Current;
 
@@ -61,11 +61,11 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
 
          if(append)
          {
-            await AppendAsync(fullPath, dataStream, cancellationToken);
+            await AppendAsync(fullPath, dataStream, cancellationToken).ConfigureAwait(false);
          }
          else
          {
-            await WriteAsync(fullPath, dataStream, cancellationToken);
+            await WriteAsync(fullPath, dataStream, cancellationToken).ConfigureAwait(false);
          }
       }
 
@@ -104,7 +104,7 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
 
             //create a new byte array with
             byte[] extra = sourceStream.ToByteArray();
-            ConditionalValue<byte[]> value = await coll.TryGetValueAsync(tx.Tx, fullPath);
+            ConditionalValue<byte[]> value = await coll.TryGetValueAsync(tx.Tx, fullPath).ConfigureAwait(false);
             int oldLength = value.HasValue ? value.Value.Length : 0;
             byte[] newData = new byte[oldLength + extra.Length];
             if(value.HasValue)
@@ -128,8 +128,8 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
 
          using (ServiceFabricTransaction tx = GetTransaction())
          {
-            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
-            ConditionalValue<byte[]> value = await coll.TryGetValueAsync(tx.Tx, id);
+            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync().ConfigureAwait(false);
+            ConditionalValue<byte[]> value = await coll.TryGetValueAsync(tx.Tx, id).ConfigureAwait(false);
 
             if (!value.HasValue) throw new StorageException(ErrorCode.NotFound, null);
 
@@ -143,14 +143,14 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
 
          using (ServiceFabricTransaction tx = GetTransaction())
          {
-            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
+            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync().ConfigureAwait(false);
 
             foreach (string fullPath in fullPaths)
             {
-               await coll.TryRemoveAsync(tx.Tx, ToFullPath(fullPath));
+               await coll.TryRemoveAsync(tx.Tx, ToFullPath(fullPath)).ConfigureAwait(false);
             }
 
-            await tx.CommitAsync();
+            await tx.CommitAsync().ConfigureAwait(false);
          }
       }
 
@@ -161,11 +161,11 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
          var result = new List<bool>();
          using (ServiceFabricTransaction tx = GetTransaction())
          {
-            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
+            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync().ConfigureAwait(false);
 
             foreach (string fullPath in fullPaths)
             {
-               bool exists = await coll.ContainsKeyAsync(tx.Tx, ToFullPath(fullPath));
+               bool exists = await coll.ContainsKeyAsync(tx.Tx, ToFullPath(fullPath)).ConfigureAwait(false);
 
                result.Add(exists);
             }
@@ -181,11 +181,11 @@ namespace Storage.Net.Microsoft.ServiceFabric.Blobs
 
          using (ServiceFabricTransaction tx = GetTransaction())
          {
-            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync();
+            IReliableDictionary<string, byte[]> coll = await OpenCollectionAsync().ConfigureAwait(false);
 
             foreach (string fullPath in fullPaths)
             {
-               ConditionalValue<byte[]> value = await coll.TryGetValueAsync(tx.Tx, ToFullPath(fullPath));
+               ConditionalValue<byte[]> value = await coll.TryGetValueAsync(tx.Tx, ToFullPath(fullPath)).ConfigureAwait(false);
 
                if (!value.HasValue)
                {
