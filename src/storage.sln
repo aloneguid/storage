@@ -60,6 +60,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageQueues", "Azure\Stor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Databricks", "General\Storage.Net.Databricks\Databricks.csproj", "{281E39C6-36D9-4DEF-9C40-F803887F06C9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Storage.Net.SFtp", "Storage.Net.SFtp\Storage.Net.SFtp.csproj", "{80E83E2A-520A-4A39-9910-07D230692AF2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -130,6 +132,10 @@ Global
 		{281E39C6-36D9-4DEF-9C40-F803887F06C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{281E39C6-36D9-4DEF-9C40-F803887F06C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{281E39C6-36D9-4DEF-9C40-F803887F06C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80E83E2A-520A-4A39-9910-07D230692AF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80E83E2A-520A-4A39-9910-07D230692AF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80E83E2A-520A-4A39-9910-07D230692AF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80E83E2A-520A-4A39-9910-07D230692AF2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -155,6 +161,7 @@ Global
 		{598A07EE-E6D5-4B54-81FB-1C0639847B18} = {E5D1DA80-E9FE-4965-A498-DFFC8ED70E40}
 		{DE2FD82A-2549-4C27-9C98-BB3662D83939} = {E5D1DA80-E9FE-4965-A498-DFFC8ED70E40}
 		{281E39C6-36D9-4DEF-9C40-F803887F06C9} = {8098BD8F-AC7C-44CD-8F84-A514A5418C8C}
+		{80E83E2A-520A-4A39-9910-07D230692AF2} = {8098BD8F-AC7C-44CD-8F84-A514A5418C8C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C5FC6E9A-255E-4FD4-B08C-8EDE44BFE37A}

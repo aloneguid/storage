@@ -6,13 +6,13 @@
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
       <PackageId>Storage.Net.Microsoft.Azure.EventHub</PackageId>
-      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
+      <PackageIconUrl></PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <Version>1.0.0</Version>
       <FileVersion>1.0.0.0</FileVersion>
       <AssemblyVersion>1.0.0.0</AssemblyVersion>
       <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
-      <PackageLicenseUrl>https://github.com/aloneguid/storage/blob/master/LICENSE</PackageLicenseUrl>
+      <PackageLicenseUrl></PackageLicenseUrl>
       <RepositoryType>GitHub</RepositoryType>
       <Description>Extension to Storage.Net providing integration with Microsoft Azure Storage for blobs, tables and queues.</Description>
       <LangVersion>latest</LangVersion>

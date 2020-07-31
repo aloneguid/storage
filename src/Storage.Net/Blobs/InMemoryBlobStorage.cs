@@ -252,5 +252,15 @@ namespace Storage.Net.Blobs
       {
          return Task.FromResult(EmptyTransaction.Instance);
       }
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         if(_pathToTag.ContainsKey(fromPath))
+         {
+            _pathToTag.Add(toPath, _pathToTag[fromPath]);
+            _pathToTag.Remove(fromPath);
+         }
+         return Task.CompletedTask;
+      }
    }
 }

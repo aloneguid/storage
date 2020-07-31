@@ -366,5 +366,20 @@ namespace Storage.Net.Blobs.Files
       {
          return Task.FromResult(EmptyTransaction.Instance);
       }
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         GenericValidation.CheckBlobFullPath(fromPath);
+         GenericValidation.CheckBlobFullPath(toPath);
+
+         string origin = GetFilePath(StoragePath.Normalize(fromPath, false));
+         string destination = GetFilePath(StoragePath.Normalize(toPath, false));
+         if(File.Exists(origin))
+         {
+            File.Move(origin, destination);
+         }
+
+         return Task.CompletedTask;
+      }
    }
 }

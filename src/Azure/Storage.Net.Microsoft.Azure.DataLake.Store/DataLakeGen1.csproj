@@ -7,9 +7,9 @@
       <Version>1.0.0</Version>
       <FileVersion>1.0.0.0</FileVersion>
       <AssemblyVersion>1.0.0.0</AssemblyVersion>
-      <PackageLicenseUrl>https://github.com/aloneguid/storage/blob/master/LICENSE</PackageLicenseUrl>
+      <PackageLicenseUrl></PackageLicenseUrl>
       <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
-      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
+      <PackageIconUrl></PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <Description>Provides Azure Data Lake Store integration for Storage.Net library. Supports only ADLS Gen 1. To use Gen 2, use Storage.Net.Microsoft.Azure.Storage.Blobs package.</Description>

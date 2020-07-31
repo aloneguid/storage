@@ -147,5 +147,9 @@ namespace Storage.Net.Blobs
 
       }
 
+      /// <summary>
+      /// When supported, moves or changes the Blob identifier or container blob location
+      /// </summary>
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default) => throw new NotSupportedException();
    }
 }

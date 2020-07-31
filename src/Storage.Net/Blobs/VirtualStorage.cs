@@ -426,5 +426,17 @@ namespace Storage.Net.Blobs
 
          await storage.WriteAsync(relPath, dataStream, append, cancellationToken).ConfigureAwait(false);
       }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="fromPath"></param>
+      /// <param name="toPath"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         throw new NotImplementedException();
+      }
    }
 }

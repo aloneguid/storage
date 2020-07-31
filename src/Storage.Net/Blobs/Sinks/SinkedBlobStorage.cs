@@ -76,5 +76,7 @@ namespace Storage.Net.Blobs.Sinks
             await _parent.WriteAsync(fullPath, source, append, cancellationToken).ConfigureAwait(false);
          }
       }
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default) => _parent.MoveBlobAsync(fromPath, toPath, cancellationToken);
    }
 }

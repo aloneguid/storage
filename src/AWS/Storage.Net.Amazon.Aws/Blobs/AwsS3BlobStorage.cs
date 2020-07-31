@@ -354,5 +354,10 @@ namespace Storage.Net.Amazon.Aws.Blobs
             Verb = verb,
          });
       }
+
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         throw new NotImplementedException();
+      }
    }
 }

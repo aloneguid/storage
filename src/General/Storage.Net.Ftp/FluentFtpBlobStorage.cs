@@ -200,5 +200,11 @@ namespace Storage.Net.Ftp
             _client.Dispose();
          }
       }
+
+      public async Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         var client = await GetClientAsync().ConfigureAwait(false);
+         await client.MoveFileAsync(StoragePath.Normalize(fromPath), StoragePath.Normalize(toPath));
+      }
    }
 }

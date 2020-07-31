@@ -157,6 +157,11 @@ namespace Storage.Net.Databricks
 
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
+      public Task MoveBlobAsync(string fromPath, string toPath, CancellationToken cancellationToken = default)
+      {
+         throw new NotImplementedException();
+      }
+
       public void Dispose()
       {
 
