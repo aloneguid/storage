@@ -22,19 +22,19 @@ namespace Storage.Net.Databricks
 
       public async Task DeleteAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
-         await Task.WhenAll(fullPaths.Select(fp => DeleteAsync(fp)));
+         await Task.WhenAll(fullPaths.Select(fp => DeleteAsync(fp))).ConfigureAwait(false);
       }
 
       private async Task DeleteAsync(string fullPath)
       {
          fullPath = StoragePath.Normalize(fullPath);
 
-         await _dbfs.Delete(fullPath, true);
+         await _dbfs.Delete(fullPath, true).ConfigureAwait(false);
       }
 
       public async Task<IReadOnlyCollection<bool>> ExistsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
-         return await Task.WhenAll(fullPaths.Select(fp => ExistsAsync(fp)));
+         return await Task.WhenAll(fullPaths.Select(fp => ExistsAsync(fp))).ConfigureAwait(false);
       }
 
       private async Task<bool> ExistsAsync(string fullPath)
@@ -43,7 +43,7 @@ namespace Storage.Net.Databricks
 
          try
          {
-            await _dbfs.GetStatus(fullPath);
+            await _dbfs.GetStatus(fullPath).ConfigureAwait(false);
          }
          catch(ClientApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
@@ -55,7 +55,7 @@ namespace Storage.Net.Databricks
 
       public async Task<IReadOnlyCollection<Blob>> GetBlobsAsync(IEnumerable<string> fullPaths, CancellationToken cancellationToken = default)
       {
-         return await Task.WhenAll(fullPaths.Select(fp => GetBlobAsync(fp)));
+         return await Task.WhenAll(fullPaths.Select(fp => GetBlobAsync(fp))).ConfigureAwait(false);
       }
 
       private async Task<Blob> GetBlobAsync(string fullPath)
@@ -64,7 +64,7 @@ namespace Storage.Net.Databricks
          FileInfo status;
          try
          {
-            status = await _dbfs.GetStatus(fullPath);
+            status = await _dbfs.GetStatus(fullPath).ConfigureAwait(false);
          }
          catch(ClientApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
@@ -84,7 +84,7 @@ namespace Storage.Net.Databricks
 
          var result = new List<Blob>();
 
-         await ListFolderAsync(options.FolderPath, result, options);
+         await ListFolderAsync(options.FolderPath, result, options).ConfigureAwait(false);
 
          if(options.MaxResults != null)
          {
@@ -100,7 +100,7 @@ namespace Storage.Net.Databricks
 
          try
          {
-            objects = await _dbfs.List(StoragePath.Normalize(path));
+            objects = await _dbfs.List(StoragePath.Normalize(path)).ConfigureAwait(false);
          }
          catch(ClientApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound)
          {
@@ -118,7 +118,7 @@ namespace Storage.Net.Databricks
 
          if(options.Recurse)
          {
-            await Task.WhenAll(batch.Where(b => b.IsFolder).Select(f => ListFolderAsync(f.FullPath, container, options)));
+            await Task.WhenAll(batch.Where(b => b.IsFolder).Select(f => ListFolderAsync(f.FullPath, container, options))).ConfigureAwait(false);
          }
       }
 
@@ -129,7 +129,7 @@ namespace Storage.Net.Databricks
          var ms = new MemoryStream(0);
          try
          {
-            await _dbfs.Download(fullPath, ms);
+            await _dbfs.Download(fullPath, ms).ConfigureAwait(false);
          }
          catch(ClientApiException ex) when(ex.StatusCode == HttpStatusCode.NotFound || ex.StatusCode == HttpStatusCode.BadRequest)
          {
@@ -152,7 +152,7 @@ namespace Storage.Net.Databricks
          if(append)
             throw new ArgumentOutOfRangeException(nameof(append), "append mode is not supported");
 
-         await _dbfs.Upload(fullPath, true, dataStream);
+         await _dbfs.Upload(fullPath, true, dataStream).ConfigureAwait(false);
       }
 
       public Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default) => throw new NotSupportedException();

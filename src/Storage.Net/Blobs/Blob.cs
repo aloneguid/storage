@@ -49,6 +49,11 @@ namespace Storage.Net.Blobs
       public string MD5 { get; set; }
 
       /// <summary>
+      /// Creation time when known
+      /// </summary>
+      public DateTimeOffset? CreatedTime { get; set; }
+
+      /// <summary>
       /// Last modification time when known
       /// </summary>
       public DateTimeOffset? LastModificationTime { get; set; }
@@ -110,6 +115,21 @@ namespace Storage.Net.Blobs
                Properties[key] = value;
             }
          }
+      }
+
+      /// <summary>
+      /// Works just like <see cref="TryAddProperties(object[])"/> but prefixes all the keys
+      /// </summary>
+      /// <param name="prefix"></param>
+      /// <param name="keyValues"></param>
+      public void TryAddPropertiesWithPrefix(string prefix, params object[] keyValues)
+      {
+         if(string.IsNullOrEmpty(prefix))
+            TryAddProperties(keyValues);
+
+         object[] keyValuesWithPrefix = keyValues.Select((e, i) => i % 2 == 0 ? (prefix + (string)e) : e).ToArray();
+
+         TryAddProperties(keyValuesWithPrefix);
       }
 
       /// <summary>

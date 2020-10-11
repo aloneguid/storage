@@ -59,7 +59,7 @@ namespace Storage.Net.Databricks
          //notebooks are passed with extensions at the end (.py, .scala etc.) so you need to remove them first
          string path = Path.ChangeExtension(fullPath, null);   // removes extension
 
-         byte[] notebookBytes = await _api.Export(StoragePath.Normalize(path), exportFormat);
+         byte[] notebookBytes = await _api.Export(StoragePath.Normalize(path), exportFormat).ConfigureAwait(false);
          return new MemoryStream(notebookBytes);
       }
 
@@ -72,12 +72,12 @@ namespace Storage.Net.Databricks
          string parent = StoragePath.GetParent(path);
          if(!StoragePath.IsRootPath(parent))
          {
-            await _api.Mkdirs(StoragePath.Normalize(parent));
+            await _api.Mkdirs(StoragePath.Normalize(parent)).ConfigureAwait(false);
          }
 
          GetImportParameters(path, out ExportFormat exportFormat, out Language? language);
 
-         await _api.Import(path, exportFormat, language, dataStream.ToByteArray(), true);
+         await _api.Import(path, exportFormat, language, dataStream.ToByteArray(), true).ConfigureAwait(false);
       }
 
       private Blob ToBlob(ObjectInfo oi)

@@ -25,17 +25,17 @@ namespace Storage.Net.Microsoft.ServiceFabric.Messaging
 
       public async Task PutMessagesAsync(IReadOnlyCollection<QueueMessage> messages, CancellationToken cancellationToken)
       {
-         IReliableConcurrentQueue<byte[]> collection = await _stateManager.GetOrAddAsync<IReliableConcurrentQueue<byte[]>>(_queueName);
+         IReliableConcurrentQueue<byte[]> collection = await _stateManager.GetOrAddAsync<IReliableConcurrentQueue<byte[]>>(_queueName).ConfigureAwait(false);
 
          using (var tx = new ServiceFabricTransaction(_stateManager, null))
          {
             foreach (QueueMessage message in messages)
             {
                byte[] data = message.ToByteArray();
-               await collection.EnqueueAsync(tx.Tx, data, cancellationToken, _timeout);
+               await collection.EnqueueAsync(tx.Tx, data, cancellationToken, _timeout).ConfigureAwait(false);
             }
 
-            await tx.CommitAsync();
+            await tx.CommitAsync().ConfigureAwait(false);
          }
       }
 

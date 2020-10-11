@@ -101,7 +101,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
          {
             ListObjectsV2Response response = await _client.ListObjectsV2Async(request, cancellationToken).ConfigureAwait(false);
 
-            await Task.WhenAll(response.S3Objects.Select(s3 => _client.DeleteObjectAsync(_bucketName, s3.Key, cancellationToken)));
+            await Task.WhenAll(response.S3Objects.Select(s3 => _client.DeleteObjectAsync(_bucketName, s3.Key, cancellationToken))).ConfigureAwait(false);
 
             if(response.NextContinuationToken == null)
                break;

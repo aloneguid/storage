@@ -25,7 +25,7 @@ namespace Storage.Net.Databricks
       {
          try
          {
-            await _api.CreateScope(name, initialManagePrincipal);
+            await _api.CreateScope(name, initialManagePrincipal).ConfigureAwait(false);
          }
          catch(ClientApiException ex) when(ex.StatusCode == HttpStatusCode.BadRequest)
          {
@@ -44,7 +44,7 @@ namespace Storage.Net.Databricks
          // listing from "/secrets"
          if(StoragePath.IsRootPath(path))
          {
-            IEnumerable<SecretScope> scopes = await _api.ListScopes();
+            IEnumerable<SecretScope> scopes = await _api.ListScopes().ConfigureAwait(false);
             foreach(SecretScope scope in scopes)
             {
                var scopeBlob = new Blob(scope.Name, BlobItemKind.Folder);
@@ -52,7 +52,7 @@ namespace Storage.Net.Databricks
                   "Backend", scope.BackendType,
                   "ObjectType", "secretScope");
 
-               IEnumerable<AclItem> acl = await _api.ListSecretAcl(scope.Name);
+               IEnumerable<AclItem> acl = await _api.ListSecretAcl(scope.Name).ConfigureAwait(false);
                scopeBlob.Properties.Add("ACL", string.Join(";", acl.Select(a => $"{a.Principal}:{a.Permission}")));
                r.Add(scopeBlob);
             }
@@ -62,7 +62,7 @@ namespace Storage.Net.Databricks
          // listing from "/secrets/[scope name]
 
          string scopeName = StoragePath.Split(path)[0];
-         List<SecretMetadata> secretNames = (await _api.ListSecrets(scopeName)).ToList();
+         List<SecretMetadata> secretNames = (await _api.ListSecrets(scopeName).ConfigureAwait(false)).ToList();
          foreach(SecretMetadata sm in secretNames)
          {
             var sb = new Blob(scopeName, sm.Key, BlobItemKind.File);
@@ -80,7 +80,7 @@ namespace Storage.Net.Databricks
          GetScopeAndKey(fullPath, out string scope, out string key);
          byte[] data = dataStream.ToByteArray();
 
-         await _api.PutSecret(data, scope, key);
+         await _api.PutSecret(data, scope, key).ConfigureAwait(false);
       }
 
       public override Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)

@@ -236,7 +236,7 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
       {
          AdlsClient client = await GetAdlsClientAsync().ConfigureAwait(false);
 
-         await client.RenameAsync(StoragePath.Normalize(oldPath), StoragePath.Normalize(newPath), true, cancellationToken);
+         await client.RenameAsync(StoragePath.Normalize(oldPath), StoragePath.Normalize(newPath), true, cancellationToken).ConfigureAwait(false);
       }
 
       #endregion

@@ -47,12 +47,12 @@ namespace Storage.Net.Messaging.Large
          {
             AddBlobId(message, out string id);
 
-            await _offloadStorage.WriteAsync(id, message.Content, false, cancellationToken);
+            await _offloadStorage.WriteAsync(id, message.Content, false, cancellationToken).ConfigureAwait(false);
 
             message.Content = null; //delete content
          }
 
-         await _parentPublisher.SendAsync(channelName, new[] { message });
+         await _parentPublisher.SendAsync(channelName, new[] { message }).ConfigureAwait(false);
       }
 
 
@@ -62,7 +62,7 @@ namespace Storage.Net.Messaging.Large
       public Task<long> GetMessageCountAsync(string channelName, CancellationToken cancellationToken = default) => throw new NotImplementedException();
       public async Task SendAsync(string channelName, IEnumerable<QueueMessage> messages, CancellationToken cancellationToken = default)
       {
-         await Task.WhenAll(messages.Select(m => SendAsync(channelName, m, cancellationToken)));
+         await Task.WhenAll(messages.Select(m => SendAsync(channelName, m, cancellationToken))).ConfigureAwait(false);
       }
 
       public Task<IReadOnlyCollection<QueueMessage>> ReceiveAsync(string channelName, int count = 100, TimeSpan? visibility = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();

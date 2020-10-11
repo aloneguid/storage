@@ -212,7 +212,7 @@ namespace Storage.Net.Microsoft.Azure.ServiceBus.Messaging
             throw new ArgumentNullException(nameof(channelName));
 
          MessageReceiver receiver = CreateMessageReceiver(channelName);
-         IList<Message> messages = await receiver.PeekAsync(count);
+         IList<Message> messages = await receiver.PeekAsync(count).ConfigureAwait(false);
 
          return messages.Select(Converter.ToQueueMessage).ToList();
       }

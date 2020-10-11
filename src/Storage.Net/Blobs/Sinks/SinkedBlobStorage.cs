@@ -50,7 +50,7 @@ namespace Storage.Net.Blobs.Sinks
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
       {
          //chain streams
-         Stream readStream = await _parent.OpenReadAsync(fullPath, cancellationToken);
+         Stream readStream = await _parent.OpenReadAsync(fullPath, cancellationToken).ConfigureAwait(false);
 
          if(readStream == null)
             return null;
@@ -73,7 +73,7 @@ namespace Storage.Net.Blobs.Sinks
 
          using(var source = new SinkedStream(dataSourceStream, fullPath, _sinks))
          {
-            await _parent.WriteAsync(fullPath, source, append, cancellationToken);
+            await _parent.WriteAsync(fullPath, source, append, cancellationToken).ConfigureAwait(false);
          }
       }
    }
