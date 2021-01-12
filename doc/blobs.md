@@ -8,6 +8,7 @@ This page lists blob storage providers available in Storage.Net
 - [Local Disk](#local-disk)
 - [Zip File](#zip-file)
 - [FTP](#ftp)
+- [SFTP](#sftp)
 - [Microsoft Azure Blob and File Storage](blobs/azure.md)
 - [Amazon S3 Storage](blobs/awss3.md)
 - [Azure Data Lake Store](#azure-data-lake-store)
@@ -93,6 +94,30 @@ To create from connection string, first register the module when your program st
 IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("ftp://host=hostname;user=username;password=password");
 ```
 
+### SFTP
+
+SFTP implementation is wrapping [SSH.NET](https://github.com/sshnet/SSH.NET/) library. As this is an external library, you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.SFtp.svg)](https://www.nuget.org/packages/Storage.Net.Sftp/) package first.
+
+The provider respects folder structure of the remote SFTP share.
+
+You can instantiate it either by using a simple helper method accepting the most basic parameters, like hostname, port, username and password, however for custom scenarios you can always construct your own instance of `FtpClient` from the FluentFTP library and pass it to Storage.Net to manage:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.Sftp("myhost.com", "username", "password");
+
+// With a custom port and a private key file
+IBlobStorage storage = StorageFactory.Blobs.Sftp("myhost.com", 2222, "username", new PrivateKeyFile("filename"));
+
+// With both password and public-key authentication as an example, real world scenarios may need extra customisations
+var connectionInfo = new ConnectionInfo("sftp.foo.com", "guest", new PasswordAuthenticationMethod("guest", "pwd"), new PrivateKeyAuthenticationMethod("rsa.key"));
+IBlobStorage storage = StorageFactory.Blobs.Sftp(connectionInfo);
+```
+
+To create from connection string, first register the module when your program starts by calling `StorageFactory.Modules.UseSftpStorage();` then use the following connections tring:
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("sftp://host=hostname;user=username;password=password");
+```
 ## Azure Data Lake Store
 
 In order to use, reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Microsoft.Azure.DataLake.Store.svg)](https://www.nuget.org/packages/Storage.Net.Microsoft.Azure.DataLake.Store/) package first. Both **Gen1** and **Gen2** storage accounts are supported.
