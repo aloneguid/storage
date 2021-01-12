@@ -1,0 +1,12 @@
+<Project>
+   <PropertyGroup>
+      <PackageLicenseFile>LICENSE</PackageLicenseFile>
+      <PackageIcon>icon.png</PackageIcon>
+      <RepositoryType>git</RepositoryType>
+   </PropertyGroup>
+
+   <ItemGroup>
+      <None Include="$(MSBuildThisFileDirectory)LICENSE"  Pack="true" PackagePath="" />
+      <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath=""/>
+   </ItemGroup>
+</Project>
