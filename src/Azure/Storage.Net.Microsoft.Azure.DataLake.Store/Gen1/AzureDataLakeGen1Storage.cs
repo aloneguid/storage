@@ -34,6 +34,13 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
          _clientSecret = clientSecret;
       }
 
+      private AzureDataLakeGen1Storage(string accountName, ServiceClientCredentials credentials)
+      {
+         _accountName = accountName ?? throw new ArgumentNullException(nameof(accountName));
+
+         _credential = credentials ?? throw new ArgumentNullException(nameof(credentials));
+      }
+
       /// <summary>
       /// Returns the actual credential object used to authenticate to ADLS. Note that this will only be populated
       /// once you make at least one successful call.
@@ -62,6 +69,9 @@ namespace Storage.Net.Microsoft.Azure.DataLake.Store.Gen1
 
          return new AzureDataLakeGen1Storage(accountName, credential.Domain, credential.UserName, credential.Password, null);
       }
+
+      public static AzureDataLakeGen1Storage CreateByCredentials(string accountName, ServiceClientCredentials credentials)
+         => new AzureDataLakeGen1Storage(accountName, credentials);
 
       public async Task<IReadOnlyCollection<Blob>> ListAsync(ListOptions options, CancellationToken cancellationToken)
       {
