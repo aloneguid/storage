@@ -110,6 +110,15 @@ IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen1StoreByClientSecret
          int listBatchSize = 5000)
 ```
 
+or
+
+```csharp
+IBlobStorage storage = StorageFactory.Blobs.AzureDataLakeGen1StoreByClientSecret(
+         string accountName,
+         ServiceClientCredentials credentials,
+         int listBatchSize = 5000)
+```
+
 The last parameter *listBatchSize* indicates how to query storage for list operations - by default a batch of 5k items will be used. Note that the larger the batch size, the more data you will receive in the request. This speeds up list operations, however may result in HTTP time-out the slower your internet connection is. This feature is not available in the standard .NET SDK and was implemented from scratch.
 
 You can also use connection strings:
