@@ -6,7 +6,6 @@
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
       <PackageId>Storage.Net.Microsoft.Azure.ServiceBus</PackageId>
-      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
       <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>

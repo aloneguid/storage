@@ -7,7 +7,6 @@
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
       <AssemblyName>Storage.Net</AssemblyName>
       <PackageId>Storage.Net</PackageId>
-      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
       <RepositoryType>GitHub</RepositoryType>

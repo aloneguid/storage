@@ -6,7 +6,6 @@
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
       <PackageId>Storage.Net.Microsoft.Azure.EventHub</PackageId>
-      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <Version>1.0.0</Version>
       <FileVersion>1.0.0.0</FileVersion>

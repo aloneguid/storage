@@ -4,7 +4,6 @@
       <RepositoryType>GitHub</RepositoryType>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
-      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
       <Version>2.6.204.0</Version>

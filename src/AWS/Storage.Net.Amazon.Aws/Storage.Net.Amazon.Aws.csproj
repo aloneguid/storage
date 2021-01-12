@@ -6,7 +6,6 @@
       <GenerateDocumentationFile>true</GenerateDocumentationFile>
       <AssemblyName>Storage.Net.Amazon.Aws</AssemblyName>
       <PackageId>Storage.Net.Amazon.Aws</PackageId>
-      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
       <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
