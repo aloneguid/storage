@@ -16,7 +16,7 @@ namespace Storage.Net
       }
 
       /// <summary>
-      /// Register Azure module.
+      /// Register Sftp module.
       /// </summary>
       public static IModulesFactory UseSftpStorage(this IModulesFactory factory)
          => factory.Use(new Module());
@@ -26,7 +26,7 @@ namespace Storage.Net
       /// </summary>
       /// <param name="connectionInfo">The connection info.</param>
       /// <exception cref="T:System.ArgumentNullException"><paramref name="connectionInfo" /> is <b>null</b>.</exception>
-      public static IBlobStorage Sftp(ConnectionInfo connectionInfo)
+      public static IBlobStorage Sftp(this IBlobStorageFactory factory, ConnectionInfo connectionInfo)
          => new SshNetSftpBlobStorage(connectionInfo);
 
       /// <summary>
@@ -39,7 +39,7 @@ namespace Storage.Net
       /// <exception cref="T:System.ArgumentNullException"><paramref name="password" /> is <b>null</b>.</exception>
       /// <exception cref="T:System.ArgumentException"><paramref name="host" /> is invalid. <para>-or-</para> <paramref name="username" /> is <b>null</b> or contains only whitespace characters.</exception>
       /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="port" /> is not within <see cref="F:System.Net.IPEndPoint.MinPort" /> and <see cref="F:System.Net.IPEndPoint.MaxPort" />.</exception>
-      public static IBlobStorage Sftp(string host, int port, string username, string password)
+      public static IBlobStorage Sftp(this IBlobStorageFactory factory, string host, int port, string username, string password)
          => new SshNetSftpBlobStorage(host, port, username, password);
 
       /// <summary>
@@ -50,7 +50,7 @@ namespace Storage.Net
       /// <param name="password">Authentication password.</param>
       /// <exception cref="T:System.ArgumentNullException"><paramref name="password" /> is <b>null</b>.</exception>
       /// <exception cref="T:System.ArgumentException"><paramref name="host" /> is invalid. <para>-or-</para> <paramref name="username" /> is <b>null</b> contains only whitespace characters.</exception>
-      public static IBlobStorage Sftp(string host, string username, string password)
+      public static IBlobStorage Sftp(this IBlobStorageFactory factory, string host, string username, string password)
          => new SshNetSftpBlobStorage(host, username, password);
 
       /// <summary>
@@ -63,7 +63,7 @@ namespace Storage.Net
       /// <exception cref="T:System.ArgumentNullException"><paramref name="keyFiles" /> is <b>null</b>.</exception>
       /// <exception cref="T:System.ArgumentException"><paramref name="host" /> is invalid. <para>-or-</para> <paramref name="username" /> is nu<b>null</b>ll or contains only whitespace characters.</exception>
       /// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="port" /> is not within <see cref="F:System.Net.IPEndPoint.MinPort" /> and <see cref="F:System.Net.IPEndPoint.MaxPort" />.</exception>
-      public static IBlobStorage Sftp(string host, int port, string username, params PrivateKeyFile[] keyFiles)
+      public static IBlobStorage Sftp(this IBlobStorageFactory factory, string host, int port, string username, params PrivateKeyFile[] keyFiles)
          => new SshNetSftpBlobStorage(host, port, username, keyFiles);
 
       /// <summary>
@@ -74,7 +74,7 @@ namespace Storage.Net
       /// <param name="keyFiles">Authentication private key file(s) .</param>
       /// <exception cref="T:System.ArgumentNullException"><paramref name="keyFiles" /> is <b>null</b>.</exception>
       /// <exception cref="T:System.ArgumentException"><paramref name="host" /> is invalid. <para>-or-</para> <paramref name="username" /> is <b>null</b> or contains only whitespace characters.</exception>
-      public static IBlobStorage Sftp(string host, string username, params PrivateKeyFile[] keyFiles)
+      public static IBlobStorage Sftp(this IBlobStorageFactory factory, string host, string username, params PrivateKeyFile[] keyFiles)
          => new SshNetSftpBlobStorage(host, username, keyFiles);
 
       /// <summary>
@@ -83,7 +83,7 @@ namespace Storage.Net
       /// <param name="sftpClient">The SFTP client.</param>
       /// <param name="disposeClient">if set to <see langword="true" /> [dispose client].</param>
       /// <exception cref="System.ArgumentNullException">sftpClient</exception>
-      public static IBlobStorage Sftp(SftpClient sftpClient, bool disposeClient = false)
+      public static IBlobStorage Sftp(this IBlobStorageFactory factory, SftpClient sftpClient, bool disposeClient = false)
          => new SshNetSftpBlobStorage(sftpClient, disposeClient);
    }
 }
