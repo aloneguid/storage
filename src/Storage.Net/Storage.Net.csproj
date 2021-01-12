@@ -9,7 +9,6 @@
       <PackageId>Storage.Net</PackageId>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
-      <RepositoryType>GitHub</RepositoryType>
       <Version>4.0.1</Version>
       <FileVersion>4.0.0.0</FileVersion>
       <AssemblyVersion>4.0.0.0</AssemblyVersion>

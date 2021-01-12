@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
    <PropertyGroup>
       <TargetFrameworks>netstandard2.0</TargetFrameworks>
-      <RepositoryType>GitHub</RepositoryType>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
       <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>

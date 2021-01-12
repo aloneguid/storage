@@ -2,6 +2,7 @@
    <PropertyGroup>
       <PackageLicenseFile>LICENSE</PackageLicenseFile>
       <PackageIcon>icon.png</PackageIcon>
+      <RepositoryType>git</RepositoryType>
    </PropertyGroup>
 
    <ItemGroup>
