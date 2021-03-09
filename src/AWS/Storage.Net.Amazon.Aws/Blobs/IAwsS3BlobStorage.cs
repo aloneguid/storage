@@ -7,7 +7,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
    /// <summary>
    /// Provides access to native operations
    /// </summary>
-   public interface IAwsS3BlobStorage : IBlobStorage
+   public interface IAwsS3BlobStorage : IBlobStorageWithMetadata
    {
       /// <summary>
       /// Returns reference to the native AWS S3 blob client.

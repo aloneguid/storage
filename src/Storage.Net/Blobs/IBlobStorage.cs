@@ -78,4 +78,24 @@ namespace Storage.Net.Blobs
       /// <returns></returns>
       Task<ITransaction> OpenTransactionAsync();
    }
+
+   /// <summary>
+   /// Extend IBlobStorage to include WriteAsync overload which takes metadata. 
+   /// </summary>
+   public interface IBlobStorageWithMetadata : IBlobStorage
+   {
+      /// <summary>
+      /// Uploads data to a blob from stream.
+      /// overwritten.
+      /// </summary>
+      /// <param name="fullPath">Blob metadata</param>
+      /// <param name="dataStream">Stream to upload from</param>
+      /// <param name="metadata">Metadata to be applied to the blob</param>
+      /// <param name="cancellationToken"></param>
+      /// <param name="append">When true, appends to the file instead of writing a new one.</param>
+      /// <returns>Writeable stream</returns>
+      /// <exception cref="ArgumentNullException">Thrown when any parameter is null</exception>
+      /// <exception cref="ArgumentException">Thrown when ID is too long. Long IDs are the ones longer than 50 characters.</exception>
+      Task WriteAsync(string fullPath, Stream dataStream, Dictionary<string, string> metadata, bool append = false, CancellationToken cancellationToken = default);
+   }
 }

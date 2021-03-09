@@ -122,7 +122,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
             return response.Value.Content;
          }
-         catch(RequestFailedException ex) when (ex.ErrorCode == "BlobNotFound")
+         catch(RequestFailedException ex) when(ex.ErrorCode == "BlobNotFound")
          {
             return null;
          }
@@ -130,28 +130,9 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
       public Task<ITransaction> OpenTransactionAsync() => throw new NotImplementedException();
 
-      public async Task WriteAsync(string fullPath, Stream dataStream,
-         bool append = false, CancellationToken cancellationToken = default)
+      public async Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
       {
-         GenericValidation.CheckBlobFullPath(fullPath);
-
-         if(dataStream == null)
-            throw new ArgumentNullException(nameof(dataStream));
-
-         (BlobContainerClient container, string path) = await GetPartsAsync(fullPath, true).ConfigureAwait(false);
-
-         BlockBlobClient client = container.GetBlockBlobClient(path);
-
-         try
-         {
-            await client.UploadAsync(
-               new StorageSourceStream(dataStream),
-               cancellationToken: cancellationToken).ConfigureAwait(false);
-         }
-         catch(RequestFailedException ex) when (ex.ErrorCode == "OperationNotAllowedInCurrentState")
-         {
-            //happens when trying to write to a non-file object i.e. folder
-         }
+         await WriteAsync(fullPath, dataStream, null, append, cancellationToken).ConfigureAwait(false);
       }
       public async Task SetBlobsAsync(IEnumerable<Blob> blobs, CancellationToken cancellationToken = default)
       {
@@ -254,7 +235,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
             if(!ignoreErrors)
                throw;
          }
-         catch(RequestFailedException ex) when (ex.ErrorCode == "BlobNotFound")
+         catch(RequestFailedException ex) when(ex.ErrorCode == "BlobNotFound")
          {
             if(!ignoreErrors)
                throw;
@@ -348,6 +329,30 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
 
       #endregion
 
+      #region [ IBlobStorageWithMetadata ]
+
+      public async Task WriteAsync(string fullPath, Stream dataStream, Dictionary<string, string> metadata, bool append = false, CancellationToken cancellationToken = default)
+      {
+         GenericValidation.CheckBlobFullPath(fullPath);
+
+         if(dataStream == null)
+            throw new ArgumentNullException(nameof(dataStream));
+
+         (BlobContainerClient container, string path) = await GetPartsAsync(fullPath, true).ConfigureAwait(false);
+
+         BlockBlobClient client = container.GetBlockBlobClient(path);
+
+         try
+         {
+            await client.UploadAsync(new StorageSourceStream(dataStream), null, metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+         }
+         catch(RequestFailedException ex) when(ex.ErrorCode == "OperationNotAllowedInCurrentState")
+         {
+            //happens when trying to write to a non-file object i.e. folder
+         }
+      }
+
+      #endregion
 
       private async Task SetBlobAsync(Blob blob, CancellationToken cancellationToken)
       {
@@ -549,7 +554,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
                   await container.GetPropertiesAsync().ConfigureAwait(false);
 
                }
-               catch(RequestFailedException ex) when (ex.ErrorCode == "ContainerNotFound")
+               catch(RequestFailedException ex) when(ex.ErrorCode == "ContainerNotFound")
                {
                   if(createContainer)
                   {

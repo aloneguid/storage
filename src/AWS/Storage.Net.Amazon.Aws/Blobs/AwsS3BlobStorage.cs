@@ -162,17 +162,39 @@ namespace Storage.Net.Amazon.Aws.Blobs
       /// <summary>
       /// S3 doesnt support this natively and will cache everything in MemoryStream until disposed.
       /// </summary>
-      public async Task WriteAsync(string fullPath, Stream dataStream, bool append = false,
-         CancellationToken cancellationToken = default)
+      public async Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+      {
+         await WriteAsync(fullPath, dataStream, null, append, cancellationToken).ConfigureAwait(false);
+      }
+
+      /// <summary>
+      /// S3 doesnt support this natively and will cache everything in MemoryStream until disposed.
+      /// </summary>
+      public async Task WriteAsync(string fullPath, Stream dataStream, Dictionary<string, string> metadata, bool append = false, CancellationToken cancellationToken = default)
       {
          if(append)
             throw new NotSupportedException();
+
          GenericValidation.CheckBlobFullPath(fullPath);
          fullPath = StoragePath.Normalize(fullPath, true);
 
-         //http://docs.aws.amazon.com/AmazonS3/latest/dev/HLuploadFileDotNet.html
+         var request = new TransferUtilityUploadRequest
+         {
+            Key = fullPath,
+            BucketName = _bucketName,
+            InputStream = dataStream,
+         };
 
-         await _fileTransferUtility.UploadAsync(dataStream, _bucketName, fullPath, cancellationToken).ConfigureAwait(false);
+         // add support for metadata
+         if(metadata != null)
+         {
+            foreach(KeyValuePair<string, string> keyValuePair in metadata)
+            {
+               request.Metadata.Add(keyValuePair.Key, keyValuePair.Value);
+            }
+         }
+
+         await _fileTransferUtility.UploadAsync(request, cancellationToken).ConfigureAwait(false);
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
