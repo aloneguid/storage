@@ -13,6 +13,8 @@ using System.Threading;
 using Storage.Net.Streaming;
 using NetBox.Extensions;
 using System.Net;
+using Amazon.Extensions.S3.Encryption;
+using Amazon.Extensions.S3.Encryption.Primitives;
 
 namespace Storage.Net.Amazon.Aws.Blobs
 {
@@ -106,6 +108,19 @@ namespace Storage.Net.Amazon.Aws.Blobs
          _client = new AmazonS3Client(awsCreds, clientConfig);
 
          _fileTransferUtility = new TransferUtility(_client, transferUtilityConfig ?? new TransferUtilityConfig());
+      }
+
+      /// <summary>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint, and will assume the running AWS ECS Task role credentials or Lambda role credentials
+      /// </summary>
+      public AwsS3BlobStorage(string bucketName, string region, string kmsKeyId)
+      {
+         _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
+
+         var materials = new EncryptionMaterialsV2(kmsKeyId, KmsType.KmsContext, new Dictionary<string, string>());
+         var config = new AmazonS3CryptoConfigurationV2(new SecurityProfile()) { RegionEndpoint = region.ToRegionEndpoint() };
+         _client = new AmazonS3EncryptionClientV2(config, materials);
+         _fileTransferUtility = new TransferUtility(_client);
       }
 
       private async Task<AmazonS3Client> GetClientAsync()
