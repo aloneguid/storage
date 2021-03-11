@@ -21,7 +21,7 @@ namespace Storage.Net.Amazon.Aws.Messaging
       private readonly ConcurrentDictionary<string, string> _queueNameToUri = new ConcurrentDictionary<string, string>();
       private readonly string _serviceUrl;
       private readonly string _kmsKeyId;
-      private readonly int _waitTimeInSeconds = 60;
+      private readonly int _waitTimeInSeconds = 20;
 
       /// <summary>
       ///
@@ -32,7 +32,7 @@ namespace Storage.Net.Amazon.Aws.Messaging
       /// <param name="regionEndpoint">Optional regional endpoint</param>
       /// <param name="waitTimeInSeconds">Optional amount of time the receive call will wait (when empty) before returning</param>
       public AwsSQSMessenger(string accessKeyId, string secretAccessKey, string serviceUrl, RegionEndpoint regionEndpoint,
-                             int waitTimeInSeconds = 60)
+                             int waitTimeInSeconds = 20)
       {
          if(regionEndpoint is null)
             throw new ArgumentNullException(nameof(regionEndpoint));
@@ -45,7 +45,7 @@ namespace Storage.Net.Amazon.Aws.Messaging
 
          _client = new AmazonSQSClient(new BasicAWSCredentials(accessKeyId, secretAccessKey), config);
          _serviceUrl = serviceUrl;
-         _waitTimeInSeconds = waitTimeInSeconds;
+         _waitTimeInSeconds = Math.Min(20, waitTimeInSeconds);
       }
 
       /// <summary>
