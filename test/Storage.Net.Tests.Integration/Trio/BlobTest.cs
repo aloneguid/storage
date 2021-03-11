@@ -515,6 +515,27 @@ namespace Storage.Net.Tests.Integration.Blobs
       }
 
       [Fact]
+      public async Task UserMetadata_writeAtUpload_readsback()
+      {
+         var blob = new Blob(RandomBlobPath());
+         blob.Metadata["user"] = "ivan";
+         blob.Metadata["fun"] = "no";
+
+         if(!(_storage is IBlobStorageWithMetadata storageWithMetadata))
+            return;
+
+         var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes("test"));
+         await storageWithMetadata.WriteAsync(blob, memoryStream, blob.Metadata);
+
+         //test
+         Blob blob2 = await _storage.GetBlobAsync(blob);
+         Assert.NotNull(blob2.Metadata);
+         Assert.Equal("ivan", blob2.Metadata["user"]);
+         Assert.Equal("no", blob2.Metadata["fun"]);
+         Assert.Equal(2, blob2.Metadata.Count);
+      }
+
+      [Fact]
       public async Task UserMetadata_OverwriteWithLess_RemovesOld()
       {
          //setup

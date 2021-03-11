@@ -24,6 +24,22 @@ namespace Storage.Net
          return factory.Use(new AwsStorageModule());
       }
 
+      /// <summary>
+      /// Creates an Amazon S3 storage using IAM and KMS
+      /// </summary>
+      /// <param name="factory">Factory reference</param>
+      /// <param name="bucketName">Bucket name</param>
+      /// <param name="region">Required regional endpoint.</param>
+      /// <param name="kmsKeyId">KMS key id.</param>
+      /// <returns>A reference to the created storage</returns>
+      public static IBlobStorage AwsS3WithKms(this IBlobStorageFactory factory,
+         string bucketName,
+         string region,
+         string kmsKeyId)
+      {
+         return new AwsS3BlobStorage(bucketName, region, kmsKeyId);
+      }
+
 
       /// <summary>
       /// Creates an Amazon S3 storage using assumed role permissions (useful when running the code wform within ECS tasks or lambda where you don't need to provide and manage accessKeys and secrets as the permissions are assumed via the IAM role the lambda or ecs tasks has assigned to it)
@@ -118,6 +134,60 @@ namespace Storage.Net
          RegionEndpoint regionEndpoint = null)
       {
          return new AwsSQSMessenger(accessKeyId, secretAccessKey, serviceUrl, regionEndpoint);
+      }
+
+      /// <summary>
+      /// Creates Amazon Simple Queue Service publisher
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="accessKeyId">Access key ID</param>
+      /// <param name="secretAccessKey">Secret access key</param>
+      /// <param name="serviceUrl"></param>
+      /// <param name="regionEndpoint"></param>
+      /// <param name="waitTimeInSeconds">Amount of time the receive call will wait (when empty) before returning</param>
+      /// <returns></returns>
+      public static IMessenger AwsSQS(this IMessagingFactory factory,
+        string accessKeyId,
+        string secretAccessKey,
+        string serviceUrl,
+        int waitTimeInSeconds,
+        RegionEndpoint regionEndpoint = null)
+      {
+        return new AwsSQSMessenger(accessKeyId, secretAccessKey, serviceUrl, regionEndpoint, waitTimeInSeconds);
+      }
+
+      /// <summary>
+      /// Creates Amazon Simple Queue Service publisher
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="kmsKeyId">KMS Key Id</param>
+      /// <param name="serviceUrl"></param>
+      /// <param name="regionEndpoint"></param>
+      /// <returns></returns>
+      public static IMessenger AwsSQS(this IMessagingFactory factory,
+         string kmsKeyId,
+         string serviceUrl,
+         RegionEndpoint regionEndpoint = null)
+      {
+         return new AwsSQSMessenger(kmsKeyId, serviceUrl, regionEndpoint);
+      }
+
+      /// <summary>
+      /// Creates Amazon Simple Queue Service publisher
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="kmsKeyId">KMS Key Id</param>
+      /// <param name="serviceUrl"></param>
+      /// <param name="regionEndpoint"></param>
+      /// <param name="waitTimeInSeconds">Optional amount of time the receive call will wait (when empty) before returning</param>
+      /// <returns></returns>
+      public static IMessenger AwsSQS(this IMessagingFactory factory,
+         string kmsKeyId,
+         string serviceUrl,
+         int waitTimeInSeconds,
+         RegionEndpoint regionEndpoint = null)
+      {
+         return new AwsSQSMessenger(kmsKeyId, serviceUrl, regionEndpoint, waitTimeInSeconds);
       }
 
       #region [ Connection Strings ]

@@ -9,7 +9,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
    /// <summary>
    /// Azure blob storage specific operations
    /// </summary>
-   public interface IAzureBlobStorage : IBlobStorage
+   public interface IAzureBlobStorage : IBlobStorageWithMetadata
    {
       /// <summary>
       /// Acquires a lease

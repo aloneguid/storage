@@ -13,6 +13,8 @@ using System.Threading;
 using Storage.Net.Streaming;
 using NetBox.Extensions;
 using System.Net;
+using Amazon.Extensions.S3.Encryption;
+using Amazon.Extensions.S3.Encryption.Primitives;
 
 namespace Storage.Net.Amazon.Aws.Blobs
 {
@@ -108,6 +110,19 @@ namespace Storage.Net.Amazon.Aws.Blobs
          _fileTransferUtility = new TransferUtility(_client, transferUtilityConfig ?? new TransferUtilityConfig());
       }
 
+      /// <summary>
+      /// Creates a new instance of <see cref="AwsS3BlobStorage"/> for a given region endpoint, and will assume the running AWS ECS Task role credentials or Lambda role credentials
+      /// </summary>
+      public AwsS3BlobStorage(string bucketName, string region, string kmsKeyId)
+      {
+         _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
+
+         var materials = new EncryptionMaterialsV2(kmsKeyId, KmsType.KmsContext, new Dictionary<string, string>());
+         var config = new AmazonS3CryptoConfigurationV2(SecurityProfile.V2) { RegionEndpoint = region.ToRegionEndpoint() };
+         _client = new AmazonS3EncryptionClientV2(config, materials);
+         _fileTransferUtility = new TransferUtility(_client);
+      }
+
       private async Task<AmazonS3Client> GetClientAsync()
       {
          if(!_initialised)
@@ -162,17 +177,39 @@ namespace Storage.Net.Amazon.Aws.Blobs
       /// <summary>
       /// S3 doesnt support this natively and will cache everything in MemoryStream until disposed.
       /// </summary>
-      public async Task WriteAsync(string fullPath, Stream dataStream, bool append = false,
-         CancellationToken cancellationToken = default)
+      public async Task WriteAsync(string fullPath, Stream dataStream, bool append = false, CancellationToken cancellationToken = default)
+      {
+         await WriteAsync(fullPath, dataStream, null, append, cancellationToken).ConfigureAwait(false);
+      }
+
+      /// <summary>
+      /// S3 doesnt support this natively and will cache everything in MemoryStream until disposed.
+      /// </summary>
+      public async Task WriteAsync(string fullPath, Stream dataStream, Dictionary<string, string> metadata, bool append = false, CancellationToken cancellationToken = default)
       {
          if(append)
             throw new NotSupportedException();
+
          GenericValidation.CheckBlobFullPath(fullPath);
          fullPath = StoragePath.Normalize(fullPath, true);
 
-         //http://docs.aws.amazon.com/AmazonS3/latest/dev/HLuploadFileDotNet.html
+         var request = new TransferUtilityUploadRequest
+         {
+            Key = fullPath,
+            BucketName = _bucketName,
+            InputStream = dataStream,
+         };
 
-         await _fileTransferUtility.UploadAsync(dataStream, _bucketName, fullPath, cancellationToken).ConfigureAwait(false);
+         // add support for metadata
+         if(metadata != null)
+         {
+            foreach(KeyValuePair<string, string> keyValuePair in metadata)
+            {
+               request.Metadata.Add(keyValuePair.Key, keyValuePair.Value);
+            }
+         }
+
+         await _fileTransferUtility.UploadAsync(request, cancellationToken).ConfigureAwait(false);
       }
 
       public async Task<Stream> OpenReadAsync(string fullPath, CancellationToken cancellationToken = default)
