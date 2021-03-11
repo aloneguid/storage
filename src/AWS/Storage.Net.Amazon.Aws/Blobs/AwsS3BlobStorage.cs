@@ -118,7 +118,7 @@ namespace Storage.Net.Amazon.Aws.Blobs
          _bucketName = bucketName ?? throw new ArgumentNullException(nameof(bucketName));
 
          var materials = new EncryptionMaterialsV2(kmsKeyId, KmsType.KmsContext, new Dictionary<string, string>());
-         var config = new AmazonS3CryptoConfigurationV2(new SecurityProfile()) { RegionEndpoint = region.ToRegionEndpoint() };
+         var config = new AmazonS3CryptoConfigurationV2(SecurityProfile.V2) { RegionEndpoint = region.ToRegionEndpoint() };
          _client = new AmazonS3EncryptionClientV2(config, materials);
          _fileTransferUtility = new TransferUtility(_client);
       }

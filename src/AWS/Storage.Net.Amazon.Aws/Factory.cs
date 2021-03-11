@@ -136,6 +136,60 @@ namespace Storage.Net
          return new AwsSQSMessenger(accessKeyId, secretAccessKey, serviceUrl, regionEndpoint);
       }
 
+      /// <summary>
+      /// Creates Amazon Simple Queue Service publisher
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="accessKeyId">Access key ID</param>
+      /// <param name="secretAccessKey">Secret access key</param>
+      /// <param name="serviceUrl"></param>
+      /// <param name="regionEndpoint"></param>
+      /// <param name="waitTimeInSeconds">Amount of time the receive call will wait (when empty) before returning</param>
+      /// <returns></returns>
+      public static IMessenger AwsSQS(this IMessagingFactory factory,
+        string accessKeyId,
+        string secretAccessKey,
+        string serviceUrl,
+        int waitTimeInSeconds,
+        RegionEndpoint regionEndpoint = null)
+      {
+        return new AwsSQSMessenger(accessKeyId, secretAccessKey, serviceUrl, regionEndpoint, waitTimeInSeconds);
+      }
+
+      /// <summary>
+      /// Creates Amazon Simple Queue Service publisher
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="kmsKeyId">KMS Key Id</param>
+      /// <param name="serviceUrl"></param>
+      /// <param name="regionEndpoint"></param>
+      /// <returns></returns>
+      public static IMessenger AwsSQS(this IMessagingFactory factory,
+         string kmsKeyId,
+         string serviceUrl,
+         RegionEndpoint regionEndpoint = null)
+      {
+         return new AwsSQSMessenger(kmsKeyId, serviceUrl, regionEndpoint);
+      }
+
+      /// <summary>
+      /// Creates Amazon Simple Queue Service publisher
+      /// </summary>
+      /// <param name="factory"></param>
+      /// <param name="kmsKeyId">KMS Key Id</param>
+      /// <param name="serviceUrl"></param>
+      /// <param name="regionEndpoint"></param>
+      /// <param name="waitTimeInSeconds">Optional amount of time the receive call will wait (when empty) before returning</param>
+      /// <returns></returns>
+      public static IMessenger AwsSQS(this IMessagingFactory factory,
+         string kmsKeyId,
+         string serviceUrl,
+         int waitTimeInSeconds,
+         RegionEndpoint regionEndpoint = null)
+      {
+         return new AwsSQSMessenger(kmsKeyId, serviceUrl, regionEndpoint, waitTimeInSeconds);
+      }
+
       #region [ Connection Strings ]
 
       /// <summary>

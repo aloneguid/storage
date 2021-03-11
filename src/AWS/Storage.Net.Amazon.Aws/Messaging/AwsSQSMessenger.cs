@@ -20,6 +20,8 @@ namespace Storage.Net.Amazon.Aws.Messaging
       private const int MaxEntriesPerRequest = 10; //SQS limit
       private readonly ConcurrentDictionary<string, string> _queueNameToUri = new ConcurrentDictionary<string, string>();
       private readonly string _serviceUrl;
+      private readonly string _kmsKeyId;
+      private readonly int _waitTimeInSeconds = 60;
 
       /// <summary>
       ///
@@ -28,10 +30,13 @@ namespace Storage.Net.Amazon.Aws.Messaging
       /// <param name="secretAccessKey"></param>
       /// <param name="serviceUrl">Serivce URL, for instance http://sqs.us-west-2.amazonaws.com"</param>
       /// <param name="regionEndpoint">Optional regional endpoint</param>
-      public AwsSQSMessenger(string accessKeyId, string secretAccessKey, string serviceUrl, RegionEndpoint regionEndpoint)
+      /// <param name="waitTimeInSeconds">Optional amount of time the receive call will wait (when empty) before returning</param>
+      public AwsSQSMessenger(string accessKeyId, string secretAccessKey, string serviceUrl, RegionEndpoint regionEndpoint,
+                             int waitTimeInSeconds = 60)
       {
          if(regionEndpoint is null)
             throw new ArgumentNullException(nameof(regionEndpoint));
+
          var config = new AmazonSQSConfig
          {
             ServiceURL = serviceUrl,
@@ -40,6 +45,30 @@ namespace Storage.Net.Amazon.Aws.Messaging
 
          _client = new AmazonSQSClient(new BasicAWSCredentials(accessKeyId, secretAccessKey), config);
          _serviceUrl = serviceUrl;
+         _waitTimeInSeconds = waitTimeInSeconds;
+      }
+
+      /// <summary>
+      ///
+      /// </summary>
+      /// <param name="kmsKeyId">KMS Key Id</param>
+      /// <param name="serviceUrl">Serivce URL, for instance http://sqs.us-west-2.amazonaws.com"</param>
+      /// <param name="regionEndpoint">Optional regional endpoint</param>
+      /// <param name="waitTimeInSeconds">Optional amount of time the receive call will wait (when empty) before returning</param>
+      public AwsSQSMessenger(string kmsKeyId, string serviceUrl, RegionEndpoint regionEndpoint, int waitTimeInSeconds = 60)
+      {
+         if(regionEndpoint is null)
+            throw new ArgumentNullException(nameof(regionEndpoint));
+
+         var config = new AmazonSQSConfig
+         {
+            ServiceURL = serviceUrl,
+            RegionEndpoint = regionEndpoint,
+         };
+
+         _client = new AmazonSQSClient(config);
+         _serviceUrl = serviceUrl;
+         _kmsKeyId = kmsKeyId;
       }
 
       private string GetQueueUri(string queueName)
@@ -138,7 +167,8 @@ namespace Storage.Net.Amazon.Aws.Messaging
          {
             MessageAttributeNames = new List<string> { ".*" },
             MaxNumberOfMessages = Math.Min(10, count),
-            VisibilityTimeout = (int)visibility.TotalSeconds
+            VisibilityTimeout = (int)visibility.TotalSeconds,
+            WaitTimeSeconds = _waitTimeInSeconds
          };
 
          ReceiveMessageResponse messages = await _client.ReceiveMessageAsync(request, cancellationToken).ConfigureAwait(false);
@@ -151,7 +181,20 @@ namespace Storage.Net.Amazon.Aws.Messaging
 
       }
 
-      public Task DeleteAsync(string channelName, IEnumerable<QueueMessage> messages, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+      public async Task DeleteAsync(string channelName, IEnumerable<QueueMessage> messages, CancellationToken cancellationToken = default)
+      {
+         var toDelete = messages.ToList();
+         while(toDelete.Any())
+         {
+            var batch = toDelete.Take(10).ToList();
+            var requests = batch.Select(m => new DeleteMessageBatchRequestEntry(m.Id, m.Properties[Converter.ReceiptHandlePropertyName])).ToList();
+            var request = new DeleteMessageBatchRequest(GetQueueUri(channelName), requests);
+            await _client.DeleteMessageBatchAsync(request).ConfigureAwait(false);
+            batch.ForEach(m => toDelete.Remove(m));
+         }
+      }
+     
+        
       public Task StartMessageProcessorAsync(string channelName, IMessageProcessor messageProcessor) => throw new NotImplementedException();
 
       #endregion
