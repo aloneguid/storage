@@ -1,6 +1,6 @@
 # AWS S3
 
-In order to use **S3** you need to reference [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Amazon.Aws.svg)](https://www.nuget.org/packages/Storage.Net.Amazon.Aws/) package first. The provider wraps around the standard AWS SDK which is updated regularly, but adds a lot of untrivial workarounds that makes your life painless.
+In order to use **S3** you need to reference [Storage.Net.Amazon.Aws](https://www.nuget.org/packages/Storage.Net.Amazon.Aws/) [![NuGet](https://img.shields.io/nuget/v/Storage.Net.Amazon.Aws.svg)](https://www.nuget.org/packages/Storage.Net.Amazon.Aws/) package first. The provider wraps around the standard AWS SDK which is updated regularly, but adds a lot of untrivial workarounds that makes your life painless.
 
 ## Connecting
 
