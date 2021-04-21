@@ -184,7 +184,7 @@ This also means that today a transform sink can upload a stream only as large as
 
 ### Messaging
 
-Messaging is inteded for message passing between one or more systems in disconnected fashion. You can send a message somewhere and current or remote system picks it up for processing later when required. This paradigm somehow fits into [CQRS](https://martinfowler.com/bliki/CQRS.html) and [Message Passing](https://www.defit.org/message-passing/) architectural ideas.
+Messaging is intended for message passing between one or more systems in disconnected fashion. You can send a message somewhere and current or remote system picks it up for processing later when required. This paradigm somehow fits into [CQRS](https://martinfowler.com/bliki/CQRS.html) and [Message Passing](https://www.defit.org/message-passing/) architectural ideas.
 
 To name a few examples, [Apache Kafka](http://kafka.apache.org/), [RabbitMQ](https://www.rabbitmq.com/), [Azure Service Bus](https://azure.microsoft.com/en-gb/services/service-bus/) are all falling into this category - essentially they are designed to pass messages. Some systems are more advanced to others of course, but most often it doesn't really matter.
 
@@ -304,7 +304,7 @@ Builds from *master* branch publishes NuGet to `nuget.org`.
 
 ### Code
 
-Storage.Net tries to enforce idential behavior on all implementaions of storage interfaces to the smallest details possible and you will find a lot of test specifications which will help you to add another provider.
+Storage.Net tries to enforce identical behavior on all implementations of storage interfaces to the smallest details possible and you will find a lot of test specifications which will help you to add another provider.
 
 The solution is created in Visual Studio 2017 (Community Edition).
 
