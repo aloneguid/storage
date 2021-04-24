@@ -27,7 +27,6 @@ namespace Storage.Net.Tests.Integration.Azure
       [Fact]
       public async Task Sas_Account()
       {
-
          var policy = new AccountSasPolicy(DateTime.UtcNow, TimeSpan.FromHours(1));
          policy.Permissions =
             AccountSasPermission.List |
@@ -42,7 +41,7 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.True(containers.Count > 0);
       }
 
-      /*[Fact]
+      [Fact]
       public async Task Sas_Container()
       {
          string fileName = Guid.NewGuid().ToString() + ".containersas.txt";
@@ -54,10 +53,10 @@ namespace Storage.Net.Tests.Integration.Azure
 
          //check we can connect and list test file in the root
          IBlobStorage sasInstance = StorageFactory.Blobs.AzureBlobStorageWithSas(sas);
-         IReadOnlyCollection<Blob> blobs = await sasInstance.ListAsync(StoragePath.RootFolderPath);
-         Blob testBlob = blobs.FirstOrDefault(b => b.FullPath == fileName);
+         IReadOnlyCollection<Blob> blobs = await sasInstance.ListAsync();
+         Blob testBlob = blobs.FirstOrDefault(b => b.Name == fileName);
          Assert.NotNull(testBlob);
-      }*/
+      }
 
       [Fact]
       public async Task ContainerPublicAccess()
