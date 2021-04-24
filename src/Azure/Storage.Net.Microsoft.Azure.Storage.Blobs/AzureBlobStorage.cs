@@ -511,7 +511,7 @@ namespace Storage.Net.Microsoft.Azure.Storage.Blobs
       {
          GenericValidation.CheckBlobFullPath(fullPath);
 
-         fullPath = StoragePath.Normalize(fullPath);
+         fullPath = StoragePath.Normalize(fullPath, true);
          if(fullPath == null)
             throw new ArgumentNullException(nameof(fullPath));
 
