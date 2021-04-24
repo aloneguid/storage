@@ -61,7 +61,7 @@ namespace Storage.Net.Tests.Integration.Azure
 
          //check we can connect and list test file in the root
          IBlobStorage sasInstance = StorageFactory.Blobs.AzureBlobStorageWithSas(sas);
-         IReadOnlyCollection<Blob> blobs = await sasInstance.ListAsync();
+         IReadOnlyCollection<Blob> blobs = await sasInstance.ListAsync(StoragePath.RootFolderPath);
          Blob testBlob = blobs.FirstOrDefault(b => b.Name == fileName);
          Assert.NotNull(testBlob);
       }
