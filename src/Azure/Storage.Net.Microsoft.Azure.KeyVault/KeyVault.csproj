@@ -6,11 +6,11 @@
       <FileVersion>1.0.0.0</FileVersion>
       <AssemblyVersion>1.0.0.0</AssemblyVersion>
       <Copyright>Copyright (c) 2015-2017 by Ivan Gavryliuk</Copyright>
-      <PackageIconUrl>http://i.isolineltd.com/nuget/storage.png</PackageIconUrl>
+      <PackageIconUrl></PackageIconUrl>
       <PackageProjectUrl>https://github.com/aloneguid/storage</PackageProjectUrl>
       <RepositoryUrl>https://github.com/aloneguid/storage</RepositoryUrl>
       <Authors>Ivan Gavryliuk (@aloneguid)</Authors>
-      <PackageLicenseUrl>https://github.com/aloneguid/storage/blob/master/LICENSE</PackageLicenseUrl>
+      <PackageLicenseUrl></PackageLicenseUrl>
       <RepositoryType>GitHub</RepositoryType>
       <LangVersion>latest</LangVersion>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -19,6 +19,8 @@
       <AssemblyName>Storage.Net.Microsoft.Azure.KeyVault</AssemblyName>
       <RootNamespace>Storage.Net.Microsoft.Azure.KeyVault</RootNamespace>
       <LangVersion>latest</LangVersion>
+      <PackageLicenseFile>LICENSE</PackageLicenseFile>
+      <PackageIcon>storage.png</PackageIcon>
    </PropertyGroup>
    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -29,5 +31,15 @@
    </ItemGroup>
    <ItemGroup>
       <ProjectReference Include="..\..\Storage.Net\Storage.Net.csproj" />
+   </ItemGroup>
+   <ItemGroup>
+     <None Include="..\..\..\LICENSE">
+       <Pack>True</Pack>
+       <PackagePath></PackagePath>
+     </None>
+     <None Include="..\..\..\storage.png">
+       <Pack>True</Pack>
+       <PackagePath></PackagePath>
+     </None>
    </ItemGroup>
 </Project>
