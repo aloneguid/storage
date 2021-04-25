@@ -50,13 +50,13 @@ stages:
       inputs:
         command: 'test'
         projects: 'test/Storage.Net.Tests/Storage.Net.Tests.csproj'
-        arguments: '-c release /p:Version=$(pv) /p:FileVersion=$(v) /p:AssemblyVersion=$(av) /p:PackageLicenseUrl="https://github.com/aloneguid/storage/blob/master/LICENSE" /p:Authors="Ivan Gavryliuk (@aloneguid)" /p:PackageIconUrl="http://i.isolineltd.com/nuget/storage.png"'
+        arguments: '-c release /p:Version=$(pv) /p:FileVersion=$(v) /p:AssemblyVersion=$(av) /p:PackageLicense="https://github.com/aloneguid/storage/blob/master/LICENSE" /p:Authors="Ivan Gavryliuk (@aloneguid)" /p:PackageIcon="http://i.isolineltd.com/nuget/storage.png"'
 
     - task: DotNetCoreCLI@2
       displayName: 'build all'
       inputs:
         projects: src/storage.sln
-        arguments: '-c release /p:Version=$(pv) /p:FileVersion=$(v) /p:AssemblyVersion=$(av) /p:PackageLicenseUrl="https://github.com/aloneguid/storage/blob/master/LICENSE" /p:Authors="Ivan Gavryliuk (@aloneguid)" /p:PackageIconUrl="http://i.isolineltd.com/nuget/storage.png"'
+        arguments: '-c release /p:Version=$(pv) /p:FileVersion=$(v) /p:AssemblyVersion=$(av) /p:PackageLicense="https://github.com/aloneguid/storage/blob/master/LICENSE" /p:Authors="Ivan Gavryliuk (@aloneguid)" /p:PackageIcon="http://i.isolineltd.com/nuget/storage.png"'
 
     - task: CopyFiles@2
       displayName: 'copy generated nugets'
