@@ -1,4 +1,6 @@
-﻿using Storage.Net.Blobs;
+﻿using Azure.Storage;
+using Azure.Storage.Blobs;
+using Storage.Net.Blobs;
 using Storage.Net.Microsoft.Azure.Storage.Blobs;
 using System;
 using System.Collections.Generic;
@@ -7,13 +9,15 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Xunit;
+using AzureNative = global::Azure;
 
 namespace Storage.Net.Tests.Integration.Azure
 {
    [Trait("Category", "Blobs")]
    public class LeakyAzureBlobStorageTest
    {
-      private readonly IAzureBlobStorage _native;
+      private readonly IAzureBlobStorage _service;
+      private readonly BlobServiceClient _native;
 
       public LeakyAzureBlobStorageTest()
       {
@@ -21,19 +25,22 @@ namespace Storage.Net.Tests.Integration.Azure
 
          IBlobStorage storage = StorageFactory.Blobs.AzureBlobStorageWithSharedKey(
             settings.AzureStorageName, settings.AzureStorageKey);
-         _native = (IAzureBlobStorage)storage;
+         _service = (IAzureBlobStorage)storage;
+
+         _native = new BlobServiceClient(
+           new Uri($"https://{Settings.Instance.AzureStorageName}.blob.core.windows.net/"),
+           new StorageSharedKeyCredential(Settings.Instance.AzureStorageName, Settings.Instance.AzureStorageKey));
       }
 
       [Fact]
       public async Task Sas_Account()
       {
-
          var policy = new AccountSasPolicy(DateTime.UtcNow, TimeSpan.FromHours(1));
          policy.Permissions =
             AccountSasPermission.List |
             AccountSasPermission.Read |
             AccountSasPermission.Write;
-         string sas = await _native.GetStorageSasAsync(policy);
+         string sas = await _service.GetStorageSasAsync(policy);
          Assert.NotNull(sas);
 
          //check we can connect and list containers
@@ -42,36 +49,88 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.True(containers.Count > 0);
       }
 
-      /*[Fact]
+      [Fact]
       public async Task Sas_Container()
       {
          string fileName = Guid.NewGuid().ToString() + ".containersas.txt";
          string filePath = StoragePath.Combine("test", fileName);
-         await _native.WriteTextAsync(filePath, "whack!");
+         await _service.WriteTextAsync(filePath, "whack!");
 
          var policy = new ContainerSasPolicy(DateTime.UtcNow, TimeSpan.FromHours(1));
-         string sas = await _native.GetContainerSasAsync("test", policy, true);
+         string sas = await _service.GetContainerSasAsync("test", policy, true);
 
          //check we can connect and list test file in the root
          IBlobStorage sasInstance = StorageFactory.Blobs.AzureBlobStorageWithSas(sas);
          IReadOnlyCollection<Blob> blobs = await sasInstance.ListAsync(StoragePath.RootFolderPath);
-         Blob testBlob = blobs.FirstOrDefault(b => b.FullPath == fileName);
+         Blob testBlob = blobs.FirstOrDefault(b => b.Name == fileName);
          Assert.NotNull(testBlob);
-      }*/
+      }
+
+      [Theory]
+      [InlineData("")]
+      [InlineData("directory/")]
+      public async Task Sas_Container_StoresBlob_NameDoesNotContainLeadingOrDoubleSlash(string directoryName)
+      {
+         string fileName = Guid.NewGuid().ToString() + ".containersas.txt";
+         await _service.CreateFolderAsync("test");
+
+         var policy = new ContainerSasPolicy(DateTime.UtcNow, TimeSpan.FromHours(1));
+         policy.Permissions = ContainerSasPermission.Create;
+         string sas = await _service.GetContainerSasAsync("test", policy, true);
+
+         IBlobStorage sasInstance = StorageFactory.Blobs.AzureBlobStorageWithSas(sas);
+         await sasInstance.WriteTextAsync(directoryName + fileName, "file content");
+
+         AzureNative.Storage.Blobs.Models.BlobItem freshBlob = null;
+         BlobContainerClient nativeContainerClient = _native.GetBlobContainerClient("test");
+         await foreach(AzureNative.Storage.Blobs.Models.BlobItem blob in nativeContainerClient.GetBlobsAsync())
+         {
+            if(blob.Name.Contains(fileName))
+            {
+               freshBlob = blob;
+               break;
+            }
+         }
+
+         Assert.False(freshBlob.Name.StartsWith('/'));
+         Assert.DoesNotContain("//", freshBlob.Name);
+      }
+
+      [Theory]
+      [InlineData("")]
+      [InlineData("directory/")]
+      public async Task Sas_Container_StoresBlob_CanReadFileWithSamePath(string directoryName)
+      {
+         string fileName = Guid.NewGuid().ToString() + ".containersas.txt";
+         string path = directoryName + fileName;
+         string content = "file content" + Guid.NewGuid().ToString();
+         await _service.CreateFolderAsync("test");
+
+         var policy = new ContainerSasPolicy(DateTime.UtcNow, TimeSpan.FromHours(1));
+         policy.Permissions = ContainerSasPermission.Create | ContainerSasPermission.Read;
+         string sas = await _service.GetContainerSasAsync("test", policy, true);
+
+         IBlobStorage sasInstance = StorageFactory.Blobs.AzureBlobStorageWithSas(sas);
+         await sasInstance.WriteTextAsync(path, content);
+
+         string actualContent = await sasInstance.ReadTextAsync(path);
+
+         Assert.Equal(content, actualContent);
+      }
 
       [Fact]
       public async Task ContainerPublicAccess()
       {
          //make sure container exists
-         await _native.WriteTextAsync("test/one", "test");
-         await _native.SetContainerPublicAccessAsync("test", ContainerPublicAccessType.Off);
+         await _service.WriteTextAsync("test/one", "test");
+         await _service.SetContainerPublicAccessAsync("test", ContainerPublicAccessType.Off);
 
-         ContainerPublicAccessType pa = await _native.GetContainerPublicAccessAsync("test");
+         ContainerPublicAccessType pa = await _service.GetContainerPublicAccessAsync("test");
          Assert.Equal(ContainerPublicAccessType.Off, pa);   //it's off by default
 
          //set to public
-         await _native.SetContainerPublicAccessAsync("test", ContainerPublicAccessType.Container);
-         pa = await _native.GetContainerPublicAccessAsync("test");
+         await _service.SetContainerPublicAccessAsync("test", ContainerPublicAccessType.Container);
+         pa = await _service.GetContainerPublicAccessAsync("test");
          Assert.Equal(ContainerPublicAccessType.Container, pa);
       }
 
@@ -80,14 +139,14 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string path = StoragePath.Combine("test", Guid.NewGuid().ToString() + ".txt");
 
-         await _native.WriteTextAsync(path, "read me!");
+         await _service.WriteTextAsync(path, "read me!");
 
          var policy = new BlobSasPolicy(DateTime.UtcNow, TimeSpan.FromHours(12))
          {
             Permissions = BlobSasPermission.Read | BlobSasPermission.Write
          };
 
-         string publicUrl = await _native.GetBlobSasAsync(path);
+         string publicUrl = await _service.GetBlobSasAsync(path);
 
          Assert.NotNull(publicUrl);
 
@@ -100,9 +159,9 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string id = $"test/{nameof(Lease_CanAcquireAndRelease)}.lck";
 
-         await _native.BreakLeaseAsync(id, true);
+         await _service.BreakLeaseAsync(id, true);
 
-         using(AzureStorageLease lease = await _native.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20)))
+         using(AzureStorageLease lease = await _service.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20)))
          {
             
          }
@@ -113,11 +172,11 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string id = $"test/{nameof(Lease_Break)}.lck";
 
-         await _native.BreakLeaseAsync(id, true);
+         await _service.BreakLeaseAsync(id, true);
 
-         await _native.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20));
+         await _service.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20));
 
-         await _native.BreakLeaseAsync(id);
+         await _service.BreakLeaseAsync(id);
       }
 
       [Fact]
@@ -125,11 +184,11 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string id = $"test/{nameof(Lease_FailsOnAcquiredLeasedBlob)}.lck";
 
-         await _native.BreakLeaseAsync(id, true);
+         await _service.BreakLeaseAsync(id, true);
 
-         using(AzureStorageLease lease1 = await _native.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20)))
+         using(AzureStorageLease lease1 = await _service.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20)))
          {
-            await Assert.ThrowsAsync<StorageException>(() => _native.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20)));
+            await Assert.ThrowsAsync<StorageException>(() => _service.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20)));
          }
       }
 
@@ -138,11 +197,11 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string id = $"test/{nameof(Lease_WaitsToReleaseAcquiredLease)}.lck";
 
-         await _native.BreakLeaseAsync(id, true);
+         await _service.BreakLeaseAsync(id, true);
 
-         using(AzureStorageLease lease1 = await _native.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20)))
+         using(AzureStorageLease lease1 = await _service.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20)))
          {
-            await _native.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20), null, true);
+            await _service.AcquireLeaseAsync(id, TimeSpan.FromSeconds(20), null, true);
          }
       }
 
@@ -151,9 +210,9 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string id = "test";
 
-         await _native.BreakLeaseAsync(id, true);
+         await _service.BreakLeaseAsync(id, true);
 
-         using(AzureStorageLease lease = await _native.AcquireLeaseAsync(id, TimeSpan.FromSeconds(15)))
+         using(AzureStorageLease lease = await _service.AcquireLeaseAsync(id, TimeSpan.FromSeconds(15)))
          {
 
          }
@@ -164,17 +223,17 @@ namespace Storage.Net.Tests.Integration.Azure
       {
          string id = "test";
 
-         await _native.BreakLeaseAsync(id, true);
+         await _service.BreakLeaseAsync(id, true);
 
-         await _native.AcquireLeaseAsync(id, TimeSpan.FromSeconds(15));
+         await _service.AcquireLeaseAsync(id, TimeSpan.FromSeconds(15));
 
-         await _native.BreakLeaseAsync(id);
+         await _service.BreakLeaseAsync(id);
       }
 
       [Fact]
       public async Task Top_level_folders_are_containers()
       {
-         IReadOnlyCollection<Blob> containers = await _native.ListAsync();
+         IReadOnlyCollection<Blob> containers = await _service.ListAsync();
 
          foreach(Blob container in containers)
          {
@@ -188,13 +247,13 @@ namespace Storage.Net.Tests.Integration.Azure
       public async Task Delete_container()
       {
          string containerName = Guid.NewGuid().ToString();
-         await _native.WriteTextAsync($"{containerName}/test.txt", "test");
+         await _service.WriteTextAsync($"{containerName}/test.txt", "test");
 
-         IReadOnlyCollection<Blob> containers = await _native.ListAsync();
+         IReadOnlyCollection<Blob> containers = await _service.ListAsync();
          Assert.Contains(containers, c => c.Name == containerName);
 
-         await _native.DeleteAsync(containerName);
-         containers = await _native.ListAsync();
+         await _service.DeleteAsync(containerName);
+         containers = await _service.ListAsync();
          Assert.DoesNotContain(containers, c => c.Name == containerName);
       }
 

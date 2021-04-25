@@ -187,7 +187,9 @@ namespace Storage.Net
       {
          TryParseSasUrl(sas, out string accountName, out string containerName, out string sasQuery);
 
-         var client = new BlobServiceClient(new Uri(sas));
+         var uriBuilder = new UriBuilder(GetServiceUri(accountName).AbsoluteUri);
+         uriBuilder.Query = sasQuery;
+         var client = new BlobServiceClient(uriBuilder.Uri);
 
          return new AzureBlobStorage(client, accountName, containerName: containerName);
       }
