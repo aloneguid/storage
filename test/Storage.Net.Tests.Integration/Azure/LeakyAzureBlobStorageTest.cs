@@ -96,6 +96,28 @@ namespace Storage.Net.Tests.Integration.Azure
          Assert.DoesNotContain("//", freshBlob.Name);
       }
 
+      [Theory]
+      [InlineData("")]
+      [InlineData("directory/")]
+      public async Task Sas_Container_StoresBlob_CanReadFileWithSamePath(string directoryName)
+      {
+         string fileName = Guid.NewGuid().ToString() + ".containersas.txt";
+         string path = directoryName + fileName;
+         string content = "file content" + Guid.NewGuid().ToString();
+         await _service.CreateFolderAsync("test");
+
+         var policy = new ContainerSasPolicy(DateTime.UtcNow, TimeSpan.FromHours(1));
+         policy.Permissions = ContainerSasPermission.Create | ContainerSasPermission.Read;
+         string sas = await _service.GetContainerSasAsync("test", policy, true);
+
+         IBlobStorage sasInstance = StorageFactory.Blobs.AzureBlobStorageWithSas(sas);
+         await sasInstance.WriteTextAsync(path, content);
+
+         string actualContent = await sasInstance.ReadTextAsync(path);
+
+         Assert.Equal(content, actualContent);
+      }
+
       [Fact]
       public async Task ContainerPublicAccess()
       {
