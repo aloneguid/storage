@@ -122,7 +122,12 @@ namespace Storage.Net.Amazon.Aws.Blobs
             }
             catch(AmazonS3Exception ex) when(ex.ErrorCode == "BucketAlreadyOwnedByYou")
             {
-               //ignore this error as bucket already exists
+               // ignore this error as bucket already exists (S3)
+               _initialised = true;
+            }
+            catch(AmazonS3Exception ex) when(ex.ErrorCode == "Conflict")
+            {
+               // ignore this error as bucket already exists (DigitalOcean)
                _initialised = true;
             }
          }

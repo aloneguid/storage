@@ -16,7 +16,13 @@ namespace Storage.Net.Amazon.Aws
          {
             string cliProfileName = connectionString.Get(KnownParameter.LocalProfileName);
             connectionString.GetRequired(KnownParameter.BucketName, true, out string bucket);
-            connectionString.GetRequired(KnownParameter.Region, true, out string region);
+            string serviceUrl = connectionString.Get(KnownParameter.ServiceUrl);
+            string region = connectionString.Get(KnownParameter.Region);
+
+            if(string.IsNullOrEmpty(serviceUrl) == string.IsNullOrEmpty(region))
+            {
+               throw new ArgumentException($"connection string requires either a 'region' or a 'serviceUrl' parameter.");
+            }
 
             if(string.IsNullOrEmpty(cliProfileName))
             {
@@ -29,13 +35,14 @@ namespace Storage.Net.Amazon.Aws
                }
 
 
-               if(string.IsNullOrEmpty(keyId))
+               if(string.IsNullOrEmpty(keyId) && !string.IsNullOrEmpty(region))
                {
                   return new AwsS3BlobStorage(bucket, region);
                }
 
                string sessionToken = connectionString.Get(KnownParameter.SessionToken);
-               return new AwsS3BlobStorage(keyId, key, sessionToken, bucket, region, null);
+
+               return new AwsS3BlobStorage(keyId, key, sessionToken, bucket, region, serviceUrl);
             }
 #if !NET16
             else

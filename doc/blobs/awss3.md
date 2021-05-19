@@ -33,31 +33,40 @@ IBlobStorage storage = StorageFactory.Blobs.FromConnectionString("aws.s3://keyId
 where:
 - **keyId** is (optional) access key ID.
 - **key** is (optional) secret access key.
-- **bucket** is bucket name.
-- **region** is an optional value and defaults to `EU West 1` if not specified. At the moment of this wring the following regions are supported. However as we are using the official AWS SDK, when region information changes, storage.net gets automatically updated.
-  - `us-east-1`
-  - `us-east-2`
-  - `us-west-1`
-  - `us-west-2`
-  - `eu-north-1`
-  - `eu-west-1`
-  - `eu-west-2`
-  - `eu-west-3`
-  - `eu-central-1`
-  - `ap-northeast-1`
-  - `ap-northeast-2`
-  - `ap-northeast-3`
-  - `ap-south-1`
-  - `ap-southeast-1`
-  - `ap-southeast-2`
-  - `sa-east-1`
-  - `us-gov-east-1`
-  - `us-gov-west-1`
-  - `cn-north-1`
-  - `cn-northwest-1`
-  - `ca-central-1`
+  > If **keyId** and **key** are omitted, the AWS SDK's default approach to credential resolution will be used. For example: if running in Lambda, it will assume the Lambda execution role; if there are credentials configured in ~/.aws, it will use those; etc.  See [AWS SDK Documentation](https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/net-dg-config-creds.html) for more details. This feature is not supported for connections with a custom **serviceUrl**.
 
-If **keyId** and **key** are omitted, the AWS SDK's default approach to credential resolution will be used. For example: if running in Lambda, it will assume the Lambda execution role; if there are credentials configured in ~/.aws, it will use those; etc.  See [AWS SDK Documentation](https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/net-dg-config-creds.html) for more details.
+- **bucket** is bucket name, i.e. `example-bucket`.
+  > Do _not_ use the full bucket url
+- **serviceUrl** 
+  > Optional and mutually exclusive with **region**. It overwrites the S3 service endpoint for use with 3rd party providers or On-Premise configurations.
+  > 
+  > Currently the following 3rd party providers are supported:
+  > - **DigitalOcean**  
+  >   Include the region in the serviceUrl, for example: `https://ams3.digitaloceanspaces.com`
+   
+- **region**  
+  > Required value (when **serviceUri** is absent), and defaults to `EU West 1` if not specified. At the moment of this writing the following regions are supported. However as we are using the official AWS SDK, when region information changes, storage.net gets automatically updated.
+  > - `us-east-1`
+  > - `us-east-2`
+  > - `us-west-1`
+  > - `us-west-2`
+  > - `eu-north-1`
+  > - `eu-west-1`
+  > - `eu-west-2`
+  > - `eu-west-3`
+  > - `eu-central-1`
+  > - `ap-northeast-1`
+  > - `ap-northeast-2`
+  > - `ap-northeast-3`
+  > - `ap-south-1`
+  > - `ap-southeast-1`
+  > - `ap-southeast-2`
+  > - `sa-east-1`
+  > - `us-gov-east-1`
+  > - `us-gov-west-1`
+  > - `cn-north-1`
+  > - `cn-northwest-1`
+  > - `ca-central-1`
 
 ## AWS CLI Profile Support
 

@@ -46,6 +46,11 @@ namespace Storage.Net
       /// Region
       /// </summary>
       public static readonly string Region = "region";
+      
+      /// <summary>
+      /// Service url (for on-premise S3)
+      /// </summary>
+      public static readonly string ServiceUrl = "serviceUrl";
 
       /// <summary>
       /// 
