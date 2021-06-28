@@ -37,7 +37,7 @@ namespace Storage.Net
       }
 
       /// <summary>
-      /// Creates a blob stogage instance from a connection string
+      /// Creates a blob storage instance from a connection string
       /// </summary>
       public static IBlobStorage FromConnectionString(this IBlobStorageFactory factory, string connectionString)
       {
