@@ -100,6 +100,22 @@ namespace Storage.Net
       {
          return AwsS3BlobStorage.FromAwsCliProfile(awsCliProfileName, bucketName, region);
       }
+      
+      /// <summary>
+      /// Creates an Amazon S3 storage provider using credentials retrieve from SSO
+      /// </summary>
+      /// <param name="factory">Factory reference</param>
+      /// <param name="credentials"></param>
+      /// <param name="bucketName">Bucket name</param>
+      /// <param name="region"></param>
+      /// <returns>A reference to the created storage</returns>
+      public static IBlobStorage AwsS3(this IBlobStorageFactory factory,
+         AWSCredentials credentials,
+         string bucketName,
+         string region)
+      {
+         return AwsS3BlobStorage.FromAwsCredentials(credentials, bucketName, region);
+      }
 #endif
 
       /// <summary>

@@ -41,6 +41,11 @@ namespace Storage.Net.Amazon.Aws.Blobs
       {
          return new AwsS3BlobStorage(bucketName, region, AwsCliCredentials.GetCredentials(profileName));
       }
+      
+      public static AwsS3BlobStorage FromAwsCredentials(AwsCredentials credentials, string bucketName, string region)
+      {
+         return new AwsS3BlobStorage(bucketName, region, credentials);
+      }
 #endif
 
       public AwsS3BlobStorage(string bucketName, string region, AWSCredentials credentials)
